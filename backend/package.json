@@ -1,0 +1,28 @@
+{
+  "name": "iknowball-backend",
+  "version": "1.0.0",
+  "description": "iKnowBall Backend API",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "prisma skills sync || exit 0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "pg": "^8.11.3",
+    "redis": "^4.6.10"
+  },
+  "devDependencies": {
+    "@prisma/client": "^7.10.0",
+    "dotenv": "^17.4.2",
+    "install": "^0.13.0",
+    "nodemon": "^3.0.1",
+    "npm": "^11.19.1",
+    "prisma": "^7.10.0"
+  }
+}

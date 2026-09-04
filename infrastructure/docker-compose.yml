@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: iknowball-postgres
+    environment:
+      POSTGRES_USER: iknowball
+      POSTGRES_PASSWORD: iknowball123
+      POSTGRES_DB: iknowball
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - iknowball-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: iknowball-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - iknowball-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: iknowball-backend
+    environment:
+      - DATABASE_URL=postgresql://iknowball:iknowball123@postgres:5432/iknowball
+      - REDIS_URL=redis://redis:6379
+      - NODE_ENV=development
+      - PORT=4000
+    ports:
+      - "4000:4000"
+      - "3000:3000" # Nếu backend cũng chạy trên 3000
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ../backend:/app
+      - /app/node_modules
+    networks:
+      - iknowball-network
+    restart: unless-stopped
+    command: npm run dev # Hoặc lệnh tương ứng
+
+  prediction-service:
+    build:
+      context: ../prediction-service
+      dockerfile: Dockerfile
+    container_name: iknowball-prediction
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - POSTGRES_URL=postgresql://iknowball:iknowball123@postgres:5432/iknowball
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ../prediction-service:/app
+    networks:
+      - iknowball-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  iknowball-network:
+    driver: bridge
