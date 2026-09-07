@@ -1,0 +1,269 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String               @id @default(uuid())
+  email           String               @unique
+  passwordHash    String?
+  fullName        String?
+  avatarUrl       String?
+  emailVerifiedAt DateTime?
+  roleId          String
+  role            Role                 @relation(fields: [roleId], references: [id])
+  status          String               @default("active") // active | banned
+  refreshTokens   RefreshToken[]
+  oauthAccounts   OAuthAccount[]
+  resetTokens     PasswordResetToken[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+}
+
+model Role {
+  id          String @id @default(uuid())
+  name        String @unique // guest | user | premium | admin
+  permissions Json?
+  users       User[]
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  tokenHash  String
+  deviceInfo String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model OAuthAccount {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  provider       String // "google"
+  providerUserId String
+  createdAt      DateTime @default(now())
+
+  @@unique([provider, providerUserId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+}
+
+// ===== Sports Domain (Phase 3) =====
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+  POSTPONED
+  CANCELED
+}
+
+enum SyncJobStatus {
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+model Sport {
+  id      String   @id @default(uuid())
+  name    String   @unique // "football" | "basketball"
+  leagues League[]
+
+  createdAt DateTime @default(now())
+}
+
+model League {
+  id          String  @id @default(uuid())
+  sportId     String
+  sport       Sport   @relation(fields: [sportId], references: [id])
+  name        String
+  country     String?
+  externalId  String  @unique
+  season      String
+  contentHash String? @db.VarChar(64)
+
+  teams     Team[]
+  matches   Match[]
+  standings Standing[]
+  teamStats TeamStats[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sportId])
+}
+
+model Team {
+  id          String  @id @default(uuid())
+  leagueId    String
+  league      League  @relation(fields: [leagueId], references: [id])
+  name        String
+  shortName   String?
+  logoUrl     String?
+  externalId  String  @unique
+  foundedYear Int?
+  contentHash String? @db.VarChar(64)
+
+  players     Player[]
+  homeMatches Match[]     @relation("HomeTeam")
+  awayMatches Match[]     @relation("AwayTeam")
+  teamStats   TeamStats[]
+  standings   Standing[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leagueId])
+}
+
+model Player {
+  id          String    @id @default(uuid())
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id])
+  fullName    String
+  position    String?
+  nationality String?
+  dateOfBirth DateTime?
+  externalId  String    @unique
+
+  matchEvents MatchEvent[]
+  playerStats PlayerStats[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
+}
+
+model Match {
+  id          String      @id @default(uuid())
+  leagueId    String
+  league      League      @relation(fields: [leagueId], references: [id])
+  homeTeamId  String
+  homeTeam    Team        @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId  String
+  awayTeam    Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  matchDate   DateTime
+  status      MatchStatus @default(SCHEDULED)
+  homeScore   Int?
+  awayScore   Int?
+  externalId  String      @unique
+  rawData     Json?
+  contentHash String?     @db.VarChar(64)
+
+  events      MatchEvent[]
+  playerStats PlayerStats[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([matchDate])
+  @@index([leagueId])
+  @@index([homeTeamId, awayTeamId])
+}
+
+model MatchEvent {
+  id       String  @id @default(uuid())
+  matchId  String
+  match    Match   @relation(fields: [matchId], references: [id])
+  type     String // goal | card | substitution
+  minute   Int
+  playerId String?
+  player   Player? @relation(fields: [playerId], references: [id])
+  teamId   String
+  detail   Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model TeamStats {
+  id            String  @id @default(uuid())
+  teamId        String
+  team          Team    @relation(fields: [teamId], references: [id])
+  leagueId      String
+  league        League  @relation(fields: [leagueId], references: [id])
+  season        String
+  matchesPlayed Int     @default(0)
+  wins          Int     @default(0)
+  draws         Int     @default(0)
+  losses        Int     @default(0)
+  goalsFor      Int     @default(0)
+  goalsAgainst  Int     @default(0)
+  eloRating     Decimal @default(1500) @db.Decimal(7, 2)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, leagueId, season])
+}
+
+model PlayerStats {
+  id              String   @id @default(uuid())
+  playerId        String
+  player          Player   @relation(fields: [playerId], references: [id])
+  matchId         String?
+  match           Match?   @relation(fields: [matchId], references: [id])
+  season          String
+  minutesPlayed   Int      @default(0)
+  goals           Int      @default(0)
+  assists         Int      @default(0)
+  rating          Decimal? @db.Decimal(3, 1)
+  advancedMetrics Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([playerId])
+  @@index([matchId])
+}
+
+model Standing {
+  id       String @id @default(uuid())
+  leagueId String
+  league   League @relation(fields: [leagueId], references: [id])
+  teamId   String
+  team     Team   @relation(fields: [teamId], references: [id])
+  season   String
+  rank     Int
+  points   Int
+  played   Int
+  won      Int
+  drawn    Int
+  lost     Int
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([leagueId, teamId, season])
+}
+
+model SyncJobLog {
+  id               String        @id @default(uuid())
+  jobName          String
+  status           SyncJobStatus
+  startedAt        DateTime
+  finishedAt       DateTime?
+  recordsProcessed Int           @default(0)
+  errorMessage     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([jobName, createdAt])
+}

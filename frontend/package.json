@@ -1,4 +1,13 @@
 {
+  "name": "iknowball-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix my-app",
+    "build": "npm run build --prefix my-app",
+    "start": "npm run start --prefix my-app",
+    "lint": "npm run lint --prefix my-app"
+  },
   "dependencies": {
     "@tanstack/react-query": "^5.102.8",
     "zustand": "^5.0.15"
