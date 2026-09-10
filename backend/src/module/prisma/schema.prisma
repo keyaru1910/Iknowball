@@ -179,6 +179,8 @@ model Match {
   awayTeamId  String
   awayTeam    Team        @relation("AwayTeam", fields: [awayTeamId], references: [id])
   matchDate   DateTime
+  /// Canonical season of this fixture (for example 2025-2026). A league spans seasons.
+  season      String
   status      MatchStatus @default(SCHEDULED)
   homeScore   Int?
   awayScore   Int?
@@ -196,6 +198,7 @@ model Match {
 
   @@index([matchDate])
   @@index([leagueId])
+  @@index([leagueId, season])
   @@index([homeTeamId, awayTeamId])
 }
 

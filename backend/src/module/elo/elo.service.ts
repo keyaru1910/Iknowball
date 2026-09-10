@@ -24,14 +24,14 @@ export class EloService {
 
       const [homeStats, awayStats] = await Promise.all([
         tx.teamStats.upsert({
-          where: { teamId_leagueId_season: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.league.season } },
+          where: { teamId_leagueId_season: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.season } },
           update: {},
-          create: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.league.season },
+          create: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.season },
         }),
         tx.teamStats.upsert({
-          where: { teamId_leagueId_season: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.league.season } },
+          where: { teamId_leagueId_season: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.season } },
           update: {},
-          create: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.league.season },
+          create: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.season },
         }),
       ]);
       const actual: EloResult = match.homeScore > match.awayScore ? 1 : match.homeScore < match.awayScore ? 0 : 0.5;
@@ -83,10 +83,10 @@ export class EloService {
   async rebuildLeagueSeason(leagueId: string, season: string): Promise<number> {
     await this.prisma.$transaction([
       this.prisma.teamStats.updateMany({ where: { leagueId, season }, data: { eloRating: new Prisma.Decimal(DEFAULT_ELO) } }),
-      this.prisma.match.updateMany({ where: { leagueId, league: { season }, status: MatchStatus.FINISHED }, data: { eloProcessedAt: null } }),
+      this.prisma.match.updateMany({ where: { leagueId, season, status: MatchStatus.FINISHED }, data: { eloProcessedAt: null } }),
     ]);
     const matches = await this.prisma.match.findMany({
-      where: { leagueId, league: { season }, status: MatchStatus.FINISHED },
+      where: { leagueId, season, status: MatchStatus.FINISHED },
       orderBy: [{ matchDate: 'asc' }, { id: 'asc' }], select: { id: true },
     });
     for (const match of matches) await this.applyFinishedMatch(match.id);

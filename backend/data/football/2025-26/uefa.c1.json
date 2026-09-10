@@ -1,0 +1,3242 @@
+{
+    "name": "UEFA Champions League 2025/26",
+    "matches": [
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "18:45",
+            "team1": "PSV Eindhoven",
+            "team2": "Union Saint-Gilloise",
+            "score": {
+                "ft": [
+                    1,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "18:45",
+            "team1": "Athletic Club",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "20:00",
+            "team1": "Benfica",
+            "team2": "Qarabağ",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "20:00",
+            "team1": "Tottenham Hotspur",
+            "team2": "Villarreal",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Marseille",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-16",
+            "time": "21:00",
+            "team1": "Juventus",
+            "team2": "Borussia Dortmund",
+            "score": {
+                "ft": [
+                    4,
+                    4
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "18:45",
+            "team1": "Slavia Praha",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "19:45",
+            "team1": "Olympiacos",
+            "team2": "Pafos",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "20:00",
+            "team1": "Liverpool",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Chelsea",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-17",
+            "time": "21:00",
+            "team1": "Ajax",
+            "team2": "Inter",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "18:45",
+            "team1": "FC København",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "18:45",
+            "team1": "Club Brugge",
+            "team2": "AS Monaco",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "18:45",
+            "team1": "Sporting CP",
+            "team2": "Kairat Almaty",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "21:00",
+            "team1": "Napoli",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 1",
+            "date": "2025-09-18",
+            "time": "21:00",
+            "team1": "Newcastle United",
+            "team2": "Barcelona",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "18:45",
+            "team1": "Atalanta",
+            "team2": "Club Brugge",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "18:45",
+            "team1": "Kairat Almaty",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    0,
+                    5
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Eintracht Frankfurt",
+            "score": {
+                "ft": [
+                    5,
+                    1
+                ],
+                "ht": [
+                    3,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Chelsea",
+            "team2": "Benfica",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Inter",
+            "team2": "Slavia Praha",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Bodø/Glimt",
+            "team2": "Tottenham Hotspur",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Galatasaray",
+            "team2": "Liverpool",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Marseille",
+            "team2": "Ajax",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-09-30",
+            "time": "21:00",
+            "team1": "Pafos",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    1,
+                    5
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "18:45",
+            "team1": "Qarabağ",
+            "team2": "FC København",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "18:45",
+            "team1": "Union Saint-Gilloise",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    0,
+                    4
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Olympiacos",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "AS Monaco",
+            "team2": "Manchester City",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "PSV Eindhoven",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Borussia Dortmund",
+            "team2": "Athletic Club",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Villarreal",
+            "team2": "Juventus",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 2",
+            "date": "2025-10-01",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Napoli",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "18:45",
+            "team1": "Barcelona",
+            "team2": "Olympiacos",
+            "score": {
+                "ft": [
+                    6,
+                    1
+                ],
+                "ht": [
+                    3,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "18:45",
+            "team1": "Kairat Almaty",
+            "team2": "Pafos",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    2,
+                    7
+                ],
+                "ht": [
+                    1,
+                    4
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "FC København",
+            "team2": "Borussia Dortmund",
+            "score": {
+                "ft": [
+                    2,
+                    4
+                ],
+                "ht": [
+                    1,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "Newcastle United",
+            "team2": "Benfica",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "PSV Eindhoven",
+            "team2": "Napoli",
+            "score": {
+                "ft": [
+                    6,
+                    2
+                ],
+                "ht": [
+                    3,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "Union Saint-Gilloise",
+            "team2": "Inter",
+            "score": {
+                "ft": [
+                    0,
+                    4
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-21",
+            "time": "21:00",
+            "team1": "Villarreal",
+            "team2": "Manchester City",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "18:45",
+            "team1": "Athletic Club",
+            "team2": "Qarabağ",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "18:45",
+            "team1": "Galatasaray",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "AS Monaco",
+            "team2": "Tottenham Hotspur",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Atalanta",
+            "team2": "Slavia Praha",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Chelsea",
+            "team2": "Ajax",
+            "score": {
+                "ft": [
+                    5,
+                    1
+                ],
+                "ht": [
+                    3,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Eintracht Frankfurt",
+            "team2": "Liverpool",
+            "score": {
+                "ft": [
+                    1,
+                    5
+                ],
+                "ht": [
+                    0,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Club Brugge",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Juventus",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 3",
+            "date": "2025-10-22",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Marseille",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "18:45",
+            "team1": "Slavia Praha",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "18:45",
+            "team1": "Napoli",
+            "team2": "Eintracht Frankfurt",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Union Saint-Gilloise",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Bodø/Glimt",
+            "team2": "AS Monaco",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Juventus",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Liverpool",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Olympiacos",
+            "team2": "PSV Eindhoven",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-04",
+            "time": "21:00",
+            "team1": "Tottenham Hotspur",
+            "team2": "FC København",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "18:45",
+            "team1": "Pafos",
+            "team2": "Villarreal",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "18:45",
+            "team1": "Qarabağ",
+            "team2": "Chelsea",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Ajax",
+            "team2": "Galatasaray",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Club Brugge",
+            "team2": "Barcelona",
+            "score": {
+                "ft": [
+                    3,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Inter",
+            "team2": "Kairat Almaty",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Manchester City",
+            "team2": "Borussia Dortmund",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Newcastle United",
+            "team2": "Athletic Club",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Benfica",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 4",
+            "date": "2025-11-05",
+            "time": "21:00",
+            "team1": "Marseille",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "18:45",
+            "team1": "Ajax",
+            "team2": "Benfica",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "18:45",
+            "team1": "Galatasaray",
+            "team2": "Union Saint-Gilloise",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Borussia Dortmund",
+            "team2": "Villarreal",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Chelsea",
+            "team2": "Barcelona",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Bodø/Glimt",
+            "team2": "Juventus",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Manchester City",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Marseille",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Slavia Praha",
+            "team2": "Athletic Club",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-25",
+            "time": "21:00",
+            "team1": "Napoli",
+            "team2": "Qarabağ",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "18:45",
+            "team1": "FC København",
+            "team2": "Kairat Almaty",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "18:45",
+            "team1": "Pafos",
+            "team2": "AS Monaco",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Inter",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Eintracht Frankfurt",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Liverpool",
+            "team2": "PSV Eindhoven",
+            "score": {
+                "ft": [
+                    1,
+                    4
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Olympiacos",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    3,
+                    4
+                ],
+                "ht": [
+                    2,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Tottenham Hotspur",
+            "score": {
+                "ft": [
+                    5,
+                    3
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 5",
+            "date": "2025-11-26",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Club Brugge",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "18:45",
+            "team1": "Kairat Almaty",
+            "team2": "Olympiacos",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "AS Monaco",
+            "team2": "Galatasaray",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Atalanta",
+            "team2": "Chelsea",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "Eintracht Frankfurt",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Inter",
+            "team2": "Liverpool",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "PSV Eindhoven",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Union Saint-Gilloise",
+            "team2": "Marseille",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-09",
+            "time": "21:00",
+            "team1": "Tottenham Hotspur",
+            "team2": "Slavia Praha",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "18:45",
+            "team1": "Qarabağ",
+            "team2": "Ajax",
+            "score": {
+                "ft": [
+                    2,
+                    4
+                ],
+                "ht": [
+                    1,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "18:45",
+            "team1": "Villarreal",
+            "team2": "FC København",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Athletic Club",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Borussia Dortmund",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Club Brugge",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Juventus",
+            "team2": "Pafos",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Manchester City",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 6",
+            "date": "2025-12-10",
+            "time": "21:00",
+            "team1": "Benfica",
+            "team2": "Napoli",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "18:45",
+            "team1": "Kairat Almaty",
+            "team2": "Club Brugge",
+            "score": {
+                "ft": [
+                    1,
+                    4
+                ],
+                "ht": [
+                    0,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "18:45",
+            "team1": "Bodø/Glimt",
+            "team2": "Manchester City",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "FC København",
+            "team2": "Napoli",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Inter",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    1,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Olympiacos",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "AS Monaco",
+            "score": {
+                "ft": [
+                    6,
+                    1
+                ],
+                "ht": [
+                    3,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Tottenham Hotspur",
+            "team2": "Borussia Dortmund",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-20",
+            "time": "21:00",
+            "team1": "Villarreal",
+            "team2": "Ajax",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "18:45",
+            "team1": "Galatasaray",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "18:45",
+            "team1": "Qarabağ",
+            "team2": "Eintracht Frankfurt",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Atalanta",
+            "team2": "Athletic Club",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Chelsea",
+            "team2": "Pafos",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Union Saint-Gilloise",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Juventus",
+            "team2": "Benfica",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Newcastle United",
+            "team2": "PSV Eindhoven",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Marseille",
+            "team2": "Liverpool",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 7",
+            "date": "2026-01-21",
+            "time": "21:00",
+            "team1": "Slavia Praha",
+            "team2": "Barcelona",
+            "score": {
+                "ft": [
+                    2,
+                    4
+                ],
+                "ht": [
+                    1,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Ajax",
+            "team2": "Olympiacos",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Kairat Almaty",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "AS Monaco",
+            "team2": "Juventus",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Athletic Club",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "Villarreal",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Borussia Dortmund",
+            "team2": "Inter",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Club Brugge",
+            "team2": "Marseille",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Eintracht Frankfurt",
+            "team2": "Tottenham Hotspur",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "FC København",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Liverpool",
+            "team2": "Qarabağ",
+            "score": {
+                "ft": [
+                    6,
+                    0
+                ],
+                "ht": [
+                    3,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Manchester City",
+            "team2": "Galatasaray",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Pafos",
+            "team2": "Slavia Praha",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "PSV Eindhoven",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Union Saint-Gilloise",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Benfica",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    4,
+                    2
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "League Phase - Matchday 8",
+            "date": "2026-01-28",
+            "time": "21:00",
+            "team1": "Napoli",
+            "team2": "Chelsea",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-17",
+            "time": "21:00",
+            "team1": "Benfica",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-17",
+            "time": "21:00",
+            "team1": "AS Monaco",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    2,
+                    3
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-17",
+            "time": "21:00",
+            "team1": "Galatasaray",
+            "team2": "Juventus",
+            "score": {
+                "ft": [
+                    5,
+                    2
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-17",
+            "time": "21:00",
+            "team1": "Borussia Dortmund",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-18",
+            "time": "18:45",
+            "team1": "Qarabağ",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    1,
+                    6
+                ],
+                "ht": [
+                    0,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-18",
+            "time": "18:45",
+            "team1": "Bodø/Glimt",
+            "team2": "Inter",
+            "score": {
+                "ft": [
+                    3,
+                    1
+                ],
+                "ht": [
+                    1,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-18",
+            "time": "21:00",
+            "team1": "Club Brugge",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    3,
+                    3
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - First Leg",
+            "date": "2026-02-18",
+            "time": "21:00",
+            "team1": "Olympiacos",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-24",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Club Brugge",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ],
+                "agg": [
+                    7,
+                    4
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-24",
+            "time": "21:00",
+            "team1": "Inter",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ],
+                "agg": [
+                    2,
+                    5
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-24",
+            "time": "21:00",
+            "team1": "Newcastle United",
+            "team2": "Qarabağ",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ],
+                "agg": [
+                    9,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-24",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "Olympiacos",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ],
+                "agg": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-25",
+            "time": "21:00",
+            "team1": "Atalanta",
+            "team2": "Borussia Dortmund",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ],
+                "agg": [
+                    4,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-25",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Benfica",
+            "score": {
+                "ft": [
+                    2,
+                    1
+                ],
+                "ht": [
+                    1,
+                    0
+                ],
+                "agg": [
+                    3,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-25",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "AS Monaco",
+            "score": {
+                "ft": [
+                    2,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ],
+                "agg": [
+                    5,
+                    4
+                ]
+            }
+        },
+        {
+            "round": "Knockout Phase Play-off - Second Leg",
+            "date": "2026-02-25",
+            "time": "21:00",
+            "team1": "Juventus",
+            "team2": "Galatasaray",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ],
+                "agg": [
+                    5,
+                    7
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-10",
+            "time": "21:00",
+            "team1": "Bayer Leverkusen",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-10",
+            "time": "21:00",
+            "team1": "Bodø/Glimt",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-10",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Chelsea",
+            "score": {
+                "ft": [
+                    5,
+                    2
+                ],
+                "ht": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-10",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Manchester City",
+            "score": {
+                "ft": [
+                    3,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-17",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Bodø/Glimt",
+            "score": {
+                "ft": [
+                    5,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ],
+                "agg": [
+                    5,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-17",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Bayer Leverkusen",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ],
+                "agg": [
+                    3,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-17",
+            "time": "21:00",
+            "team1": "Chelsea",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    0,
+                    3
+                ],
+                "ht": [
+                    0,
+                    1
+                ],
+                "agg": [
+                    2,
+                    8
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - First Leg",
+            "date": "2026-03-17",
+            "time": "21:00",
+            "team1": "Manchester City",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ],
+                "agg": [
+                    1,
+                    5
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - Second Leg",
+            "date": "2026-03-18",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "Newcastle United",
+            "score": {
+                "ft": [
+                    7,
+                    2
+                ],
+                "ht": [
+                    3,
+                    1
+                ],
+                "agg": [
+                    8,
+                    3
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - Second Leg",
+            "date": "2026-03-18",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Atalanta",
+            "score": {
+                "ft": [
+                    4,
+                    1
+                ],
+                "ht": [
+                    2,
+                    0
+                ],
+                "agg": [
+                    10,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - Second Leg",
+            "date": "2026-03-18",
+            "time": "21:00",
+            "team1": "Liverpool",
+            "team2": "Galatasaray",
+            "score": {
+                "ft": [
+                    4,
+                    0
+                ],
+                "ht": [
+                    2,
+                    0
+                ],
+                "agg": [
+                    4,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Round of 16 - Second Leg",
+            "date": "2026-03-18",
+            "time": "21:00",
+            "team1": "Tottenham Hotspur",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    3,
+                    2
+                ],
+                "ht": [
+                    1,
+                    1
+                ],
+                "agg": [
+                    5,
+                    7
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - First Leg",
+            "date": "2026-04-07",
+            "time": "21:00",
+            "team1": "Real Madrid",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - First Leg",
+            "date": "2026-04-07",
+            "time": "21:00",
+            "team1": "Sporting CP",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    0,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - First Leg",
+            "date": "2026-04-08",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Liverpool",
+            "score": {
+                "ft": [
+                    2,
+                    0
+                ],
+                "ht": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - First Leg",
+            "date": "2026-04-08",
+            "time": "21:00",
+            "team1": "Barcelona",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - Second Leg",
+            "date": "2026-04-14",
+            "time": "21:00",
+            "team1": "Liverpool",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    0,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ],
+                "agg": [
+                    0,
+                    4
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - Second Leg",
+            "date": "2026-04-14",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Barcelona",
+            "score": {
+                "ft": [
+                    1,
+                    2
+                ],
+                "ht": [
+                    0,
+                    1
+                ],
+                "agg": [
+                    3,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - Second Leg",
+            "date": "2026-04-15",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Real Madrid",
+            "score": {
+                "ft": [
+                    4,
+                    3
+                ],
+                "ht": [
+                    2,
+                    1
+                ],
+                "agg": [
+                    6,
+                    4
+                ]
+            }
+        },
+        {
+            "round": "Quarter-final - Second Leg",
+            "date": "2026-04-15",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Sporting CP",
+            "score": {
+                "ft": [
+                    0,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ],
+                "agg": [
+                    1,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Semi-final - First Leg",
+            "date": "2026-04-28",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Bayern München",
+            "score": {
+                "ft": [
+                    5,
+                    4
+                ],
+                "ht": [
+                    2,
+                    2
+                ]
+            }
+        },
+        {
+            "round": "Semi-final - First Leg",
+            "date": "2026-04-29",
+            "time": "21:00",
+            "team1": "Atlético Madrid",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ]
+            }
+        },
+        {
+            "round": "Semi-final - Second Leg",
+            "date": "2026-05-05",
+            "time": "21:00",
+            "team1": "Arsenal",
+            "team2": "Atlético Madrid",
+            "score": {
+                "ft": [
+                    1,
+                    0
+                ],
+                "ht": [
+                    0,
+                    0
+                ],
+                "agg": [
+                    2,
+                    1
+                ]
+            }
+        },
+        {
+            "round": "Semi-final - Second Leg",
+            "date": "2026-05-06",
+            "time": "21:00",
+            "team1": "Bayern München",
+            "team2": "Paris Saint-Germain",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ],
+                "agg": [
+                    5,
+                    6
+                ]
+            }
+        },
+        {
+            "round": "Final",
+            "date": "2026-05-30",
+            "time": "21:00",
+            "team1": "Paris Saint-Germain",
+            "team2": "Arsenal",
+            "score": {
+                "ft": [
+                    1,
+                    1
+                ],
+                "ht": [
+                    0,
+                    0
+                ],
+                "pens": [
+                    4,
+                    3
+                ]
+            }
+        }
+    ]
+}

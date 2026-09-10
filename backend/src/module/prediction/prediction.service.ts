@@ -102,10 +102,10 @@ export class PredictionService {
     const [home, away, h2h, homeRecentMatches, awayRecentMatches] = await Promise.all([
       // Elo rating hiện tại (đã được cập nhật tuần tự trước trận)
       this.prisma.teamStats.findUnique({
-        where: { teamId_leagueId_season: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.league.season } },
+        where: { teamId_leagueId_season: { teamId: match.homeTeamId, leagueId: match.leagueId, season: match.season } },
       }),
       this.prisma.teamStats.findUnique({
-        where: { teamId_leagueId_season: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.league.season } },
+        where: { teamId_leagueId_season: { teamId: match.awayTeamId, leagueId: match.leagueId, season: match.season } },
       }),
       // H2H: CHỈ các trận đã kết thúc TRƯỚC matchDate
       this.prisma.match.count({

@@ -28,6 +28,7 @@ interface ResolvedMatch {
   homeTeamId: string;
   awayTeamId: string;
   matchDate: Date;
+  season: string;
   status: MatchStatus;
   homeScore: number | null;
   awayScore: number | null;
@@ -374,6 +375,7 @@ export class SportsSyncService {
               homeTeamId: homeTeam.id,
               awayTeamId: awayTeam.id,
               matchDate: m.matchDate,
+              season: league.season,
               status: m.status as MatchStatus,
               homeScore: m.homeScore,
               awayScore: m.awayScore,
@@ -639,7 +641,7 @@ export class SportsSyncService {
     const values = changed.map(
       (m) => Prisma.sql`(
         ${m.id}, ${m.externalId}, ${m.leagueId}, ${m.homeTeamId}, ${m.awayTeamId},
-        ${m.matchDate}, ${m.status}::"MatchStatus", ${m.homeScore}, ${m.awayScore},
+        ${m.matchDate}, ${m.season}, ${m.status}::"MatchStatus", ${m.homeScore}, ${m.awayScore},
         ${JSON.stringify(m.rawData)}::jsonb, ${m.hash}, now(), now()
       )`,
     );
@@ -647,11 +649,13 @@ export class SportsSyncService {
     await this.prisma.$executeRaw`
       INSERT INTO "Match" (
         id, "externalId", "leagueId", "homeTeamId", "awayTeamId",
-        "matchDate", status, "homeScore", "awayScore", "rawData", "contentHash", "createdAt", "updatedAt"
+        "matchDate", season, status, "homeScore", "awayScore", "rawData", "contentHash", "createdAt", "updatedAt"
       )
       VALUES ${Prisma.join(values)}
       ON CONFLICT ("externalId") DO UPDATE SET
-        status        = EXCLUDED.status,
+        "matchDate"   = EXCLUDED."matchDate",
+        season          = EXCLUDED.season,
+        status          = EXCLUDED.status,
         "homeScore"   = EXCLUDED."homeScore",
         "awayScore"   = EXCLUDED."awayScore",
         "rawData"     = EXCLUDED."rawData",
@@ -680,6 +684,8 @@ export class SportsSyncService {
     await this.prisma.match.upsert({
       where: { externalId: m.externalId },
       update: {
+        matchDate: m.matchDate,
+        season: m.season,
         status: m.status,
         homeScore: m.homeScore,
         awayScore: m.awayScore,
@@ -693,6 +699,7 @@ export class SportsSyncService {
         homeTeamId: m.homeTeamId,
         awayTeamId: m.awayTeamId,
         matchDate: m.matchDate,
+        season: m.season,
         status: m.status,
         homeScore: m.homeScore,
         awayScore: m.awayScore,

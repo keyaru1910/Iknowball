@@ -127,7 +127,7 @@ export class MatchService {
         }
         if (season) {
           const seasonVariants = getSeasonVariants(season);
-          where.league.season = {
+          where.season = {
             in: seasonVariants,
           };
         }

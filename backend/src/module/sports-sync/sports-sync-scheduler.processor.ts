@@ -32,6 +32,10 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
    * Đăng ký các Repeatable Cron Jobs khi Module khởi động
    */
   async onModuleInit() {
+    if (process.env.ENABLE_FOOTBALL_2026_27_SYNC !== 'true') {
+      this.logger.log('Pipeline football 2026/27 đang tắt; không đăng ký lịch đồng bộ dữ liệu thật.');
+      return;
+    }
     try {
       const existing = await this.schedulerQueue.getRepeatableJobs();
       for (const job of existing) {
