@@ -14,9 +14,8 @@ import { colors, type MatchStatus } from "../../lib/design-tokens";
 export default function MatchesPage() {
   const router = useRouter();
   const { isBasketball } = useSport();
-  const todayStr = new Intl.DateTimeFormat("en-CA").format(new Date());
 
-  const [selectedDate, setSelectedDate] = useState<string>(todayStr);
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | undefined>(undefined);
   const [selectedSeason, setSelectedSeason] = useState<string>(DEFAULT_SEASON);
   const [statusTab, setStatusTab] = useState<"all" | MatchStatus>("all");
@@ -81,7 +80,11 @@ export default function MatchesPage() {
           selectedLeagueId={selectedLeagueId}
           onSelectLeagueId={setSelectedLeagueId}
           selectedSeason={selectedSeason}
-          onSelectSeason={setSelectedSeason}
+          onSelectSeason={(season) => {
+            setSelectedSeason(season);
+            setSelectedDate(undefined);
+            setSelectedLeagueId(undefined);
+          }}
           leagues={leagues}
         />
       </div>
@@ -91,9 +94,8 @@ export default function MatchesPage() {
         <button
           type="button"
           onClick={() => setStatusTab("all")}
-          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${
-            statusTab === "all" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${statusTab === "all" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "all" ? colors.panelAlt : "transparent",
             color: statusTab === "all" ? colors.accent : colors.textMuted,
@@ -105,9 +107,8 @@ export default function MatchesPage() {
         <button
           type="button"
           onClick={() => setStatusTab("live")}
-          className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${
-            statusTab === "live" ? "shadow-sm" : "hover:text-white"
-          }`}
+          className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${statusTab === "live" ? "shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "live" ? colors.panelAlt : "transparent",
             color: statusTab === "live" ? colors.live : colors.textMuted,
@@ -120,9 +121,8 @@ export default function MatchesPage() {
         <button
           type="button"
           onClick={() => setStatusTab("upcoming")}
-          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${
-            statusTab === "upcoming" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${statusTab === "upcoming" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "upcoming" ? colors.panelAlt : "transparent",
             color: statusTab === "upcoming" ? colors.accent : colors.textMuted,
@@ -134,9 +134,8 @@ export default function MatchesPage() {
         <button
           type="button"
           onClick={() => setStatusTab("finished")}
-          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${
-            statusTab === "finished" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-sm px-3.5 py-1.5 text-xs font-semibold transition-all ${statusTab === "finished" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "finished" ? colors.panelAlt : "transparent",
             color: statusTab === "finished" ? colors.accent : colors.textMuted,

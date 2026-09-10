@@ -14,9 +14,19 @@ export interface SeasonOption {
 
 export const SUPPORTED_SEASONS: SeasonOption[] = [
   {
+    value: "2024-2025",
+    label: "24/25",
+    description: "Mùa giải 2024 - 2025",
+  },
+  {
     value: "2025-2026",
     label: "25/26",
     description: "Mùa giải 2025 - 2026",
+  },
+  {
+    value: "2026-2027",
+    label: "26/27",
+    description: "Mùa giải 2026 - 2027",
   },
 ];
 
