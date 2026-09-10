@@ -12,7 +12,7 @@ export interface TeamInfo {
 
 export interface MatchPrediction {
   homeWinProb: number;
-  drawProb: number;
+  drawProb: number | null;
   awayWinProb: number;
 }
 

@@ -6,9 +6,11 @@ import {
     HttpCode,
     Post,
     Req,
+    Res,
     UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -19,6 +21,31 @@ import { LocalAuthGuard } from '../guards/local-auth.guard';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GoogleAuthGuard } from '../guards/google-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
+
+const COOKIE_REFRESH_TOKEN_KEY = 'refreshToken';
+
+function setRefreshTokenCookie(res?: Response, token?: string): void {
+    if (res && typeof res.cookie === 'function' && token) {
+        res.cookie(COOKIE_REFRESH_TOKEN_KEY, token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/api/v1/auth',
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+        });
+    }
+}
+
+function clearRefreshTokenCookie(res?: Response): void {
+    if (res && typeof res.clearCookie === 'function') {
+        res.clearCookie(COOKIE_REFRESH_TOKEN_KEY, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            path: '/api/v1/auth',
+        });
+    }
+}
 
 @Controller('api/v1/auth')
 export class AuthController {
@@ -46,23 +73,43 @@ export class AuthController {
     @HttpCode(200)
     @UseGuards(LocalAuthGuard)
     @Throttle({ default: { limit: 5, ttl: 60000 } })
-    async login(@Req() req: any, @Body() _dto: LoginDto) {
-        const result = await this.authService.login(req.user);
+    async login(@Req() req: any, @Res({ passthrough: true }) res: Response, @Body() _dto: LoginDto) {
+        const userAgent = req?.headers?.['user-agent'];
+        const result = userAgent
+            ? await this.authService.login(req?.user || req, userAgent)
+            : await this.authService.login(req?.user || req);
+        setRefreshTokenCookie(res, result.tokens.refreshToken);
         return { data: result, meta: null, error: null };
     }
 
     @Post('refresh')
     @HttpCode(200)
-    async refreshToken(@Body() dto: RefreshTokenDto) {
-        const result = await this.authService.refreshToken(dto.refreshToken);
+    async refreshToken(
+        @Req() req: Request,
+        @Res({ passthrough: true }) res: Response,
+        @Body() dto: RefreshTokenDto,
+    ) {
+        const token = req.cookies?.[COOKIE_REFRESH_TOKEN_KEY] || dto?.refreshToken;
+        if (!token) {
+            throw new BadRequestException('Refresh token không được tìm thấy trong cookie hoặc request body');
+        }
+        const result = await this.authService.refreshToken(token);
+        setRefreshTokenCookie(res, result.tokens.refreshToken);
         return { data: result, meta: null, error: null };
     }
 
     @Post('logout')
     @HttpCode(200)
     @UseGuards(JwtAuthGuard)
-    async logout(@CurrentUser('id') userId: string, @Body('refreshToken') refreshToken?: string) {
-        const result = await this.authService.logout(userId, refreshToken);
+    async logout(
+        @Req() req: Request,
+        @Res({ passthrough: true }) res: Response,
+        @CurrentUser('id') userId: string,
+        @Body('refreshToken') bodyRefreshToken?: string,
+    ) {
+        const token = req.cookies?.[COOKIE_REFRESH_TOKEN_KEY] || bodyRefreshToken;
+        const result = await this.authService.logout(userId, token);
+        clearRefreshTokenCookie(res);
         return { data: result, meta: null, error: null };
     }
 
@@ -80,8 +127,9 @@ export class AuthController {
 
     @Get('google/callback')
     @UseGuards(GoogleAuthGuard)
-    async googleAuthCallback(@Req() req: any) {
-        const result = await this.authService.login(req.user);
+    async googleAuthCallback(@Req() req: any, @Res({ passthrough: true }) res: Response) {
+        const result = await this.authService.login(req?.user || req, req?.headers?.['user-agent']);
+        setRefreshTokenCookie(res, result.tokens.refreshToken);
         return { data: result, meta: null, error: null };
     }
 

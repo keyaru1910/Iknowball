@@ -9,7 +9,7 @@ export const teamSchema = z.object({
 
 export const predictionSchema = z.object({
   homeWinProb: z.number().min(0).max(100),
-  drawProb: z.number().min(0).max(100),
+  drawProb: z.number().min(0).max(100).nullable(),
   awayWinProb: z.number().min(0).max(100),
   modelVersion: z.string().optional(),
 });

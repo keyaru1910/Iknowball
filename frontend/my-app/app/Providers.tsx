@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SportProvider } from "./context/SportContext";
+import { AuthProvider } from "./context/AuthContext";
 
 /**
  * QueryClient tạo bằng useState (không phải module-level singleton) —
@@ -23,7 +24,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SportProvider>{children}</SportProvider>
+      {/* AuthProvider bọc ngoài cùng để mọi component đều truy cập được */}
+      <AuthProvider>
+        <SportProvider>{children}</SportProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

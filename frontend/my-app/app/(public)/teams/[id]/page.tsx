@@ -4,48 +4,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useTeamDetail, useTeamStats } from "../../../hooks/useTeamDetail";
 import TeamFormBadge from "../../../components/TeamFormBadge";
 import { colors } from "../../../lib/design-tokens";
-import type { TeamDetail } from "../../../lib/api/schemas/team.schema";
-
-const mockTeam: TeamDetail = {
-  id: "t-1",
-  name: "Arsenal FC",
-  shortName: "ARS",
-  logoUrl: "https://media.api-sports.io/football/teams/42.png",
-  foundedYear: 1886,
-  leagueName: "Premier League",
-  venue: "Emirates Stadium (London, 60.704 chỗ)",
-  form: ["W", "W", "W", "W", "W"],
-  stats: {
-    matchesPlayed: 27,
-    wins: 20,
-    draws: 4,
-    losses: 3,
-    goalsFor: 62,
-    goalsAgainst: 23,
-    eloRating: 1980,
-    cleanSheets: 12,
-    avgGoalsScored: 2.3,
-    avgGoalsConceded: 0.85,
-  },
-  players: [
-    { id: "p-1", fullName: "Bukayo Saka", position: "Attacker", nationality: "England", number: 7 },
-    { id: "p-2", fullName: "Martin Ødegaard", position: "Midfielder", nationality: "Norway", number: 8 },
-    { id: "p-3", fullName: "Declan Rice", position: "Midfielder", nationality: "England", number: 41 },
-    { id: "p-4", fullName: "William Saliba", position: "Defender", nationality: "France", number: 2 },
-    { id: "p-5", fullName: "David Raya", position: "Goalkeeper", nationality: "Spain", number: 22 },
-  ],
-};
 
 export default function TeamDetailPage() {
   const params = useParams();
   const router = useRouter();
   const teamId = String(params?.id || "");
 
-  const { data: teamData, isLoading } = useTeamDetail(teamId);
+  const { data: teamData, isLoading, isError } = useTeamDetail(teamId);
   const { data: statsData } = useTeamStats(teamId);
-
-  const team = teamData || mockTeam;
-  const stats = statsData || team.stats;
 
   if (isLoading) {
     return (
@@ -54,6 +20,19 @@ export default function TeamDetailPage() {
       </div>
     );
   }
+
+  if (isError || !teamData) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <div className="rounded-md border p-8 text-center" style={{ borderColor: colors.loss, backgroundColor: `${colors.loss}10` }}>
+          <p className="text-sm text-rose-400">Không thể tải thông tin đội bóng hoặc đội không tồn tại.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const team = teamData;
+  const stats = statsData ?? team.stats;
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">

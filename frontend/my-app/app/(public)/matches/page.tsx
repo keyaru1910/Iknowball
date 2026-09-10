@@ -7,78 +7,9 @@ import { useLeagues } from "../../hooks/useLeagues";
 import { useSport } from "../../context/SportContext";
 import MatchCard from "../../components/MatchCard";
 import MatchDateFilter from "../../components/MatchDateFilter";
+import PredictionDisclaimer from "../../components/PredictionDisclaimer";
+import { DEFAULT_SEASON } from "../../lib/constants/seasons";
 import { colors, type MatchStatus } from "../../lib/design-tokens";
-import type { Match } from "../../lib/api/schemas/match.schema";
-
-// Dữ liệu mẫu bóng đá
-const mockFootballMatches: Match[] = [
-  {
-    id: "m-1",
-    league: "Premier League",
-    homeTeam: { id: "t-1", name: "Arsenal", logoUrl: "https://media.api-sports.io/football/teams/42.png" },
-    awayTeam: { id: "t-2", name: "Chelsea", logoUrl: "https://media.api-sports.io/football/teams/49.png" },
-    kickoffTime: new Date(Date.now() + 3600000).toISOString(),
-    status: "live" as MatchStatus,
-    homeScore: 2,
-    awayScore: 1,
-    minute: 68,
-    prediction: { homeWinProb: 55, drawProb: 25, awayWinProb: 20 },
-  },
-  {
-    id: "m-2",
-    league: "Premier League",
-    homeTeam: { id: "t-3", name: "Man City", logoUrl: "https://media.api-sports.io/football/teams/50.png" },
-    awayTeam: { id: "t-4", name: "Liverpool", logoUrl: "https://media.api-sports.io/football/teams/40.png" },
-    kickoffTime: new Date(Date.now() + 7200000).toISOString(),
-    status: "upcoming" as MatchStatus,
-    prediction: { homeWinProb: 48, drawProb: 26, awayWinProb: 26 },
-  },
-  {
-    id: "m-3",
-    league: "La Liga",
-    homeTeam: { id: "t-5", name: "Real Madrid", logoUrl: "https://media.api-sports.io/football/teams/541.png" },
-    awayTeam: { id: "t-6", name: "Barcelona", logoUrl: "https://media.api-sports.io/football/teams/529.png" },
-    kickoffTime: new Date(Date.now() - 7200000).toISOString(),
-    status: "finished" as MatchStatus,
-    homeScore: 3,
-    awayScore: 2,
-  },
-];
-
-// Dữ liệu mẫu bóng rổ (NBA & VBA)
-const mockBasketballMatches: Match[] = [
-  {
-    id: "b-1",
-    league: "NBA Regular Season",
-    homeTeam: { id: "tb-1", name: "LA Lakers", logoUrl: "https://cdn.nba.com/logos/nba/1610612747/primary/L/logo.svg" },
-    awayTeam: { id: "tb-2", name: "GS Warriors", logoUrl: "https://cdn.nba.com/logos/nba/1610612744/primary/L/logo.svg" },
-    kickoffTime: new Date(Date.now() + 1800000).toISOString(),
-    status: "live" as MatchStatus,
-    homeScore: 104,
-    awayScore: 98,
-    minute: 38, // Q4
-    prediction: { homeWinProb: 62, drawProb: 0, awayWinProb: 38 },
-  },
-  {
-    id: "b-2",
-    league: "NBA Regular Season",
-    homeTeam: { id: "tb-3", name: "Boston Celtics", logoUrl: "https://cdn.nba.com/logos/nba/1610612738/primary/L/logo.svg" },
-    awayTeam: { id: "tb-4", name: "Milwaukee Bucks", logoUrl: "https://cdn.nba.com/logos/nba/1610612749/primary/L/logo.svg" },
-    kickoffTime: new Date(Date.now() + 5400000).toISOString(),
-    status: "upcoming" as MatchStatus,
-    prediction: { homeWinProb: 58, drawProb: 0, awayWinProb: 42 },
-  },
-  {
-    id: "b-3",
-    league: "NBA Regular Season",
-    homeTeam: { id: "tb-5", name: "Denver Nuggets", logoUrl: "https://cdn.nba.com/logos/nba/1610612743/primary/L/logo.svg" },
-    awayTeam: { id: "tb-6", name: "Phoenix Suns", logoUrl: "https://cdn.nba.com/logos/nba/1610612756/primary/L/logo.svg" },
-    kickoffTime: new Date(Date.now() - 10800000).toISOString(),
-    status: "finished" as MatchStatus,
-    homeScore: 118,
-    awayScore: 112,
-  },
-];
 
 export default function MatchesPage() {
   const router = useRouter();
@@ -87,16 +18,19 @@ export default function MatchesPage() {
 
   const [selectedDate, setSelectedDate] = useState<string>(todayStr);
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | undefined>(undefined);
+  const [selectedSeason, setSelectedSeason] = useState<string>(DEFAULT_SEASON);
   const [statusTab, setStatusTab] = useState<"all" | MatchStatus>("all");
 
-  const { data: leagues = [] } = useLeagues();
+  const sport = isBasketball ? "basketball" : "football";
+  const { data: leagues = [] } = useLeagues(sport);
   const { data: matchesData, isLoading, isError } = useMatches({
     date: selectedDate,
     leagueId: selectedLeagueId,
+    sport,
+    season: selectedSeason,
   });
 
-  const activeMockMatches = isBasketball ? mockBasketballMatches : mockFootballMatches;
-  const displayMatches = (matchesData && matchesData.length > 0) ? matchesData : activeMockMatches;
+  const displayMatches = matchesData ?? [];
 
   const filteredMatches = displayMatches.filter((m) => {
     if (statusTab === "all") return true;
@@ -136,7 +70,7 @@ export default function MatchesPage() {
         )}
       </div>
 
-      {/* Date & League Filters */}
+      {/* Date, League & Season Filters */}
       <div
         className="mb-6 rounded-md border p-4"
         style={{ borderColor: colors.border, backgroundColor: colors.panel }}
@@ -146,6 +80,8 @@ export default function MatchesPage() {
           onSelectDate={setSelectedDate}
           selectedLeagueId={selectedLeagueId}
           onSelectLeagueId={setSelectedLeagueId}
+          selectedSeason={selectedSeason}
+          onSelectSeason={setSelectedSeason}
           leagues={leagues}
         />
       </div>
@@ -226,8 +162,11 @@ export default function MatchesPage() {
           className="rounded-md border p-8 text-center"
           style={{ borderColor: colors.loss, backgroundColor: `${colors.loss}10` }}
         >
-          <p className="text-sm font-medium text-rose-400">
-            Không thể tải danh sách trận đấu. Vui lòng thử lại sau.
+          <p className="text-sm font-semibold text-rose-400">
+            Không thể kết nối đến nhà cung cấp dữ liệu thể thao (Provider Error).
+          </p>
+          <p className="text-xs mt-1" style={{ color: colors.textMuted }}>
+            Hệ thống đang tự động thử lại kết nối. Vui lòng tải lại trang sau ít phút.
           </p>
         </div>
       ) : filteredMatches.length === 0 ? (
@@ -235,27 +174,35 @@ export default function MatchesPage() {
           className="rounded-md border p-12 text-center"
           style={{ borderColor: colors.border, backgroundColor: colors.panel }}
         >
-          <p className="text-sm font-medium" style={{ color: colors.textMuted }}>
-            Không tìm thấy trận đấu nào phù hợp với bộ lọc.
+          <p className="text-sm font-medium text-white">
+            Không tìm thấy trận đấu nào phù hợp với bộ lọc ngày hoặc giải đấu này.
+          </p>
+          <p className="text-xs mt-1" style={{ color: colors.textMuted }}>
+            Hãy thử chọn một ngày khác hoặc chọn tất cả các giải đấu.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredMatches.map((match) => (
-            <MatchCard
-              key={match.id}
-              id={match.id}
-              league={match.league}
-              homeTeam={match.homeTeam}
-              awayTeam={match.awayTeam}
-              kickoffTime={match.kickoffTime}
-              status={match.status}
-              homeScore={match.homeScore}
-              awayScore={match.awayScore}
-              prediction={match.prediction}
-              onClick={(id) => router.push(`/matches/${id}`)}
-            />
-          ))}
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredMatches.map((match) => (
+              <MatchCard
+                key={match.id}
+                id={match.id}
+                league={match.league}
+                homeTeam={match.homeTeam}
+                awayTeam={match.awayTeam}
+                kickoffTime={match.kickoffTime}
+                status={match.status}
+                homeScore={match.homeScore}
+                awayScore={match.awayScore}
+                prediction={match.prediction}
+                onClick={(id) => router.push(`/matches/${id}`)}
+              />
+            ))}
+          </div>
+
+          {/* Disclaimer cố định */}
+          <PredictionDisclaimer variant="compact" />
         </div>
       )}
     </div>

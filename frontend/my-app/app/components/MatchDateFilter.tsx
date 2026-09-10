@@ -1,8 +1,7 @@
-"use client";
-
 import { useMemo } from "react";
 import { colors } from "../lib/design-tokens";
 import type { League } from "../lib/api/schemas/league.schema";
+import SeasonSelector from "./SeasonSelector";
 
 interface MatchDateFilterProps {
   selectedDate: string; // yyyy-MM-dd
@@ -10,6 +9,8 @@ interface MatchDateFilterProps {
   selectedLeagueId?: string;
   onSelectLeagueId?: (leagueId: string | undefined) => void;
   leagues?: League[];
+  selectedSeason?: string;
+  onSelectSeason?: (season: string) => void;
 }
 
 export default function MatchDateFilter({
@@ -18,6 +19,8 @@ export default function MatchDateFilter({
   selectedLeagueId,
   onSelectLeagueId,
   leagues = [],
+  selectedSeason,
+  onSelectSeason,
 }: MatchDateFilterProps) {
   // Tạo danh sách 7 ngày quanh mốc hôm nay (3 ngày trước, hôm nay, 3 ngày sau)
   const dateOptions = useMemo(() => {
@@ -54,7 +57,7 @@ export default function MatchDateFilter({
   }, []);
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       {/* Ngày thi đấu */}
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
         {dateOptions.map((item) => {
@@ -84,28 +87,38 @@ export default function MatchDateFilter({
         })}
       </div>
 
-      {/* Bộ lọc Giải đấu */}
-      {leagues.length > 0 && onSelectLeagueId && (
-        <div className="flex items-center gap-2">
-          <select
-            value={selectedLeagueId || ""}
-            onChange={(e) => onSelectLeagueId(e.target.value || undefined)}
-            className="rounded-sm border px-3 py-2 text-xs font-medium outline-none transition-colors focus:border-emerald-500"
-            style={{
-              borderColor: colors.border,
-              backgroundColor: colors.panel,
-              color: colors.text,
-            }}
-          >
-            <option value="">Tất cả giải đấu</option>
-            {leagues.map((lg) => (
-              <option key={lg.id} value={lg.id}>
-                {lg.name} {lg.country ? `(${lg.country})` : ""}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Bộ lọc Mùa giải & Giải đấu */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {selectedSeason && onSelectSeason && (
+          <SeasonSelector
+            selectedSeason={selectedSeason}
+            onSelectSeason={onSelectSeason}
+            variant="pill"
+          />
+        )}
+
+        {leagues.length > 0 && onSelectLeagueId && (
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedLeagueId || ""}
+              onChange={(e) => onSelectLeagueId(e.target.value || undefined)}
+              className="rounded-sm border px-3 py-2 text-xs font-medium outline-none transition-colors focus:border-emerald-500"
+              style={{
+                borderColor: colors.border,
+                backgroundColor: colors.panel,
+                color: colors.text,
+              }}
+            >
+              <option value="">Tất cả giải đấu</option>
+              {leagues.map((lg) => (
+                <option key={lg.id} value={lg.id}>
+                  {lg.name} {lg.country ? `(${lg.country})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

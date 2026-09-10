@@ -13,6 +13,8 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 
+import { getEmailVerifySecret, getJwtRefreshSecret, getJwtSecret } from '../../config/env.validation';
+
 const BCRYPT_COST_FACTOR = 12;
 const EMAIL_VERIFY_EXPIRES_IN = '24h';
 
@@ -65,7 +67,7 @@ export class AuthService {
         const verifyToken = this.jwtService.sign(
             { sub: user.id, purpose: 'verify-email' },
             {
-                secret: process.env.EMAIL_VERIFY_SECRET || 'verify_secret',
+                secret: getEmailVerifySecret(),
                 expiresIn: EMAIL_VERIFY_EXPIRES_IN,
             },
         );
@@ -86,7 +88,7 @@ export class AuthService {
         let payload: { sub: string; purpose: string };
         try {
             payload = this.jwtService.verify(token, {
-                secret: process.env.EMAIL_VERIFY_SECRET || 'verify_secret',
+                secret: getEmailVerifySecret(),
             });
         } catch {
             throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
@@ -136,14 +138,14 @@ export class AuthService {
         };
 
         const accessToken = this.jwtService.sign(payload, {
-            secret: process.env.JWT_SECRET || 'fallback_jwt_secret',
+            secret: getJwtSecret(),
             expiresIn: (process.env.JWT_ACCESS_EXPIRES_IN || '15m') as any,
         });
 
         const refreshToken = this.jwtService.sign(
             { sub: user.id, type: 'refresh' },
             {
-                secret: process.env.JWT_REFRESH_SECRET || 'fallback_jwt_refresh_secret',
+                secret: getJwtRefreshSecret(),
                 expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
             },
         );
@@ -173,7 +175,7 @@ export class AuthService {
         let payload: { sub: string; type: string };
         try {
             payload = this.jwtService.verify(refreshToken, {
-                secret: process.env.JWT_REFRESH_SECRET || 'fallback_jwt_refresh_secret',
+                secret: getJwtRefreshSecret(),
             });
         } catch {
             throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
@@ -183,29 +185,42 @@ export class AuthService {
             throw new UnauthorizedException('Token không phải là refresh token');
         }
 
-        const storedTokens = await this.prisma.refreshToken.findMany({
-            where: {
-                userId: payload.sub,
-                revokedAt: null,
-                expiresAt: { gt: new Date() },
-            },
+        // Lấy toàn bộ token của user để kiểm tra tính hợp lệ và phòng chống Replay Attack
+        const allUserTokens = await this.prisma.refreshToken.findMany({
+            where: { userId: payload.sub },
         });
 
-        let matchedTokenRecord: any = null;
-        for (const tokenRecord of storedTokens) {
+        let matchedActiveToken: any = null;
+        let matchedRevokedToken: any = null;
+
+        for (const tokenRecord of allUserTokens) {
             const isMatch = await bcrypt.compare(refreshToken, tokenRecord.tokenHash);
             if (isMatch) {
-                matchedTokenRecord = tokenRecord;
+                if (tokenRecord.revokedAt !== null || tokenRecord.expiresAt <= new Date()) {
+                    matchedRevokedToken = tokenRecord;
+                } else {
+                    matchedActiveToken = tokenRecord;
+                }
                 break;
             }
         }
 
-        if (!matchedTokenRecord) {
-            throw new UnauthorizedException('Refresh token không khả dụng hoặc đã bị thu hồi');
+        // Phát hiện tái sử dụng token đã thu hồi (Replay Attack) -> Thu hồi toàn bộ session của user
+        if (matchedRevokedToken) {
+            await this.prisma.refreshToken.updateMany({
+                where: { userId: payload.sub, revokedAt: null },
+                data: { revokedAt: new Date() },
+            });
+            throw new UnauthorizedException('Phát hiện token không hợp lệ hoặc đã bị thu hồi. Toàn bộ phiên đăng nhập đã bị vô hiệu hóa.');
         }
 
+        if (!matchedActiveToken) {
+            throw new UnauthorizedException('Refresh token không tìm thấy trong hệ thống');
+        }
+
+        // Đánh dấu thu hồi token cũ (Rotation)
         await this.prisma.refreshToken.update({
-            where: { id: matchedTokenRecord.id },
+            where: { id: matchedActiveToken.id },
             data: { revokedAt: new Date() },
         });
 
@@ -311,7 +326,7 @@ export class AuthService {
         const rawToken = this.jwtService.sign(
             { sub: user.id, purpose: 'reset-password' },
             {
-                secret: process.env.EMAIL_VERIFY_SECRET || 'verify_secret',
+                secret: getEmailVerifySecret(),
                 expiresIn: '1h',
             },
         );
@@ -334,7 +349,7 @@ export class AuthService {
         let payload: { sub: string; purpose: string };
         try {
             payload = this.jwtService.verify(dto.token, {
-                secret: process.env.EMAIL_VERIFY_SECRET || 'verify_secret',
+                secret: getEmailVerifySecret(),
             });
         } catch {
             throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');

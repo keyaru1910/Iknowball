@@ -1,7 +1,9 @@
 export interface ApiMeta {
   page?: number;
   pageSize?: number;
+  limit?: number;
   total?: number;
+  totalPages?: number;
   [key: string]: unknown;
 }
 

@@ -6,10 +6,10 @@ import type { League } from "../lib/api/schemas/league.schema";
  * Hook lấy danh sách tất cả giải đấu (Premier League, La Liga, Serie A,...).
  * Dữ liệu tĩnh nên cache 24h và không refetch khi focus.
  */
-export function useLeagues() {
+export function useLeagues(sport?: "football" | "basketball") {
   return useQuery<League[]>({
-    queryKey: ["leagues"],
-    queryFn: getLeagues,
+    queryKey: ["leagues", sport],
+    queryFn: () => getLeagues(sport),
     staleTime: 1000 * 60 * 60 * 24, // 24 giờ
     refetchOnWindowFocus: false,
   });

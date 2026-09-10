@@ -7,10 +7,10 @@ import type { StandingRowDto } from "../lib/api/schemas/standing.schema";
  * nên staleTime dài (6h) và tắt refetchOnWindowFocus — tránh gọi API
  * không cần thiết cho dữ liệu gần như tĩnh trong ngày.
  */
-export function useStandings(leagueId: string) {
+export function useStandings(leagueId: string, season?: string) {
   return useQuery<StandingRowDto[]>({
-    queryKey: ["standings", leagueId],
-    queryFn: () => getStandings(leagueId),
+    queryKey: ["standings", leagueId, season],
+    queryFn: () => getStandings(leagueId, season),
     enabled: Boolean(leagueId),
     staleTime: 1000 * 60 * 60 * 6,
     refetchOnWindowFocus: false,

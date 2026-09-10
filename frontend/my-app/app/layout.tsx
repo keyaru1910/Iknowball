@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "iKnowBall — Dự đoán bóng đá bằng dữ liệu",
-  description: "Hệ thống phân tích và dự đoán bóng đá thông minh dựa trên dữ liệu thật và Elo rating.",
+  description: "Hệ thống phân tích và dự đoán thể thao thông minh dựa trên dữ liệu thật và Elo rating.",
   icons: {
     icon: "/img/fasvicon.png",
     shortcut: "/img/fasvicon.png",

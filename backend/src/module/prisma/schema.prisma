@@ -22,8 +22,18 @@ model User {
   refreshTokens   RefreshToken[]
   oauthAccounts   OAuthAccount[]
   resetTokens     PasswordResetToken[]
+  predictionViews PredictionView[]
+  subscriptions   Subscription[]
+  payments        Payment[]
+  notifications   Notification[]
+  targetAuditLogs AuditLog[]           @relation("TargetUser")
+  actorAuditLogs  AuditLog[]           @relation("ActorUser")
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
+
+  @@index([roleId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Role {
@@ -82,6 +92,12 @@ enum SyncJobStatus {
   PARTIAL
 }
 
+enum PredictionOutcome {
+  HOME_WIN
+  DRAW
+  AWAY_WIN
+}
+
 model Sport {
   id      String   @id @default(uuid())
   name    String   @unique // "football" | "basketball"
@@ -104,6 +120,7 @@ model League {
   matches   Match[]
   standings Standing[]
   teamStats TeamStats[]
+  modelPerformance ModelPerformance[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -171,6 +188,8 @@ model Match {
 
   events      MatchEvent[]
   playerStats PlayerStats[]
+  predictions Prediction[]
+  eloProcessedAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -266,4 +285,204 @@ model SyncJobLog {
   createdAt DateTime @default(now())
 
   @@index([jobName, createdAt])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ===== Prediction Domain (Phase 5) =====
+
+model Prediction {
+  id               String            @id @default(uuid())
+  matchId          String
+  match            Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  modelVersion     String
+  homeWinProb      Decimal           @db.Decimal(6, 5)
+  drawProb         Decimal?          @db.Decimal(6, 5)
+  awayWinProb      Decimal           @db.Decimal(6, 5)
+  predictedOutcome PredictionOutcome
+  featuresSnapshot Json
+  result           PredictionResult?
+  views            PredictionView[]
+  createdAt        DateTime          @default(now())
+
+  @@unique([matchId, modelVersion])
+  @@index([matchId])
+}
+
+model PredictionResult {
+  id            String            @id @default(uuid())
+  predictionId  String            @unique
+  prediction    Prediction        @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  actualOutcome PredictionOutcome
+  isCorrect     Boolean
+  logLoss       Decimal           @db.Decimal(10, 7)
+  brierScore    Decimal           @db.Decimal(10, 7)
+  evaluatedAt   DateTime          @default(now())
+
+  @@index([predictionId])
+}
+
+model ModelPerformance {
+  id            String   @id @default(uuid())
+  modelVersion  String
+  leagueId      String?
+  league        League?  @relation(fields: [leagueId], references: [id], onDelete: SetNull)
+  periodStart   DateTime
+  periodEnd     DateTime
+  accuracy      Decimal  @db.Decimal(6, 5)
+  precision     Decimal  @db.Decimal(6, 5)
+  recall        Decimal  @db.Decimal(6, 5)
+  f1            Decimal  @db.Decimal(6, 5)
+  avgLogLoss    Decimal  @db.Decimal(10, 7)
+  avgBrierScore Decimal  @db.Decimal(10, 7)
+  sampleSize    Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([modelVersion, leagueId, periodStart, periodEnd])
+  @@index([leagueId, periodStart])
+  @@index([modelVersion, createdAt])
+}
+
+model PredictionView {
+  id           String     @id @default(uuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  predictionId String
+  prediction   Prediction @relation(fields: [predictionId], references: [id], onDelete: Cascade)
+  viewedOn     DateTime   @db.Date
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, predictionId, viewedOn])
+  @@index([userId, viewedOn])
+}
+
+// ===== Billing & Payment Domain (Stripe Integration) =====
+
+enum SubscriptionPlan {
+  FREE
+  PRO_MONTHLY
+  PRO_YEARLY
+  VIP_MONTHLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELED
+  INCOMPLETE
+  UNPAID
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum WebhookEventStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+}
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String
+  plan                 SubscriptionPlan   @default(PRO_MONTHLY)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean            @default(false)
+  payments             Payment[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([stripeCustomerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Payment {
+  id                    String        @id @default(uuid())
+  userId                String
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId        String?
+  subscription          Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  stripeSessionId       String?       @unique
+  stripePaymentIntentId String?       @unique
+  amount                Decimal       @db.Decimal(10, 2)
+  currency              String        @default("usd")
+  status                PaymentStatus @default(PENDING)
+  receiptUrl            String?
+  paymentMethod         String?
+  errorMessage          String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WebhookEvent {
+  id          String             @id // Stripe Event ID (evt_xxx)
+  type        String
+  status      WebhookEventStatus @default(RECEIVED)
+  payload     Json
+  error       String?
+  processedAt DateTime?
+  createdAt   DateTime           @default(now())
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ===== Notification Domain =====
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String    @default("info") // info | warning | success | system
+  isRead    Boolean   @default(false)
+  readAt    DateTime?
+  data      Json?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+// ===== Audit Log Domain (Security & Compliance) =====
+
+model AuditLog {
+  id           String   @id @default(uuid())
+  actorId      String?
+  actor        User?    @relation("ActorUser", fields: [actorId], references: [id], onDelete: SetNull)
+  targetUserId String?
+  targetUser   User?    @relation("TargetUser", fields: [targetUserId], references: [id], onDelete: SetNull)
+  action       String // e.g. "USER_STATUS_UPDATED", "ROLE_CHANGED", "SUBSCRIPTION_ACTIVATED"
+  details      Json?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([targetUserId])
+  @@index([action])
+  @@index([createdAt])
 }

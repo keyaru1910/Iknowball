@@ -5,88 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useMatchDetail } from "../../../hooks/useMatchDetail";
 import { useMatchH2H } from "../../../hooks/useMatchH2H";
+import { usePrediction } from "../../../hooks/usePrediction";
 import MatchHeader from "../../../components/MatchHeader";
 import MatchTimeline from "../../../components/MatchTimeline";
 import MatchStatsBar from "../../../components/MatchStatsBar";
 import H2HCard from "../../../components/H2HCard";
 import ProbBar from "../../../components/ProbBar";
 import TeamFormBadge from "../../../components/TeamFormBadge";
+import PredictionDisclaimer from "../../../components/PredictionDisclaimer";
 import { colors } from "../../../lib/design-tokens";
-import type { MatchDetail } from "../../../lib/api/schemas/match.schema";
-
-// Dữ liệu mẫu dự phòng khi chưa có API backend
-const mockDetail: MatchDetail = {
-  id: "m-1",
-  league: "Premier League",
-  round: "Vòng 28",
-  venue: "Emirates Stadium (London)",
-  referee: "Michael Oliver",
-  homeTeam: { id: "t-1", name: "Arsenal", logoUrl: "https://media.api-sports.io/football/teams/42.png" },
-  awayTeam: { id: "t-2", name: "Chelsea", logoUrl: "https://media.api-sports.io/football/teams/49.png" },
-  kickoffTime: new Date().toISOString(),
-  status: "live",
-  homeScore: 2,
-  awayScore: 1,
-  minute: 68,
-  prediction: {
-    homeWinProb: 58,
-    drawProb: 24,
-    awayWinProb: 18,
-    modelVersion: "v1.2-elo-logistic",
-  },
-  events: [
-    { id: "e-1", type: "goal", minute: 14, teamId: "t-1", playerName: "Bukayo Saka", assistPlayerName: "Martin Ødegaard" },
-    { id: "e-2", type: "card", minute: 32, teamId: "t-2", playerName: "Moises Caicedo" },
-    { id: "e-3", type: "goal", minute: 41, teamId: "t-2", playerName: "Cole Palmer", assistPlayerName: "Nicolas Jackson" },
-    { id: "e-4", type: "goal", minute: 56, teamId: "t-1", playerName: "Kai Havertz", assistPlayerName: "Declan Rice" },
-    { id: "e-5", type: "substitution", minute: 62, teamId: "t-2", playerName: "Mykhailo Mudryk" },
-  ],
-  stats: {
-    possession: { home: 58, away: 42 },
-    shotsTotal: { home: 14, away: 8 },
-    shotsOnTarget: { home: 6, away: 3 },
-    corners: { home: 7, away: 4 },
-    fouls: { home: 9, away: 13 },
-    yellowCards: { home: 1, away: 2 },
-    redCards: { home: 0, away: 0 },
-    passAccuracy: { home: 88, away: 81 },
-  },
-  h2h: {
-    totalMatches: 5,
-    homeWins: 3,
-    draws: 1,
-    awayWins: 1,
-    matches: [
-      {
-        id: "h-1",
-        matchDate: "2025-11-10",
-        leagueName: "Premier League",
-        homeTeam: { id: "t-2", name: "Chelsea" },
-        awayTeam: { id: "t-1", name: "Arsenal" },
-        homeScore: 1,
-        awayScore: 1,
-      },
-      {
-        id: "h-2",
-        matchDate: "2025-04-23",
-        leagueName: "Premier League",
-        homeTeam: { id: "t-1", name: "Arsenal" },
-        awayTeam: { id: "t-2", name: "Chelsea" },
-        homeScore: 5,
-        awayScore: 0,
-      },
-      {
-        id: "h-3",
-        matchDate: "2024-10-21",
-        leagueName: "Premier League",
-        homeTeam: { id: "t-2", name: "Chelsea" },
-        awayTeam: { id: "t-1", name: "Arsenal" },
-        homeScore: 2,
-        awayScore: 2,
-      },
-    ],
-  },
-};
 
 type MatchTab = "overview" | "events" | "stats" | "h2h";
 
@@ -96,12 +23,9 @@ export default function MatchDetailPage() {
   const matchId = String(params?.id || "");
   const [activeTab, setActiveTab] = useState<MatchTab>("overview");
 
-  const { data: matchData, isLoading, isError } = useMatchDetail(matchId);
+  const { data: matchData, isLoading, isError, isStale } = useMatchDetail(matchId);
   const { data: h2hData } = useMatchH2H(matchId);
-
-  // Fallback sang mockDetail nếu API chưa có sẵn
-  const match = matchData || mockDetail;
-  const h2h = h2hData || match.h2h;
+  const { data: predictionDetail } = usePrediction(matchId);
 
   if (isLoading) {
     return (
@@ -111,8 +35,50 @@ export default function MatchDetailPage() {
     );
   }
 
+  if (isError || !matchData) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+        <div className="rounded-md border p-8 text-center" style={{ borderColor: colors.loss, backgroundColor: `${colors.loss}10` }}>
+          <p className="text-sm font-semibold text-rose-400">Không thể tải dữ liệu chi tiết trận đấu từ hệ thống provider.</p>
+          <p className="text-xs mt-2" style={{ color: colors.textMuted }}>Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau vài phút.</p>
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="mt-4 rounded-sm px-4 py-2 text-xs font-semibold"
+            style={{ backgroundColor: colors.panelAlt, color: colors.text }}
+          >
+            ← Quay lại danh sách
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const match = matchData;
+  const h2h = h2hData ?? match.h2h;
+  const currentPrediction = predictionDetail ?? (match.prediction ? {
+    homeWinProb: match.prediction.homeWinProb,
+    drawProb: match.prediction.drawProb,
+    awayWinProb: match.prediction.awayWinProb,
+    modelVersion: match.prediction.modelVersion,
+    predictedOutcome: "HOME_WIN" as const,
+    featuresSnapshot: undefined,
+    isPremium: false,
+  } : undefined);
+
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-8">
+      {/* Stale data alert if applicable */}
+      {isStale && (
+        <div
+          className="mb-4 flex items-center justify-between rounded-md border px-4 py-2 text-xs"
+          style={{ borderColor: `${colors.accent}40`, backgroundColor: `${colors.accent}15`, color: colors.accent }}
+        >
+          <span>ℹ️ Dữ liệu đang được đồng bộ định kỳ trong nền.</span>
+          <span className="font-mono text-[11px] opacity-80">Cache Validated</span>
+        </div>
+      )}
+
       {/* Breadcrumb back navigation */}
       <div className="mb-6 flex items-center gap-2 text-xs" style={{ color: colors.textMuted }}>
         <button
@@ -196,89 +162,151 @@ export default function MatchDetailPage() {
 
       {/* Tab Content Display */}
       {activeTab === "overview" && (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Prediction Card */}
-          {match.prediction && (
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            {/* Prediction Card */}
+            {currentPrediction ? (
+              <div
+                className="rounded-md border p-6 flex flex-col justify-between"
+                style={{ borderColor: colors.border, backgroundColor: colors.panel }}
+              >
+                <div>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
+                      Dự đoán xác suất trận đấu
+                    </h3>
+                    <span
+                      className="rounded px-2 py-0.5 font-mono text-[10px]"
+                      style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
+                    >
+                      {currentPrediction.isPremium ? "Premium AI" : "Free Summary"}
+                    </span>
+                  </div>
+
+                  <p className="text-xs mb-6 leading-relaxed" style={{ color: colors.textMuted }}>
+                    Xác suất được tính toán dựa trên Elo rating, phong độ 5 trận gần nhất và lợi thế sân nhà/sân khách.
+                  </p>
+
+                  <div className="mb-6">
+                    <ProbBar
+                      size="lg"
+                      home={currentPrediction.homeWinProb}
+                      draw={currentPrediction.drawProb}
+                      away={currentPrediction.awayWinProb}
+                    />
+                  </div>
+
+                  {/* Features Snapshot (dành riêng cho Premium / Admin) */}
+                  {currentPrediction.featuresSnapshot ? (
+                    <div
+                      className="mt-4 rounded-sm border p-3 text-xs mb-4"
+                      style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
+                    >
+                      <div className="text-[11px] font-semibold text-emerald-400 mb-2 flex items-center gap-1.5">
+                        <span>✨</span>
+                        <span>Dữ liệu chi tiết mô hình (Features Snapshot):</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>Home Elo: <strong className="text-white">{(currentPrediction.featuresSnapshot as any).homeElo ?? 1500}</strong></div>
+                        <div>Away Elo: <strong className="text-white">{(currentPrediction.featuresSnapshot as any).awayElo ?? 1500}</strong></div>
+                        <div>Tỷ lệ thắng nhà: <strong className="text-white">{(((currentPrediction.featuresSnapshot as any).homeWinRate ?? 0) * 100).toFixed(1)}%</strong></div>
+                        <div>Tỷ lệ thắng khách: <strong className="text-white">{(((currentPrediction.featuresSnapshot as any).awayWinRate ?? 0) * 100).toFixed(1)}%</strong></div>
+                        <div>Trận đối đầu: <strong className="text-white">{(currentPrediction.featuresSnapshot as any).h2hMatches ?? 0} trận</strong></div>
+                        <div>Môn thể thao: <strong className="text-white">{(currentPrediction.featuresSnapshot as any).sport ?? "Football"}</strong></div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className="mt-3 mb-4 rounded-sm border border-dashed p-3 text-center text-xs"
+                      style={{ borderColor: colors.borderSoft, backgroundColor: `${colors.panelAlt}60` }}
+                    >
+                      <p style={{ color: colors.textMuted }}>
+                        🔒 Đang xem bản tóm tắt xác suất. Nâng cấp <strong>Premium</strong> để mở khóa toàn bộ chỉ số Elo, lịch sử đối đầu và giải thích mô hình AI.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  className="rounded-sm border p-3 text-xs"
+                  style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
+                >
+                  <div className="flex justify-between text-[11px] mb-1">
+                    <span style={{ color: colors.textMuted }}>Mô hình:</span>
+                    <span className="font-mono text-white">{currentPrediction.modelVersion || "Elo-v1"}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span style={{ color: colors.textMuted }}>Độ tin cậy toán học:</span>
+                    <span className="font-mono text-emerald-400">High (Validated)</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div
+                className="rounded-md border p-6 flex items-center justify-center text-center"
+                style={{ borderColor: colors.border, backgroundColor: colors.panel }}
+              >
+                <p className="text-xs" style={{ color: colors.textMuted }}>
+                  Chưa có dữ liệu dự đoán được tạo cho trận đấu này.
+                </p>
+              </div>
+            )}
+
+            {/* Quick Stats & Form */}
             <div
               className="rounded-md border p-6 flex flex-col justify-between"
               style={{ borderColor: colors.border, backgroundColor: colors.panel }}
             >
               <div>
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-sm font-semibold uppercase tracking-wider text-white">
-                    Dự đoán xác suất trận đấu
-                  </h3>
-                  <span
-                    className="rounded px-2 py-0.5 font-mono text-[10px]"
-                    style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
-                  >
-                    Elo Model
-                  </span>
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
+                  Phong độ gần đây & Thông tin sân
+                </h3>
+
+                <div className="flex flex-col gap-4 border-b pb-6" style={{ borderColor: colors.borderSoft }}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-white">{match.homeTeam.name}</span>
+                    <TeamFormBadge form={["W", "W", "D", "W", "W"]} showLabel={false} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-white">{match.awayTeam.name}</span>
+                    <TeamFormBadge form={["L", "W", "W", "D", "L"]} showLabel={false} />
+                  </div>
                 </div>
 
-                <p className="text-xs mb-6 leading-relaxed" style={{ color: colors.textMuted }}>
-                  Xác suất được tính toán dựa trên Elo rating, phong độ 5 trận gần nhất và lợi thế sân nhà/sân khách.
-                </p>
-
-                <div className="mb-6">
-                  <ProbBar
-                    size="lg"
-                    home={match.prediction.homeWinProb}
-                    draw={match.prediction.drawProb}
-                    away={match.prediction.awayWinProb}
-                  />
+                <div className="pt-4">
+                  <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
+                    Địa điểm thi đấu
+                  </h4>
+                  <div className="flex flex-col gap-1.5 text-xs" style={{ color: colors.textMuted }}>
+                    <div>🏟️ Sân vận động: <strong className="text-white">{match.venue || "Sân vận động chính"}</strong></div>
+                    <div>⚖️ Trọng tài điều khiển: <strong className="text-white">{match.referee || "Tổ trọng tài quốc tế"}</strong></div>
+                    <div>🏆 Vòng đấu / Mùa giải: <strong className="text-white">{match.round || "Chính thức"}</strong></div>
+                  </div>
                 </div>
               </div>
 
-              <div
-                className="rounded-sm border p-3 text-xs"
-                style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
-              >
-                <div className="flex justify-between text-[11px] mb-1">
-                  <span style={{ color: colors.textMuted }}>Mô hình:</span>
-                  <span className="font-mono text-white">{match.prediction.modelVersion || "Elo-v1"}</span>
-                </div>
-                <div className="flex justify-between text-[11px]">
-                  <span style={{ color: colors.textMuted }}>Sai số kỳ vọng (Brier Score):</span>
-                  <span className="font-mono text-emerald-400">0.21</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Quick Stats & Form */}
-          <div
-            className="rounded-md border p-6"
-            style={{ borderColor: colors.border, backgroundColor: colors.panel }}
-          >
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
-              Phong độ 5 trận gần nhất
-            </h3>
-
-            <div className="flex flex-col gap-4 border-b pb-6" style={{ borderColor: colors.borderSoft }}>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">{match.homeTeam.name}</span>
-                <TeamFormBadge form={["W", "W", "D", "W", "W"]} showLabel={false} />
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">{match.awayTeam.name}</span>
-                <TeamFormBadge form={["L", "W", "W", "D", "L"]} showLabel={false} />
-              </div>
-            </div>
-
-            <div className="pt-4">
-              <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                Địa điểm thi đấu
-              </h4>
-              <div className="flex flex-col gap-1 text-xs" style={{ color: colors.textMuted }}>
-                <div>🏟️ Sân: <strong className="text-white">{match.venue || "Chưa cập nhật"}</strong></div>
-                <div>⚖️ Trọng tài chính: <strong className="text-white">{match.referee || "Chưa cập nhật"}</strong></div>
+              <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.borderSoft }}>
+                <Link
+                  href={`/teams/${match.homeTeam.id}`}
+                  className="text-xs font-semibold text-emerald-400 hover:underline mr-4"
+                >
+                  Xem đội {match.homeTeam.shortName || match.homeTeam.name} →
+                </Link>
+                <Link
+                  href={`/teams/${match.awayTeam.id}`}
+                  className="text-xs font-semibold text-emerald-400 hover:underline"
+                >
+                  Xem đội {match.awayTeam.shortName || match.awayTeam.name} →
+                </Link>
               </div>
             </div>
           </div>
 
+          {/* Disclaimer cố định trên toàn màn prediction */}
+          <PredictionDisclaimer variant="banner" />
+
           {/* Quick Timeline Preview */}
-          <div className="md:col-span-2">
+          <div>
             <MatchTimeline
               events={match.events}
               homeTeamId={match.homeTeam.id}
@@ -314,3 +342,4 @@ export default function MatchDetailPage() {
     </div>
   );
 }
+

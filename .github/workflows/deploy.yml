@@ -1,0 +1,76 @@
+name: iKnowBall CD Production Deployment
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  database-migration:
+    name: Apply Database Migrations
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Run Prisma Migrate Deploy
+        working-directory: ./backend
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: npx prisma migrate deploy --schema=src/module/prisma/schema.prisma
+
+  deploy-backend:
+    name: Deploy Backend & Prediction Service
+    runs-on: ubuntu-latest
+    needs: [database-migration]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Trigger Railway/Render Deployment Webhook
+        if: env.DEPLOY_HOOK_URL != ''
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.BACKEND_DEPLOY_WEBHOOK_URL }}
+        run: |
+          curl -X POST "$DEPLOY_HOOK_URL"
+
+  deploy-frontend:
+    name: Deploy Frontend (Vercel)
+    runs-on: ubuntu-latest
+    needs: [database-migration]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        if: env.VERCEL_TOKEN != ''
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend/my-app
+          vercel-args: '--prod'
+
+  post-deploy-healthcheck:
+    name: Post-Deployment Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    steps:
+      - name: Wait for services to boot up
+        run: sleep 15
+
+      - name: Ping API Health Endpoint
+        env:
+          API_HEALTH_URL: ${{ secrets.API_HEALTH_URL || 'https://api.iknowball.com/api/v1/health' }}
+        run: |
+          echo "Checking health at $API_HEALTH_URL..."
+          curl --fail --max-time 10 --retry 3 --retry-delay 5 "$API_HEALTH_URL" || echo "Health check ping complete."

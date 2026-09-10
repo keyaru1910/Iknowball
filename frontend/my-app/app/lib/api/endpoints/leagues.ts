@@ -4,8 +4,9 @@ import { leagueListSchema, leagueSchema, type League } from "../schemas/league.s
 /**
  * Lấy danh sách tất cả các giải đấu đang được theo dõi
  */
-export async function getLeagues(): Promise<League[]> {
-  const { data } = await apiFetch<unknown>("/leagues");
+export async function getLeagues(sport?: "football" | "basketball"): Promise<League[]> {
+  const query = sport ? `?sport=${sport}` : "";
+  const { data } = await apiFetch<unknown>(`/leagues${query}`);
   return leagueListSchema.parse(data);
 }
 
