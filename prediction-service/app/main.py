@@ -110,9 +110,10 @@ async def predict(payload: PredictRequest):
       - Lợi thế sân nhà (+65 điểm Elo)
       - Phong độ gần đây (5 trận gần nhất)
     """
-    # Ưu tiên homeRecentForm nếu có, fallback về homeWinRate
-    home_form = payload.homeRecentForm if payload.homeRecentForm != 0.5 else payload.homeWinRate
-    away_form = payload.awayRecentForm if payload.awayRecentForm != 0.5 else payload.awayWinRate
+    # Chỉ fallback khi client không gửi recent form. 0.5 là giá trị hợp lệ
+    # (và 0.0 cũng vậy), nên không được dùng để suy luận field bị thiếu.
+    home_form = payload.homeRecentForm if "homeRecentForm" in payload.model_fields_set else payload.homeWinRate
+    away_form = payload.awayRecentForm if "awayRecentForm" in payload.model_fields_set else payload.awayWinRate
 
     result = elo_predict(
         sport=payload.sport,

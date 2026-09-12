@@ -14,9 +14,11 @@ import sys
 import os
 
 # Đảm bảo import từ thư mục gốc của prediction-service
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from app.models.elo_model import predict
+from app.features.feature_extractor import normalize_snapshot
+from app.main import PredictRequest, predict as api_predict
 from app.evaluation.metrics import compute_metrics, log_loss_single, brier_score_single
 from app.evaluation.backtest import run_backtest, MatchRecord, report_to_dict
 
@@ -76,6 +78,27 @@ def test_draw_decreases_with_larger_elo_diff():
     even = predict("football", home_elo=1500, away_elo=1500)
     uneven = predict("football", home_elo=1800, away_elo=1200)
     assert even["drawProb"] > uneven["drawProb"], "Draw prob should be higher for evenly matched teams"
+
+
+def test_normalize_snapshot_keeps_zero_recent_form():
+    snapshot = normalize_snapshot({"homeRecentForm": 0.0, "awayRecentForm": 0.0})
+    assert snapshot["homeRecentForm"] == 0.0
+    assert snapshot["awayRecentForm"] == 0.0
+
+
+def test_api_keeps_explicit_neutral_recent_form():
+    """Recent form 0.5 được gửi rõ ràng không được fallback sang season win rate."""
+    import asyncio
+    payload = PredictRequest(
+        homeTeamId="H",
+        awayTeamId="A",
+        homeRecentForm=0.5,
+        awayRecentForm=0.5,
+        homeWinRate=1.0,
+        awayWinRate=0.0,
+    )
+    response = asyncio.run(api_predict(payload))
+    assert response.explanation.formAdjustment == 0.0
 
 
 # ── Tests: metrics ───────────────────────────────────────────────────────────
@@ -197,6 +220,8 @@ if __name__ == "__main__":
         test_better_form_increases_win_prob,
         test_explanation_fields_present,
         test_draw_decreases_with_larger_elo_diff,
+        test_normalize_snapshot_keeps_zero_recent_form,
+        test_api_keeps_explicit_neutral_recent_form,
         test_perfect_accuracy,
         test_log_loss_perfect_prediction,
         test_brier_score_perfect,

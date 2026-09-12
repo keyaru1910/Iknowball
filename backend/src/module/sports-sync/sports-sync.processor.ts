@@ -69,6 +69,15 @@ export class SportsSyncProcessor extends WorkerHost {
           );
           break;
 
+        // Sync lịch thi đấu giới hạn theo priority giải — phù hợp Free plan
+        case SportsSyncJob.SYNC_FIXTURES_LIMITED:
+          result = await this.sportsSyncService.syncFixturesLimited(
+            job.data?.maxTotal ?? 10,
+            job.data?.days ?? 7,
+          );
+          break;
+
+
         default:
           throw new Error(`Không hỗ trợ loại job: ${job.name}`);
       }

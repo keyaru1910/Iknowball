@@ -601,6 +601,147 @@ export class SportsSyncService {
   }
 
   /**
+   * 7b. Đồng bộ lịch thi đấu sắp tới với giới hạn số trận — phù hợp Free plan.
+   *
+   * Logic phân bổ slot:
+   *  1. Ưu tiên các giải trong PRIORITY_LEAGUE_EXTERNAL_IDS trước (nhóm A).
+   *  2. Slot còn lại lấp bằng trận của bất kỳ giải nào khác có trong DB (nhóm B),
+   *     sắp xếp theo ngày gần nhất để nội dung phong phú hơn.
+   *
+   * @param maxTotal - Tổng số trận tối đa được sync (mặc định 10)
+   * @param days     - Số ngày tới cần lấy fixture (mặc định 7)
+   */
+  async syncFixturesLimited(maxTotal = 10, days = 7): Promise<SyncResult> {
+    // Danh sách externalId các giải ưu tiên, thứ tự = độ ưu tiên giảm dần
+    const PRIORITY_LEAGUE_EXTERNAL_IDS: string[] = [
+      '39',  // Premier League (Anh)
+      '140', // La Liga (Tây Ban Nha)
+      '135', // Serie A (Ý)
+      '78',  // Bundesliga (Đức)
+      '61',  // Ligue 1 (Pháp)
+      '2',   // UEFA Champions League
+      '3',   // UEFA Europa League
+    ];
+
+    const fromDate = new Date();
+    const toDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const errors: string[] = [];
+
+    // Lấy toàn bộ leagues đang có trong DB
+    const allLeagues = await this.prisma.league.findMany({
+      include: { sport: true },
+    });
+
+    // Nhóm A: giải ưu tiên (theo đúng thứ tự mảng priority)
+    const priorityLeagues = PRIORITY_LEAGUE_EXTERNAL_IDS
+      .map((extId) => allLeagues.find((l) => l.externalId === extId))
+      .filter(Boolean) as typeof allLeagues;
+
+    // Nhóm B: các giải còn lại (lấp slot nếu nhóm A chưa đủ)
+    const otherLeagues = allLeagues.filter(
+      (l) => !PRIORITY_LEAGUE_EXTERNAL_IDS.includes(l.externalId),
+    );
+
+    // Xử lý theo thứ tự: ưu tiên trước, phần còn lại sau
+    const orderedLeagues = [...priorityLeagues, ...otherLeagues];
+
+    const resolved: ResolvedMatch[] = [];
+
+    for (const league of orderedLeagues) {
+      // Dừng ngay khi đã đủ slot
+      if (resolved.length >= maxTotal) break;
+
+      try {
+        const provider = this.getProvider(league.sport.name);
+        const fixtures = await provider.fetchFixtures(league.externalId, league.season, {
+          status: 'SCHEDULED',
+          fromDate,
+          toDate,
+        });
+
+        // Sắp xếp theo ngày gần nhất
+        fixtures.sort(
+          (a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime(),
+        );
+
+        // Tính slot còn lại và lấy đủ số lượng
+        const slotsLeft = maxTotal - resolved.length;
+
+        for (const m of fixtures.slice(0, slotsLeft)) {
+          try {
+            const [homeTeam, awayTeam] = await Promise.all([
+              this.prisma.team.findUnique({ where: { externalId: m.homeTeamExternalId } }),
+              this.prisma.team.findUnique({ where: { externalId: m.awayTeamExternalId } }),
+            ]);
+
+            if (!homeTeam || !awayTeam) {
+              errors.push(
+                `Fixture ${m.externalId}: Thiếu đội bóng (home: ${m.homeTeamExternalId}, away: ${m.awayTeamExternalId})`,
+              );
+              continue;
+            }
+
+            resolved.push({
+              id: randomUUID(),
+              externalId: m.externalId,
+              leagueId: league.id,
+              homeTeamId: homeTeam.id,
+              awayTeamId: awayTeam.id,
+              matchDate: m.matchDate,
+              season: league.season,
+              status: m.status as MatchStatus,
+              homeScore: m.homeScore,
+              awayScore: m.awayScore,
+              rawData: m.rawData,
+              hash: computeContentHash(m.rawData),
+            });
+          } catch (err: any) {
+            errors.push(`Fixture ${m.externalId} resolve thất bại: ${err.message}`);
+          }
+        }
+      } catch (err: any) {
+        errors.push(`Fetch fixtures cho league ${league.externalId} thất bại: ${err.message}`);
+        this.logger.warn(`Fetch fixtures cho league ${league.externalId} thất bại: ${err.message}`);
+      }
+    }
+
+    this.logger.log(
+      `syncFixturesLimited: Đã resolve ${resolved.length}/${maxTotal} trận từ ${orderedLeagues.length} giải`,
+    );
+
+    // Ghi vào DB theo chunk
+    const changedIds: string[] = [];
+
+    for (let i = 0; i < resolved.length; i += BATCH_CHUNK_SIZE) {
+      const chunk = resolved.slice(i, i + BATCH_CHUNK_SIZE);
+      try {
+        const { changedExternalIds } = await this.batchUpsertMatches(chunk);
+        changedIds.push(...changedExternalIds);
+      } catch (err: any) {
+        this.logger.warn(`Batch upsert fixtures thất bại, chuyển sang fallback per-row: ${err.message}`);
+        for (const m of chunk) {
+          try {
+            await this.upsertMatchIfChanged(m);
+            changedIds.push(m.externalId);
+          } catch (rowErr: any) {
+            errors.push(`Fixture ${m.externalId} upsert thất bại: ${rowErr.message}`);
+          }
+        }
+      }
+    }
+
+    await this.invalidateCache();
+
+    return {
+      ids: changedIds,
+      processedCount: resolved.length,
+      failedCount: errors.length,
+      errors,
+    };
+  }
+
+
+  /**
    * 8. Đồng bộ các trận đấu trong ngày (MATCH-DAY)
    */
   async syncMatchDay(sportName?: string): Promise<SyncResult> {

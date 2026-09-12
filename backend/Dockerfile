@@ -1,22 +1,17 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy package files
+# Install dependencies before copying source to retain the dependency cache.
 COPY package*.json ./
+RUN npm ci
 
-# Install dependencies (production + dev for prisma generate)
-RUN npm install
+# Build in the image so a clean checkout does not depend on a local dist/ folder.
+COPY tsconfig.json tsconfig.build.json nest-cli.json ./
+COPY src ./src
+RUN npx prisma generate --schema=./src/module/prisma/schema.prisma
+RUN npm run build
 
-# Copy pre-built dist and source for prisma
-COPY dist/ ./dist/
-COPY src/module/prisma/schema.prisma ./prisma/schema.prisma
-
-# Generate prisma client
-RUN npx prisma generate --schema=./prisma/schema.prisma || true
-
-# Expose port
 EXPOSE 4000
 
-# Start NestJS
 CMD ["node", "dist/main.js"]
