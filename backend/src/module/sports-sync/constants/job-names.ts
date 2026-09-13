@@ -17,6 +17,8 @@ export enum SportsSyncJob {
   SYNC_UPCOMING = 'sync-upcoming',
   // Lịch thi đấu giới hạn theo priority giải (Free plan)
   SYNC_FIXTURES_LIMITED = 'sync-fixtures-limited',
+  // NBA riêng: sync kết quả và tính lại BXH từ DB (không gọi API standings)
+  SYNC_NBA_FINISHED = 'sync-nba-finished',
 
   // Các job kích hoạt từ Scheduler
   TRIGGER_FULL_SYNC = 'trigger-full-sync',
@@ -26,4 +28,6 @@ export enum SportsSyncJob {
   TRIGGER_UPCOMING_SYNC = 'trigger-upcoming-sync',
   TRIGGER_STANDINGS_SYNC = 'trigger-standings-sync',
   TRIGGER_FIXTURES_LIMITED_SYNC = 'trigger-fixtures-limited-sync',
+  // NBA
+  TRIGGER_NBA_FINISHED_SYNC = 'trigger-nba-finished-sync',
 }

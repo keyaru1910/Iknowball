@@ -72,10 +72,17 @@ export class SportsSyncProcessor extends WorkerHost {
         // Sync lịch thi đấu giới hạn theo priority giải — phù hợp Free plan
         case SportsSyncJob.SYNC_FIXTURES_LIMITED:
           result = await this.sportsSyncService.syncFixturesLimited(
-            job.data?.maxTotal ?? 10,
+            job.data?.maxFootball ?? 10,
+            job.data?.maxBasketball ?? 10,
             job.data?.days ?? 7,
           );
           break;
+
+        // NBA: sync kết quả trận + tính BXH từ DB (không gọi API standings)
+        case SportsSyncJob.SYNC_NBA_FINISHED:
+          result = await this.sportsSyncService.syncNbaFinishedMatches();
+          break;
+
 
 
         default:

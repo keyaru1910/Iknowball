@@ -165,84 +165,41 @@ export class BalldontlieProvider implements SportsDataProvider {
   }
 
   /**
-   * Lấy bảng xếp hạng NBA
+   * Lấy bảng xếp hạng NBA trực tiếp từ endpoint /standings của Balldontlie API.
+   * Chỉ tốn 1 request thay vì phải fetchFixtures() toàn mùa giải.
    */
   async fetchStandings(
-    leagueExternalId: string,
+    _leagueExternalId: string,
     season: string,
   ): Promise<NormalizedStanding[]> {
-    const [teams, fixtures] = await Promise.all([
-      this.fetchTeams(),
-      this.fetchFixtures(leagueExternalId, season),
-    ]);
+    try {
+      const data = await this.requestWithRetry<{ data: any[] }>('/standings', { season });
+      const standings = data.data ?? [];
 
-    // Tính toán bảng xếp hạng dựa trên kết quả các trận đã kết thúc
-    const standingsMap = new Map<
-      string,
-      { won: number; lost: number; points: number; played: number; goalsFor: number; goalsAgainst: number }
-    >();
-
-    for (const team of teams) {
-      standingsMap.set(team.externalId, {
-        won: 0,
-        lost: 0,
-        points: 0,
-        played: 0,
-        goalsFor: 0,
-        goalsAgainst: 0,
+      // Sắp xếp theo thứ hạng conference, fallback theo số thắng
+      const sorted = [...standings].sort((a, b) => {
+        const rankA: number = a.conference?.rank ?? 999;
+        const rankB: number = b.conference?.rank ?? 999;
+        if (rankA !== rankB) return rankA - rankB;
+        return (b.wins ?? 0) - (a.wins ?? 0);
       });
-    }
 
-    for (const match of fixtures) {
-      if (match.status === 'FINISHED' && match.homeScore !== null && match.awayScore !== null) {
-        const home = standingsMap.get(match.homeTeamExternalId);
-        const away = standingsMap.get(match.awayTeamExternalId);
-
-        if (home) {
-          home.played += 1;
-          home.goalsFor += match.homeScore;
-          home.goalsAgainst += match.awayScore;
-          if (match.homeScore > match.awayScore) {
-            home.won += 1;
-            home.points += 2;
-          } else {
-            home.lost += 1;
-          }
-        }
-
-        if (away) {
-          away.played += 1;
-          away.goalsFor += match.awayScore;
-          away.goalsAgainst += match.homeScore;
-          if (match.awayScore > match.homeScore) {
-            away.won += 1;
-            away.points += 2;
-          } else {
-            away.lost += 1;
-          }
-        }
-      }
-    }
-
-    const sortedStandings = Array.from(standingsMap.entries())
-      .map(([teamExternalId, stats]) => ({
-        leagueExternalId,
-        teamExternalId,
-        season,
-        rank: 0,
-        points: stats.points,
-        played: stats.played,
-        won: stats.won,
+      return sorted.map((item: any, index: number) => ({
+        leagueExternalId: _leagueExternalId,
+        teamExternalId: String(item.team?.id ?? ''),
+        season: String(season),
+        rank: index + 1,
+        points: (item.wins ?? 0) * 2, // NBA: 2 điểm/thắng, 0 điểm/thua
+        played: (item.wins ?? 0) + (item.losses ?? 0),
+        won: item.wins ?? 0,
         drawn: 0, // NBA không có trận hòa
-        lost: stats.lost,
-        goalsFor: stats.goalsFor,
-        goalsAgainst: stats.goalsAgainst,
-      }))
-      .sort((a, b) => b.won - a.won || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
-
-    return sortedStandings.map((item, index) => ({
-      ...item,
-      rank: index + 1,
-    }));
+        lost: item.losses ?? 0,
+        goalsFor: 0,    // Balldontlie /standings không trả về điểm số chi tiết
+        goalsAgainst: 0,
+      }));
+    } catch (err: any) {
+      this.logger.warn(`[Balldontlie] fetchStandings thất bại: ${err.message}`);
+      return [];
+    }
   }
 }

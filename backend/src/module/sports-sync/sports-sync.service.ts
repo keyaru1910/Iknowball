@@ -586,6 +586,170 @@ export class SportsSyncService {
   }
 
   /**
+   * 6b. Đồng bộ kết quả NBA sau khi trận kết thúc.
+   *
+   * Khung giờ: 02:00–13:00 VN (UTC+7) — tương đương 19:00 UTC hôm trước → 06:00 UTC hôm nay.
+   * Trận NBA thường diễn ra 08:00–12:00 VN (tối hôm trước giờ Mỹ), kết thúc trước 13:00 VN.
+   *
+   * BXH được cập nhật từ API endpoint /standings — 1 request duy nhất, không tốn thêm quota.
+   */
+  async syncNbaFinishedMatches(): Promise<SyncResult> {
+    const nbaLeague = await this.prisma.league.findFirst({
+      where: { externalId: 'nba' },
+      include: { sport: true },
+    });
+
+    if (!nbaLeague) {
+      this.logger.warn('syncNbaFinishedMatches: Chưa có league NBA trong DB, bỏ qua.');
+      return { ids: [], processedCount: 0, failedCount: 0, errors: ['NBA league chưa được sync'] };
+    }
+
+    // Khung giờ VN (UTC+7):  02:00 VN = 19:00 UTC hôm trước | 13:00 VN = 06:00 UTC hôm nay
+    const now = new Date();
+    const fromDate = new Date(now);
+    fromDate.setUTCHours(19, 0, 0, 0);
+    fromDate.setUTCDate(fromDate.getUTCDate() - 1); // 19:00 UTC ngày hôm trước
+
+    const toDate = new Date(now);
+    toDate.setUTCHours(6, 0, 0, 0); // 06:00 UTC hôm nay
+
+    this.logger.log(
+      `syncNbaFinishedMatches: Lấy kết quả từ ${fromDate.toISOString()} đến ${toDate.toISOString()}`,
+    );
+
+    const result = await this.syncMatches({
+      leagueIds: [nbaLeague.id],
+      status: 'FINISHED',
+      fromDate,
+      toDate,
+    });
+
+    // Cập nhật BXH NBA từ API /standings (chỉ 1 request)
+    if (result.processedCount > 0 || result.ids.length > 0) {
+      this.logger.log('syncNbaFinishedMatches: Đồng bộ BXH NBA từ API...');
+      await this.syncStandings([nbaLeague.id]);
+    }
+
+    return result;
+  }
+
+
+  /**
+   * Tính toán lại BXH NBA từ toàn bộ matches FINISHED trong DB — không gọi API.
+   * Dùng sau khi sync kết quả trận đấu để tiết kiệm request.
+   */
+  private async recalculateNbaStandingsFromDb(leagueId: string, season: string): Promise<void> {
+    const finishedMatches = await this.prisma.match.findMany({
+      where: {
+        leagueId,
+        status: 'FINISHED',
+        homeScore: { not: null },
+        awayScore: { not: null },
+      },
+      select: {
+        homeTeamId: true,
+        awayTeamId: true,
+        homeScore: true,
+        awayScore: true,
+      },
+    });
+
+    // Tổng hợp thống kê từng đội
+    const statsMap = new Map<string, {
+      won: number; lost: number; played: number;
+      pointsFor: number; pointsAgainst: number;
+    }>();
+
+    const ensureTeam = (teamId: string) => {
+      if (!statsMap.has(teamId)) {
+        statsMap.set(teamId, { won: 0, lost: 0, played: 0, pointsFor: 0, pointsAgainst: 0 });
+      }
+      return statsMap.get(teamId)!;
+    };
+
+    for (const m of finishedMatches) {
+      const home = ensureTeam(m.homeTeamId);
+      const away = ensureTeam(m.awayTeamId);
+      const homeScore = m.homeScore ?? 0;
+      const awayScore = m.awayScore ?? 0;
+
+      home.played += 1;
+      home.pointsFor += homeScore;
+      home.pointsAgainst += awayScore;
+      away.played += 1;
+      away.pointsFor += awayScore;
+      away.pointsAgainst += homeScore;
+
+      if (homeScore > awayScore) { home.won += 1; away.lost += 1; }
+      else { away.won += 1; home.lost += 1; }
+    }
+
+    // Xếp hạng theo số trận thắng giảm dần
+    const ranked = Array.from(statsMap.entries())
+      .sort(([, a], [, b]) => b.won - a.won || (b.pointsFor - b.pointsAgainst) - (a.pointsFor - a.pointsAgainst));
+
+    // Upsert bảng Standing và TeamStats
+    for (let i = 0; i < ranked.length; i++) {
+      const [teamId, stats] = ranked[i];
+      const rank = i + 1;
+      const rankPoints = stats.won * 2; // NBA: 2 điểm/thắng, 0 điểm/thua
+
+      try {
+        await this.prisma.standing.upsert({
+          where: { leagueId_teamId_season: { leagueId, teamId, season } },
+          update: {
+            rank,
+            points: rankPoints,
+            played: stats.played,
+            won: stats.won,
+            drawn: 0,
+            lost: stats.lost,
+          },
+          create: {
+            leagueId,
+            teamId,
+            season,
+            rank,
+            points: rankPoints,
+            played: stats.played,
+            won: stats.won,
+            drawn: 0,
+            lost: stats.lost,
+          },
+        });
+
+        await this.prisma.teamStats.upsert({
+          where: { teamId_leagueId_season: { teamId, leagueId, season } },
+          update: {
+            matchesPlayed: stats.played,
+            wins: stats.won,
+            draws: 0,
+            losses: stats.lost,
+            goalsFor: stats.pointsFor,
+            goalsAgainst: stats.pointsAgainst,
+          },
+          create: {
+            teamId,
+            leagueId,
+            season,
+            matchesPlayed: stats.played,
+            wins: stats.won,
+            draws: 0,
+            losses: stats.lost,
+            goalsFor: stats.pointsFor,
+            goalsAgainst: stats.pointsAgainst,
+          },
+        });
+      } catch (err: any) {
+        this.logger.warn(`recalculateNbaStandings: team ${teamId} lỗi: ${err.message}`);
+      }
+    }
+
+    this.logger.log(`recalculateNbaStandingsFromDb: Đã cập nhật BXH ${ranked.length} đội NBA từ DB.`);
+    await this.invalidateCache();
+  }
+
+  /**
    * 7. Đồng bộ các trận đấu sắp tới (UPCOMING) trong N ngày
    */
   async syncUpcomingMatches(days = 7, sportName?: string): Promise<SyncResult> {
@@ -601,18 +765,15 @@ export class SportsSyncService {
   }
 
   /**
-   * 7b. Đồng bộ lịch thi đấu sắp tới với giới hạn số trận — phù hợp Free plan.
+   * 7b. Đồng bộ lịch thi đấu sắp tới với giới hạn số trận phân chia theo môn thể thao
    *
-   * Logic phân bổ slot:
-   *  1. Ưu tiên các giải trong PRIORITY_LEAGUE_EXTERNAL_IDS trước (nhóm A).
-   *  2. Slot còn lại lấp bằng trận của bất kỳ giải nào khác có trong DB (nhóm B),
-   *     sắp xếp theo ngày gần nhất để nội dung phong phú hơn.
-   *
-   * @param maxTotal - Tổng số trận tối đa được sync (mặc định 10)
-   * @param days     - Số ngày tới cần lấy fixture (mặc định 7)
+   * @param maxFootball   - Số trận tối đa cho bóng đá (mặc định 10)
+   * @param maxBasketball - Số trận tối đa cho bóng rổ (mặc định 10)
+   * @param days          - Số ngày tới cần lấy fixture (mặc định 7)
    */
-  async syncFixturesLimited(maxTotal = 10, days = 7): Promise<SyncResult> {
+  async syncFixturesLimited(maxFootball = 10, maxBasketball = 10, days = 7): Promise<SyncResult> {
     // Danh sách externalId các giải ưu tiên, thứ tự = độ ưu tiên giảm dần
+    // Bóng đá dùng externalId số (API-Football), NBA dùng 'nba' (Balldontlie)
     const PRIORITY_LEAGUE_EXTERNAL_IDS: string[] = [
       '39',  // Premier League (Anh)
       '140', // La Liga (Tây Ban Nha)
@@ -621,6 +782,7 @@ export class SportsSyncService {
       '61',  // Ligue 1 (Pháp)
       '2',   // UEFA Champions League
       '3',   // UEFA Europa League
+      'nba', // NBA (Bóng rổ Mỹ)
     ];
 
     const fromDate = new Date();
@@ -646,10 +808,15 @@ export class SportsSyncService {
     const orderedLeagues = [...priorityLeagues, ...otherLeagues];
 
     const resolved: ResolvedMatch[] = [];
+    let resolvedFootball = 0;
+    let resolvedBasketball = 0;
 
     for (const league of orderedLeagues) {
-      // Dừng ngay khi đã đủ slot
-      if (resolved.length >= maxTotal) break;
+      const isBasketball = league.sport.name.toLowerCase() === 'basketball';
+      
+      // Dừng nếu môn thể thao này đã đủ slot
+      if (isBasketball && resolvedBasketball >= maxBasketball) continue;
+      if (!isBasketball && resolvedFootball >= maxFootball) continue;
 
       try {
         const provider = this.getProvider(league.sport.name);
@@ -664,10 +831,14 @@ export class SportsSyncService {
           (a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime(),
         );
 
-        // Tính slot còn lại và lấy đủ số lượng
-        const slotsLeft = maxTotal - resolved.length;
+        // Tính slot còn lại cho môn thể thao này
+        const slotsLeft = isBasketball 
+          ? (maxBasketball - resolvedBasketball)
+          : (maxFootball - resolvedFootball);
 
-        for (const m of fixtures.slice(0, slotsLeft)) {
+        const fixturesToProcess = fixtures.slice(0, slotsLeft);
+
+        for (const m of fixturesToProcess) {
           try {
             const [homeTeam, awayTeam] = await Promise.all([
               this.prisma.team.findUnique({ where: { externalId: m.homeTeamExternalId } }),
@@ -695,6 +866,9 @@ export class SportsSyncService {
               rawData: m.rawData,
               hash: computeContentHash(m.rawData),
             });
+            
+            if (isBasketball) resolvedBasketball++;
+            else resolvedFootball++;
           } catch (err: any) {
             errors.push(`Fixture ${m.externalId} resolve thất bại: ${err.message}`);
           }
@@ -706,7 +880,7 @@ export class SportsSyncService {
     }
 
     this.logger.log(
-      `syncFixturesLimited: Đã resolve ${resolved.length}/${maxTotal} trận từ ${orderedLeagues.length} giải`,
+      `syncFixturesLimited: Đã resolve ${resolvedFootball}/${maxFootball} bóng đá, ${resolvedBasketball}/${maxBasketball} bóng rổ từ ${orderedLeagues.length} giải`,
     );
 
     // Ghi vào DB theo chunk

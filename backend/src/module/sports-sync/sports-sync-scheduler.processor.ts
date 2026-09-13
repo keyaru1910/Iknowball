@@ -93,6 +93,7 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
 
       // 5. Sync lịch thi đấu giới hạn (≤10 trận, ưu tiên giải lớn) — 07:00 sáng
       //    → Cập nhật fixtures 7 ngày tới mỗi sáng, tiết kiệm API
+      //    NBA cũng nằm trong danh sách này (externalId: 'nba')
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FIXTURES_LIMITED_SYNC,
         {},
@@ -102,9 +103,21 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
         },
       );
 
+      // 6. Sync kết quả và BXH NBA — 14:00 chiều (giờ VN)
+      //    Trận NBA thường đá từ 08:00–12:00 VN, kết thúc trước 14:00
+      //    BXH NBA được tính lại từ DB, không gọi thêm API standings
+      await this.schedulerQueue.add(
+        SportsSyncJob.TRIGGER_NBA_FINISHED_SYNC,
+        {},
+        {
+          repeat: { pattern: '0 14 * * *' },
+          jobId: 'nba-finished-sync-2pm',
+        },
+      );
+
       this.logger.log(
         'Đã đăng ký lịch đồng bộ Free-plan: ' +
-        'Full(03:00) | Finished(01:00 + 04:00) | Standings(02:00) | Fixtures(07:00)',
+        'Full(03:00) | Finished-Football(01:00+04:00) | Standings(02:00) | Fixtures(07:00) | NBA(14:00)',
       );
     } catch (err: any) {
       this.logger.warn(`Không thể khởi tạo cron scheduler: ${err.message}`);
@@ -158,12 +171,18 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
         await this.syncQueue.add(SportsSyncJob.SYNC_STANDINGS, {});
         break;
 
-      // Sync lịch thi đấu giới hạn — tối đa 10 trận, ưu tiên giải lớn (07:00 sáng)
+      // Sync lịch thi đấu giới hạn — tối đa 10 trận bóng đá, 10 trận bóng rổ (07:00 sáng)
       case SportsSyncJob.TRIGGER_FIXTURES_LIMITED_SYNC:
         await this.syncQueue.add(SportsSyncJob.SYNC_FIXTURES_LIMITED, {
-          maxTotal: 10,
+          maxFootball: 10,
+          maxBasketball: 10,
           days: 7,
         });
+        break;
+
+      // Sync kết quả NBA và tính lại BXH từ DB — không gọi thêm API (14:00 chiều)
+      case SportsSyncJob.TRIGGER_NBA_FINISHED_SYNC:
+        await this.syncQueue.add(SportsSyncJob.SYNC_NBA_FINISHED, {});
         break;
 
       default:
