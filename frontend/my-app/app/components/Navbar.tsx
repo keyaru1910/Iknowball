@@ -16,6 +16,7 @@ const navLinks: NavLinkItem[] = [
   { href: "/", label: "Trang chủ" },
   { href: "/matches", label: "Lịch thi đấu" },
   { href: "/standings", label: "Bảng xếp hạng" },
+  { href: "/statistics", label: "Dữ liệu thống kê" },
   { href: "/news", label: "Tin tức" },
 ];
 

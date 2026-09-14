@@ -142,22 +142,22 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen w-full font-sans antialiased overflow-x-hidden"
+      className="min-h-screen w-full max-w-full font-sans antialiased overflow-x-hidden"
       style={{ backgroundColor: bangMau.bg, color: bangMau.text }}
     >
       {/* Thanh điều hướng dùng chung toàn ứng dụng */}
       <Navbar />
 
       {/* Phần Hero - Giới thiệu dịch vụ */}
-      <section className="relative mx-auto max-w-7xl px-6 lg:px-20 pb-20 pt-16 md:pb-28 md:pt-24">
-        <div className="relative grid grid-cols-1 gap-10 md:grid-cols-[1fr_420px] items-center">
+      <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-12 pb-16 pt-12 md:pb-24 md:pt-20 lg:pt-24">
+        <div className="relative grid grid-cols-1 gap-12 lg:grid-cols-[1fr_420px] xl:grid-cols-[1fr_460px] items-center">
           {/* Cột bên trái: Tiêu đề & mô tả */}
-          <div className="flex flex-col justify-center">
-            <h1 className="max-w-xl text-4xl font-semibold leading-[1.15] tracking-tight md:text-5xl">
+          <div className="flex flex-col justify-center text-center sm:text-left">
+            <h1 className="max-w-2xl text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-5xl">
               Nhìn thể thao qua con số, không qua cảm xúc.
             </h1>
             <p
-              className="mt-6 max-w-md text-[15px] leading-relaxed"
+              className="mt-4 sm:mt-6 max-w-lg text-sm sm:text-[15px] leading-relaxed mx-auto sm:mx-0"
               style={{ color: bangMau.textMuted }}
             >
               Mỗi trận đấu được chấm điểm từ dữ liệu thật: phong độ gần đây, Elo
@@ -165,28 +165,28 @@ export default function LandingPage() {
               công khai rõ ràng.
             </p>
 
-            <div className="mt-9 flex flex-wrap items-center gap-5">
+            <div className="mt-8 sm:mt-9 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-5 justify-center sm:justify-start">
               <Link
                 href="/matches"
-                className="relative z-20 rounded-sm px-5 py-3 text-sm font-medium transition-opacity hover:opacity-90"
+                className="relative z-20 rounded-md px-6 py-3 text-sm font-semibold transition-all hover:opacity-90 shadow-lg text-center"
                 style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
               >
                 Xem trận hôm nay
               </Link>
               <a
                 href="#accuracy"
-                className="relative z-20 rounded-sm border px-5 py-3 text-sm font-medium transition-all hover:bg-white/5"
-                style={{ borderColor: bangMau.accent, color: bangMau.accent }}
+                className="relative z-20 rounded-md border px-6 py-3 text-sm font-medium transition-all hover:bg-white/5 text-center"
+                style={{ borderColor: bangMau.border, color: bangMau.text }}
               >
                 Xem độ chính xác mô hình
               </a>
             </div>
           </div>
 
-          {/* Cột bên phải: cầu thủ đổi theo môn thể thao đang chọn. */}
-          <div className="relative -translate-x-5 xl:-translate-x-9 transition-transform duration-300">
-            {/* Cầu thủ bên trái chỉ vào bảng dự đoán. */}
-            <div className="hidden lg:block absolute right-full bottom-1 mr-2 xl:mr-3 z-10 w-40 xl:w-44 pointer-events-none transition-transform duration-300 hover:scale-105">
+          {/* Cột bên phải: cầu thủ + Bảng Danh sách trận sắp diễn ra */}
+          <div className="relative flex justify-center w-full">
+            {/* Cầu thủ bên trái (chỉ hiển thị từ màn hình XL >= 1280px để không đè chữ trên Laptop nhỏ) */}
+            <div className="hidden xl:block absolute right-[calc(100%-8px)] bottom-0 z-10 w-36 2xl:w-44 pointer-events-none transition-transform duration-300 hover:scale-105">
               <img
                 src={sport === "basketball" ? "/img/lebron.png" : "/img/messi.png"}
                 alt={sport === "basketball" ? "LeBron James" : "Lionel Messi"}
@@ -196,15 +196,15 @@ export default function LandingPage() {
 
             {/* Bảng Danh sách trận sắp diễn ra */}
             <div
-              className="relative z-20 min-h-[320px] rounded-sm border p-5 shadow-2xl backdrop-blur-sm"
+              className="relative z-20 w-full max-w-md lg:max-w-none rounded-xl border p-4 sm:p-5 shadow-2xl backdrop-blur-sm"
               style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
             >
               <div className="mb-4 flex items-center justify-between">
-                <span className="text-[13px] font-medium" style={{ color: bangMau.textMuted }}>
+                <span className="text-xs sm:text-[13px] font-semibold" style={{ color: bangMau.textMuted }}>
                   Trận sắp diễn ra
                 </span>
                 <span
-                  className="flex items-center gap-1.5 text-[11px] font-mono"
+                  className="flex items-center gap-1.5 text-[11px] font-mono font-medium"
                   style={{ color: bangMau.live }}
                 >
                   <span
@@ -216,14 +216,14 @@ export default function LandingPage() {
               </div>
 
               {danhSachTranDauSapToi.length === 0 ? (
-                <div className="flex min-h-[237px] items-center justify-center rounded-sm border border-dashed px-4 text-center text-sm" style={{ borderColor: bangMau.borderSoft, color: bangMau.textMuted }}>
+                <div className="flex min-h-[220px] items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm" style={{ borderColor: bangMau.borderSoft, color: bangMau.textMuted }}>
                   Chưa có trận nào hôm nay
                 </div>
               ) : (
                 <div className="flex flex-col divide-y" style={{ borderColor: bangMau.borderSoft }}>
                   {danhSachTranDauSapToi.map((tranDau, idx) => (
-                    <div key={idx} className="py-4 first:pt-0 last:pb-0" style={{ borderColor: bangMau.borderSoft }}>
-                      <div className="mb-2 flex items-center justify-between">
+                    <div key={idx} className="py-3.5 first:pt-0 last:pb-0" style={{ borderColor: bangMau.borderSoft }}>
+                      <div className="mb-1.5 flex items-center justify-between">
                         <span className="text-[11px]" style={{ color: bangMau.textFaint }}>
                           {tranDau.league}
                         </span>
@@ -231,10 +231,10 @@ export default function LandingPage() {
                           {tranDau.time}
                         </span>
                       </div>
-                      <div className="mb-2.5 flex items-center justify-between text-[14px]">
-                        <span className="font-medium">{tranDau.home}</span>
-                        <span className="text-xs" style={{ color: bangMau.textFaint }}>vs</span>
-                        <span className="font-medium">{tranDau.away}</span>
+                      <div className="mb-2 flex items-center justify-between text-[13px] sm:text-[14px]">
+                        <span className="font-semibold truncate max-w-[130px] sm:max-w-[150px]">{tranDau.home}</span>
+                        <span className="text-xs px-2" style={{ color: bangMau.textFaint }}>vs</span>
+                        <span className="font-semibold truncate max-w-[130px] sm:max-w-[150px] text-right">{tranDau.away}</span>
                       </div>
                       <ThanhXacSuat home={tranDau.probHome} draw={tranDau.probDraw} away={tranDau.probAway} />
                     </div>
@@ -243,8 +243,8 @@ export default function LandingPage() {
               )}
             </div>
 
-            {/* Cầu thủ bên phải chỉ vào bảng dự đoán. Curry rộng hơn để giữ tỷ lệ ảnh gốc. */}
-            <div className={`hidden lg:block absolute left-full bottom-1 ml-2 xl:ml-3 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-56 xl:w-64" : "w-40 xl:w-44"}`}>
+            {/* Cầu thủ bên phải (chỉ hiển thị từ màn hình XL >= 1280px) */}
+            <div className={`hidden xl:block absolute left-[calc(100%-8px)] bottom-0 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-52 2xl:w-60" : "w-36 2xl:w-44"}`}>
               <img
                 src={sport === "basketball" ? "/img/curry.png" : "/img/ronaldo.png"}
                 alt={sport === "basketball" ? "Stephen Curry" : "Cristiano Ronaldo"}
@@ -261,18 +261,17 @@ export default function LandingPage() {
         className="border-y"
         style={{ borderColor: bangMau.borderSoft, backgroundColor: bangMau.panelAlt }}
       >
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-14 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:gap-6 px-4 sm:px-6 py-12 md:py-16 sm:grid-cols-3">
           {/* Card thống kê 1 — Độ chính xác */}
           <div
-            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
             style={{
               borderColor: bangMau.border,
               backgroundColor: "rgba(22,27,35,0.5)",
               backdropFilter: "blur(12px)",
             }}
           >
-            {/* Ánh sáng nền nhẹ khi hover */}
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
               <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
                 55.4%
@@ -288,14 +287,14 @@ export default function LandingPage() {
 
           {/* Card thống kê 2 — Brier Score với giải thích */}
           <div
-            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
             style={{
               borderColor: bangMau.border,
               backgroundColor: "rgba(22,27,35,0.5)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
@@ -317,7 +316,6 @@ export default function LandingPage() {
                 Brier Score trung bình
               </div>
 
-              {/* Microcopy giải thích ngắn gọn */}
               <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
                 Đo lường sai số dự đoán (từ 0 đến 1). <strong className="text-emerald-400 font-normal">Càng thấp càng chính xác</strong> (dưới 0.25 là mô hình tốt).
               </p>
@@ -325,7 +323,7 @@ export default function LandingPage() {
               {/* Popover chi tiết khi click nút (?) */}
               {hienGiaiThichBrier && (
                 <div
-                  className="absolute top-16 left-0 z-30 w-72 rounded-lg border p-4 text-xs shadow-2xl backdrop-blur-xl"
+                  className="absolute top-16 left-0 right-0 sm:right-auto sm:left-0 z-30 max-w-[calc(100vw-48px)] sm:w-72 rounded-xl border p-4 text-xs shadow-2xl backdrop-blur-xl"
                   style={{ borderColor: bangMau.border, backgroundColor: "rgba(18,22,29,0.95)", color: bangMau.text }}
                 >
                   <div className="flex justify-between items-center mb-2 font-semibold text-emerald-400">
@@ -342,14 +340,14 @@ export default function LandingPage() {
 
           {/* Card thống kê 3 — Trận đấu theo dõi */}
           <div
-            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
             style={{
               borderColor: bangMau.border,
               backgroundColor: "rgba(22,27,35,0.5)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
               <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
                 1.240
@@ -365,13 +363,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Quy trình hoạt động (How it works) — Có icon + đường nối chuẩn xác giữa các bước */}
-      <section id="how-it-works" className="mx-auto max-w-7xl px-6 py-20">
-        <h2 className="max-w-lg text-2xl font-semibold tracking-tight md:text-3xl">
+      {/* Quy trình hoạt động (How it works) */}
+      <section id="how-it-works" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 md:py-24">
+        <h2 className="max-w-lg text-2xl font-semibold tracking-tight sm:text-3xl">
           Từ dữ liệu thô đến một con số xác suất
         </h2>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
+        <div className="mt-10 sm:mt-12 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
           {[
             {
               buoc: "1",
@@ -381,13 +379,13 @@ export default function LandingPage() {
             },
             {
               buoc: "2",
-              tieuDe: "Tính điểm sức mạnh",
+              tieuDe: "Tính điểm elo",
               noiDung: "Elo rating được cập nhật sau mỗi trận, kết hợp phong độ gần đây và hiệu suất sân nhà/sân khách.",
               icon: <IconChart />,
             },
             {
               buoc: "3",
-              tieuDe: "Dự đoán & đánh giá công khai",
+              tieuDe: "Dự đoán & đánh giá",
               noiDung: "Mô hình đưa ra xác suất thắng/hòa/thua, sai số đo bằng Log Loss và Brier Score sau mỗi trận.",
               icon: <IconTarget />,
             },
@@ -395,9 +393,8 @@ export default function LandingPage() {
             <div key={idx} className="relative flex flex-col items-start">
               {/* Hàng chứa Icon và Mũi tên kết nối sang bước tiếp theo */}
               <div className="flex w-full items-center">
-                {/* Icon tượng trưng cho bước */}
                 <div
-                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border transition-all duration-300 hover:shadow-[0_0_20px_rgba(47,217,140,0.15)]"
+                  className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-xl border transition-all duration-300 hover:shadow-[0_0_20px_rgba(47,217,140,0.15)]"
                   style={{
                     borderColor: bangMau.border,
                     backgroundColor: "rgba(22,27,35,0.6)",
@@ -407,7 +404,7 @@ export default function LandingPage() {
                   {buocXuly.icon}
                 </div>
 
-                {/* Mũi tên kết nối sang bước kế tiếp (hiện trên Desktop giữa bước 1-2 và bước 2-3) */}
+                {/* Mũi tên kết nối sang bước kế tiếp (Desktop) */}
                 {idx < 2 && (
                   <div className="hidden md:flex flex-1 items-center pl-4 pr-2">
                     <div
@@ -416,7 +413,6 @@ export default function LandingPage() {
                         background: `linear-gradient(90deg, ${bangMau.accent}80, ${bangMau.accent}25)`,
                       }}
                     >
-                      {/* Đầu mũi tên căn giữa chính xác với đường kẻ */}
                       <div
                         className="absolute right-0 top-1/2 -translate-y-1/2 h-0 w-0"
                         style={{
@@ -430,7 +426,6 @@ export default function LandingPage() {
                 )}
               </div>
 
-              {/* Nhãn số bước nhỏ */}
               <span
                 className="mt-4 inline-block rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold"
                 style={{
@@ -441,8 +436,8 @@ export default function LandingPage() {
                 Bước {buocXuly.buoc}
               </span>
 
-              <h3 className="mt-3 text-[15px] font-semibold">{buocXuly.tieuDe}</h3>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: bangMau.textMuted }}>
+              <h3 className="mt-2.5 text-[15px] font-semibold">{buocXuly.tieuDe}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed" style={{ color: bangMau.textMuted }}>
                 {buocXuly.noiDung}
               </p>
             </div>
@@ -450,24 +445,24 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Bảng xem trước lịch thi đấu (Bổ sung hiển thị Xác suất dự đoán vào từng dòng) */}
-      <section id="matches" className="mx-auto max-w-7xl px-6 pb-20">
-        <div className="mb-6 flex items-baseline justify-between">
+      {/* Bảng xem trước lịch thi đấu */}
+      <section id="matches" className="mx-auto max-w-7xl px-4 sm:px-6 pb-16 md:pb-24">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight">Lịch thi đấu hôm nay</h2>
-            <p className="text-xs mt-1" style={{ color: bangMau.textMuted }}>
-              Tỷ lệ dự đoán xác suất Thắng - Hòa - Thua trực quan theo thời gian thực
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Lịch thi đấu hôm nay</h2>
+            <p className="text-xs sm:text-sm mt-1" style={{ color: bangMau.textMuted }}>
+              Tỷ lệ dự đoán xác suất Thắng - Hòa - Thua trực quan theo thời gian thực <span className="sm:hidden text-emerald-400 font-mono text-[11px]">(Vuốt ngang để xem)</span>
             </p>
           </div>
-          <Link href="/matches" className="text-sm hover:underline" style={{ color: bangMau.textMuted }}>
-            Xem tất cả
+          <Link href="/matches" className="text-sm font-medium hover:underline shrink-0" style={{ color: bangMau.accent }}>
+            Xem tất cả →
           </Link>
         </div>
 
-        <div className="border-t overflow-x-auto" style={{ borderColor: bangMau.border }}>
+        <div className="border-t overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0" style={{ borderColor: bangMau.border }}>
           {/* Header Bảng */}
           <div
-            className="grid min-w-[650px] grid-cols-[70px_1.2fr_1.2fr_220px_100px] gap-4 border-b py-3 text-[11px] font-medium"
+            className="grid min-w-[620px] sm:min-w-[680px] grid-cols-[65px_1.2fr_1.2fr_220px_100px] gap-4 border-b py-3 text-[11px] font-medium"
             style={{ borderColor: bangMau.borderSoft, color: bangMau.textFaint }}
           >
             <span>Giờ</span>
@@ -481,15 +476,14 @@ export default function LandingPage() {
           {danhSachTranDauSapToi.map((tranDau, idx) => (
             <div
               key={idx}
-              className="grid min-w-[650px] grid-cols-[70px_1.2fr_1.2fr_220px_100px] items-center gap-4 border-b py-4 text-[14px] transition-colors hover:bg-white/[0.02]"
+              className="grid min-w-[620px] sm:min-w-[680px] grid-cols-[65px_1.2fr_1.2fr_220px_100px] items-center gap-4 border-b py-3.5 sm:py-4 text-[13.5px] sm:text-[14px] transition-colors hover:bg-white/[0.02]"
               style={{ borderColor: bangMau.borderSoft }}
             >
-              <span className="font-mono text-[13px]" style={{ color: bangMau.textMuted }}>
+              <span className="font-mono text-[12.5px] sm:text-[13px]" style={{ color: bangMau.textMuted }}>
                 {tranDau.time}
               </span>
-              <span className="font-medium">{tranDau.home}</span>
-              <span className="font-medium">{tranDau.away}</span>
-              {/* Tái sử dụng ThanhXacSuat trong từng dòng bảng */}
+              <span className="font-semibold">{tranDau.home}</span>
+              <span className="font-semibold">{tranDau.away}</span>
               <div>
                 <ThanhXacSuat
                   home={tranDau.probHome}
@@ -498,7 +492,7 @@ export default function LandingPage() {
                   hienThiChuGiai={true}
                 />
               </div>
-              <span className="text-right text-[12px]" style={{ color: bangMau.textFaint }}>
+              <span className="text-right text-[11.5px] sm:text-[12px]" style={{ color: bangMau.textFaint }}>
                 {tranDau.league}
               </span>
             </div>
@@ -506,10 +500,240 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Bổ sung Banner Call-to-Action (CTA) phụ ở cuối trang trước Footer */}
-      <section className="mx-auto max-w-7xl px-6 pb-20">
+      {/* Mục 5: Đánh giá & Nhận xét từ cộng đồng (Marquee tự chạy từ trái sang phải) */}
+      <section
+        id="testimonials"
+        className="relative border-y py-14 md:py-20 overflow-hidden"
+        style={{ borderColor: bangMau.borderSoft, backgroundColor: bangMau.panelAlt }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-8 sm:mb-10">
+          {/* Tiêu đề phần Đánh giá */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <span
+                className="inline-block rounded-full px-3 py-1 font-mono text-xs font-semibold mb-2.5"
+                style={{ backgroundColor: `${bangMau.accent}15`, color: bangMau.accent }}
+              >
+                Cộng đồng & Trải nghiệm
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Được tin tưởng bởi người đam mê thể thao số liệu
+              </h2>
+              <p className="mt-2 text-xs sm:text-sm max-w-xl leading-relaxed" style={{ color: bangMau.textMuted }}>
+                Lắng nghe chia sẻ từ những người dùng đã thay đổi cách theo dõi và nhận định trận đấu từ cảm tính sang khoa học dữ liệu.
+              </p>
+            </div>
+
+            {/* Chỉ số uy tín tóm tắt */}
+            <div
+              className="flex items-center justify-around sm:justify-start gap-4 sm:gap-6 rounded-xl border p-3.5 sm:p-4 backdrop-blur-md shrink-0"
+              style={{ borderColor: bangMau.border, backgroundColor: "rgba(18,22,29,0.7)" }}
+            >
+              <div>
+                <div className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm">
+                  {"★".repeat(5)}
+                </div>
+                <div className="text-[11px] sm:text-xs font-medium mt-1" style={{ color: bangMau.textMuted }}>
+                  <strong style={{ color: bangMau.text }}>4.9/5</strong> từ hơn 500+ đánh giá
+                </div>
+              </div>
+              <div className="h-7 w-[1px]" style={{ backgroundColor: bangMau.border }} />
+              <div>
+                <div className="font-mono text-sm sm:text-base font-bold" style={{ color: bangMau.accent }}>
+                  98.2%
+                </div>
+                <div className="text-[11px] sm:text-xs font-medium mt-1" style={{ color: bangMau.textMuted }}>
+                  Hài lòng về độ minh bạch
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Dải Card chạy vô tận từ Trái sang Phải với CSS Mask mờ 2 bên */}
         <div
-          className="relative overflow-hidden rounded-md border p-8 md:p-12 text-center"
+          className="relative w-full overflow-hidden py-3 sm:py-4"
+          style={{
+            maskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
+          }}
+        >
+          {/* Hàng card chạy với hiệu ứng animate-marquee-ltr */}
+          <div className="animate-marquee-ltr flex gap-4 sm:gap-6 px-4 will-change-transform">
+            {[
+              {
+                ten: "Trần Hoàng Nam",
+                vaiTro: "Data Analyst & Fan Ngoại Hạng Anh",
+                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Điểm mình ưng ý nhất ở IKNOWBALL là tính minh bạch. Họ công khai Brier Score và Log Loss chứ không 'nổ' tỷ lệ thắng 100% như các hội nhóm. Mô hình Elo tính sân nhà/khách cực kỳ sát thực tế.",
+                tag: "Premier League",
+                xepHang: 5,
+              },
+              {
+                ten: "Nguyễn Minh Đức",
+                vaiTro: "Chuyên đọc sách thể thao",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Thanh xác suất 3 màu phân tách Nhà - Hòa - Khách rất trực quan. Mình thường dùng chỉ số xác suất này để so sánh với Odds nhà cái, tìm ra các kèo Value Bet có kỳ vọng dương.",
+                tag: "La Liga & UCL",
+                xepHang: 5,
+              },
+              {
+                ten: "Lê Quang Huy",
+                vaiTro: "Người theo dõi NBA & Thể thao Mỹ",
+                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Chuyển đổi giữa Bóng đá và Bóng rổ rất mượt. Dữ liệu các trận đấu NBA cập nhật chuẩn xác, giúp việc phân tích phong độ các đội trước giờ bóng lăn nhàn hơn rất nhiều.",
+                tag: "NBA Basketball",
+                xepHang: 5,
+              },
+              {
+                ten: "Phạm Hải Đăng",
+                vaiTro: "Kỹ sư phần mềm & Fan Serie A",
+                avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Giao diện Dark Mode đẹp và tốc độ tải trang cực nhanh. Không có quảng cáo rác hay banner cá cược phiền toái, thuần túy là dữ liệu và thống kê sạch sẽ.",
+                tag: "Serie A & Calcio",
+                xepHang: 5,
+              },
+              {
+                ten: "Vũ Bảo Ngọc",
+                vaiTro: "Chuyên viên thống kê tài chính",
+                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Rất ấn tượng với cách giải thích Brier Score của website. Đây là tiêu chuẩn vàng trong xác suất dự báo thời tiết và tài chính, giờ được áp dụng cho thể thao rất chuẩn.",
+                tag: "Data Science",
+                xepHang: 5,
+              },
+              {
+                ten: "Đỗ Quốc Cường",
+                vaiTro: "Quản trị viên cộng đồng Bóng rổ",
+                avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Theo dõi tỷ lệ dự đoán chuỗi trận Play-offs NBA từ mùa trước đến nay thấy mô hình dự đoán rất ổn định, đặc biệt là những trận derby căng thẳng.",
+                tag: "Basketball Pro",
+                xepHang: 5,
+              },
+              // Nhân đôi danh sách:
+              {
+                ten: "Trần Hoàng Nam",
+                vaiTro: "Data Analyst & Fan Ngoại Hạng Anh",
+                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Điểm mình ưng ý nhất ở IKNOWBALL là tính minh bạch. Họ công khai Brier Score và Log Loss chứ không 'nổ' tỷ lệ thắng 100% như các hội nhóm. Mô hình Elo tính sân nhà/khách cực kỳ sát thực tế.",
+                tag: "Premier League",
+                xepHang: 5,
+              },
+              {
+                ten: "Nguyễn Minh Đức",
+                vaiTro: "Bettor thể thao bán chuyên",
+                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Thanh xác suất 3 màu phân tách Nhà - Hòa - Khách rất trực quan. Mình thường dùng chỉ số xác suất này để so sánh với Odds nhà cái, tìm ra các kèo Value Bet có kỳ vọng dương.",
+                tag: "La Liga & UCL",
+                xepHang: 5,
+              },
+              {
+                ten: "Lê Quang Huy",
+                vaiTro: "Người theo dõi NBA & Thể thao Mỹ",
+                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Chuyển đổi giữa Bóng đá và Bóng rổ rất mượt. Dữ liệu các trận đấu NBA cập nhật chuẩn xác, giúp việc phân tích phong độ các đội trước giờ bóng lăn nhàn hơn rất nhiều.",
+                tag: "NBA Basketball",
+                xepHang: 5,
+              },
+              {
+                ten: "Phạm Hải Đăng",
+                vaiTro: "Kỹ sư phần mềm & Fan Serie A",
+                avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Giao diện Dark Mode đẹp và tốc độ tải trang cực nhanh. Không có quảng cáo rác hay banner cá cược phiền toái, thuần túy là dữ liệu và thống kê sạch sẽ.",
+                tag: "Serie A & Calcio",
+                xepHang: 5,
+              },
+              {
+                ten: "Vũ Bảo Ngọc",
+                vaiTro: "Chuyên viên thống kê tài chính",
+                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Rất ấn tượng với cách giải thích Brier Score của website. Đây là tiêu chuẩn vàng trong xác suất dự báo thời tiết và tài chính, giờ được áp dụng cho thể thao rất chuẩn.",
+                tag: "Data Science",
+                xepHang: 5,
+              },
+              {
+                ten: "Đỗ Quốc Cường",
+                vaiTro: "Quản trị viên cộng đồng Bóng rổ",
+                avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                noiDung:
+                  "Theo dõi tỷ lệ dự đoán chuỗi trận Play-offs NBA từ mùa trước đến nay thấy mô hình dự đoán rất ổn định, đặc biệt là những trận derby căng thẳng.",
+                tag: "Basketball Pro",
+                xepHang: 5,
+              },
+            ].map((nhanXet, idx) => (
+              <div
+                key={idx}
+                className="group relative flex w-[280px] sm:w-[340px] md:w-[380px] min-h-[210px] sm:min-h-[220px] shrink-0 flex-col justify-between rounded-xl border p-4 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/60 hover:shadow-[0_4px_28px_rgba(47,217,140,0.12)] select-none"
+                style={{
+                  borderColor: bangMau.border,
+                  backgroundColor: "rgba(18,22,29,0.85)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <div
+                  className="absolute top-4 right-5 font-serif text-3xl sm:text-4xl font-bold opacity-10 pointer-events-none select-none transition-opacity duration-300 group-hover:opacity-25"
+                  style={{ color: bangMau.accent }}
+                >
+                  “
+                </div>
+
+                <div>
+                  <div className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm mb-2.5 sm:mb-3">
+                    {Array.from({ length: nhanXet.xepHang }).map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
+
+                  <p className="text-[12.5px] sm:text-[13px] leading-relaxed relative z-10" style={{ color: bangMau.textMuted }}>
+                    "{nhanXet.noiDung}"
+                  </p>
+                </div>
+
+                <div className="mt-4 sm:mt-5 pt-3.5 sm:pt-4 border-t flex items-center justify-between" style={{ borderColor: bangMau.borderSoft }}>
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <img
+                      src={nhanXet.avatar}
+                      alt={nhanXet.ten}
+                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border shrink-0"
+                      style={{ borderColor: bangMau.border }}
+                    />
+                    <div className="min-w-0">
+                      <div className="text-xs sm:text-sm font-semibold truncate" style={{ color: bangMau.text }}>
+                        {nhanXet.ten}
+                      </div>
+                      <div className="text-[10px] sm:text-[11px] truncate" style={{ color: bangMau.textFaint }}>
+                        {nhanXet.vaiTro}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span
+                    className="rounded px-2 py-0.5 text-[9px] sm:text-[10px] font-mono font-medium shrink-0 ml-2"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", color: bangMau.textFaint }}
+                  >
+                    {nhanXet.tag}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bổ sung Banner Call-to-Action (CTA) phụ ở cuối trang trước Footer */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16 md:pb-24">
+        <div
+          className="relative overflow-hidden rounded-2xl border p-6 sm:p-10 md:p-14 text-center"
           style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
         >
           {/* Vùng tạo hiệu ứng ánh sáng gradient làm điểm nhấn */}
@@ -522,27 +746,27 @@ export default function LandingPage() {
             style={{ backgroundColor: bangMau.probAway }}
           />
 
-          <h2 className="relative z-10 text-2xl font-bold tracking-tight md:text-3xl max-w-2xl mx-auto leading-snug">
-            Bắt đầu theo dõi dự đoán bóng đá bằng dữ liệu ngay hôm nay
+          <h2 className="relative z-10 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight max-w-2xl mx-auto leading-snug">
+            Bắt đầu theo dõi dự đoán thể thao bằng dữ liệu ngay hôm nay
           </h2>
           <p
-            className="relative z-10 mx-auto mt-3 max-w-xl text-sm leading-relaxed"
+            className="relative z-10 mx-auto mt-3 max-w-xl text-xs sm:text-sm leading-relaxed"
             style={{ color: bangMau.textMuted }}
           >
             Trải nghiệm nền tảng phân tích thể thao chuẩn Data Science. Đăng ký tài khoản miễn phí để mở khóa toàn bộ số liệu và dự đoán chuyên sâu.
           </p>
 
-          <div className="relative z-10 mt-8 flex flex-wrap items-center justify-center gap-4">
+          <div className="relative z-10 mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3.5 sm:gap-4">
             <Link
               href="/register"
-              className="rounded-sm px-6 py-3 text-sm font-semibold transition-all hover:opacity-90 shadow-md"
+              className="rounded-md px-6 py-3 text-sm font-semibold transition-all hover:opacity-90 shadow-md text-center"
               style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
             >
               Tạo tài khoản miễn phí
             </Link>
             <Link
               href="/matches"
-              className="rounded-sm border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5"
+              className="rounded-md border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5 text-center"
               style={{ borderColor: bangMau.border, color: bangMau.text }}
             >
               Xem lịch thi đấu

@@ -124,14 +124,21 @@ export class BalldontlieProvider implements SportsDataProvider {
       nextCursor = data.meta?.next_cursor;
     } while (nextCursor && pageCount < maxPages);
 
-    return allTeams.map((team: any) => ({
-      externalId: String(team.id),
-      leagueExternalId: 'nba',
-      name: team.full_name,
-      shortName: team.abbreviation ?? null,
-      logoUrl: `https://cdn.nba.com/logos/nba/${team.id}/global/L/logo.svg`,
-      foundedYear: null,
-    }));
+    return allTeams.map((team: any) => {
+      const abbr = (team.abbreviation || '').toLowerCase();
+      const logoUrl = abbr
+        ? `https://a.espncdn.com/i/teamlogos/nba/500/${abbr}.png`
+        : `https://cdn.nba.com/logos/nba/${team.id}/global/L/logo.svg`;
+
+      return {
+        externalId: String(team.id),
+        leagueExternalId: 'nba',
+        name: team.full_name,
+        shortName: team.abbreviation ?? null,
+        logoUrl,
+        foundedYear: null,
+      };
+    });
   }
 
   /**

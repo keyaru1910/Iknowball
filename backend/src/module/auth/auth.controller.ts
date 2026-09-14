@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, Req, Res, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -7,6 +7,7 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { Throttle } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { GoogleAuthGuard } from '../guards/google-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
 @Controller('api/v1/auth')
@@ -69,5 +70,31 @@ export class AuthController {
     async resetPassword(@Body() dto: ResetPasswordDto) {
         const result = await this.authService.resetPassword(dto);
         return { data: result, meta: null, error: null };
+    }
+
+    @Get('me')
+    @UseGuards(JwtAuthGuard)
+    async getMe(@CurrentUser() user: any) {
+        return { data: user, meta: null, error: null };
+    }
+
+    @Get('google')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuth() {
+        // Tự động chuyển hướng sang trang đăng nhập Google
+    }
+
+    @Get('google/callback')
+    @UseGuards(GoogleAuthGuard)
+    async googleAuthCallback(@Req() req: any, @Res() res: any) {
+        const user = req.user;
+        const deviceInfo = req.headers?.['user-agent'];
+        const { tokens } = await this.authService.login(user, deviceInfo);
+
+        // Chuyển hướng về Frontend kèm token
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+        return res.redirect(
+            `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
+        );
     }
 }

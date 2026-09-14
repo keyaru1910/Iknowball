@@ -177,6 +177,7 @@ model League {
   sport       Sport   @relation(fields: [sportId], references: [id])
   name        String
   country     String?
+  logoUrl     String?
   externalId  String  @unique
   season      String
   contentHash String? @db.VarChar(64)
@@ -185,6 +186,8 @@ model League {
   matches   Match[]
   standings Standing[]
   teamStats TeamStats[]
+  playerStatistics PlayerStatistics[]
+  teamSeasonStatistics TeamSeasonStatistics[]
   modelPerformance ModelPerformance[]
 
   createdAt DateTime @default(now())
@@ -209,6 +212,8 @@ model Team {
   awayMatches Match[]     @relation("AwayTeam")
   teamStats   TeamStats[]
   standings   Standing[]
+  playerStatistics PlayerStatistics[]
+  teamSeasonStatistics TeamSeasonStatistics[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -228,6 +233,7 @@ model Player {
 
   matchEvents MatchEvent[]
   playerStats PlayerStats[]
+  playerStatistics PlayerStatistics[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -554,3 +560,72 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
 }
+
+// ===== Season Statistics Domain =====
+
+model PlayerStatistics {
+  id            String   @id @default(uuid())
+  playerId      String
+  player        Player   @relation(fields: [playerId], references: [id])
+  playerName    String
+  teamId        String
+  team          Team     @relation(fields: [teamId], references: [id])
+  leagueId      String
+  league        League   @relation(fields: [leagueId], references: [id])
+  season        String
+  sport         String   // "football" | "basketball"
+
+  appearances   Int?     @default(0)
+  minutesPlayed Int?     @default(0)
+
+  // Football-specific
+  goals         Int?     @default(0)
+  assists       Int?     @default(0)
+  yellowCards   Int?     @default(0)
+  redCards      Int?     @default(0)
+
+  // Basketball-specific (per-game average)
+  pointsAvg     Float?
+  reboundsAvg   Float?
+  assistsAvg    Float?
+  stealsAvg     Float?
+
+  contentHash   String?
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  @@unique([playerId, leagueId, season])
+  @@index([leagueId, season, sport])
+}
+
+model TeamSeasonStatistics {
+  id               String   @id @default(uuid())
+  teamId           String
+  team             Team     @relation(fields: [teamId], references: [id])
+  leagueId         String
+  league           League   @relation(fields: [leagueId], references: [id])
+  season           String
+  sport            String   // "football" | "basketball"
+
+  played           Int      @default(0)
+  wins             Int      @default(0)
+  draws            Int?     // null cho basketball
+  losses           Int      @default(0)
+
+  // Football-specific
+  goalsFor         Int?
+  goalsAgainst     Int?
+  cleanSheets      Int?
+
+  // Basketball-specific
+  pointsForAvg     Float?
+  pointsAgainstAvg Float?
+
+  contentHash      String?
+  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now())
+
+  @@unique([teamId, leagueId, season])
+  @@index([leagueId, season, sport])
+}
+

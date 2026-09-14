@@ -73,14 +73,24 @@ export default function StandingsPage() {
             key={league.id}
             type="button"
             onClick={() => setSelectedLeagueId(league.id)}
-            className="whitespace-nowrap rounded-sm px-4 py-2 text-xs font-semibold transition-all hover:text-white"
+            className="flex items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-xs font-semibold transition-all hover:text-white"
             style={{
               backgroundColor: selectedLeagueId === league.id ? colors.panelAlt : "transparent",
               border: `1px solid ${selectedLeagueId === league.id ? colors.accent : colors.border}`,
               color: selectedLeagueId === league.id ? colors.accent : colors.textMuted,
             }}
           >
-            {league.name}{league.country ? ` (${league.country})` : ""}
+            {league.logoUrl ? (
+              <img
+                src={league.logoUrl}
+                alt={league.name}
+                className="h-4 w-4 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+            ) : null}
+            <span>{league.name}{league.country ? ` (${league.country})` : ""}</span>
           </button>
         ))}
       </div>
@@ -95,7 +105,7 @@ export default function StandingsPage() {
             Chưa có dữ liệu bảng xếp hạng cho mùa giải này.
           </p>
         ) : (
-          <StandingsTable rows={rows} />
+          <StandingsTable rows={rows} sport={sport} />
         )}
       </div>
     </div>

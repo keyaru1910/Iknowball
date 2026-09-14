@@ -96,6 +96,15 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/statistics"
+                  className="transition-colors hover:text-white"
+                  style={{ color: colors.textMuted }}
+                >
+                  Dữ liệu thống kê
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/news"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}

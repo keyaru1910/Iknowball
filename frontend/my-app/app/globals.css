@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
 }
+
+/* Keyframe hiệu ứng cuộn vô tận từ trái sang phải (Left to Right Marquee) */
+@keyframes marqueeLeftToRight {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-marquee-ltr {
+  display: flex;
+  width: max-content;
+  animation: marqueeLeftToRight 35s linear infinite;
+}
+
+.animate-marquee-ltr:hover {
+  animation-play-state: paused;
+}

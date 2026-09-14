@@ -36,6 +36,8 @@ interface AuthContextValue {
   isAdmin: boolean;
   /** Đăng nhập bằng email + password */
   login: (payload: LoginPayload) => Promise<void>;
+  /** Đăng nhập bằng token nhận được từ OAuth */
+  loginWithToken: (token: string) => Promise<void>;
   /** Đăng ký tài khoản mới */
   register: (payload: RegisterPayload) => Promise<void>;
   /** Đăng xuất */
@@ -92,6 +94,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.data.user);
   }, []);
 
+  /** Đăng nhập với Token có sẵn từ OAuth (Google) */
+  const loginWithToken = useCallback(async (token: string) => {
+    setAccessToken(token);
+    setApiAccessToken(token);
+    const currentUser = await getCurrentUser(token);
+    if (currentUser) {
+      setUser(currentUser);
+    }
+  }, []);
+
   /** Đăng ký — chỉ tạo tài khoản, không tự đăng nhập */
   const register = useCallback(async (payload: RegisterPayload) => {
     await registerUser(payload);
@@ -112,7 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setApiAccessToken(null);
   }, [accessToken]);
 
-
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -121,10 +132,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: !!user,
       isAdmin: user?.role === "admin",
       login,
+      loginWithToken,
       logout,
       register,
     }),
-    [user, accessToken, isLoading, login, logout, register]
+    [user, accessToken, isLoading, login, loginWithToken, logout, register]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

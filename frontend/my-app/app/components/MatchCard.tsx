@@ -57,9 +57,13 @@ function initials(name: string) {
 function TeamLogoFallback({ team, className }: { team: TeamInfo; className: string }) {
   return (
     <div
-      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-[9px] font-semibold ${className}`}
-      style={{ backgroundColor: colors.borderSoft, color: colors.textMuted }}
-      title={`${team.name} chưa có logo`}
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold border ${className}`}
+      style={{
+        backgroundColor: colors.panelAlt,
+        borderColor: colors.borderSoft,
+        color: colors.accent,
+      }}
+      title={`${team.name}`}
     >
       {initials(team.name)}
     </div>
