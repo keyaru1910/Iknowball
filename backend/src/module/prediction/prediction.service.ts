@@ -164,12 +164,14 @@ export class PredictionService {
     const homeRecentForm = calcForm(homeRecentMatches, match.homeTeamId);
     const awayRecentForm = calcForm(awayRecentMatches, match.awayTeamId);
 
+    const clampElo = (elo: number) => Math.max(800, Math.min(2200, elo));
+
     return {
       sport: match.league.sport.name as 'football' | 'basketball',
       homeTeamId: match.homeTeamId,
       awayTeamId: match.awayTeamId,
-      homeElo: Number(home?.eloRating ?? DEFAULT_ELO),
-      awayElo: Number(away?.eloRating ?? DEFAULT_ELO),
+      homeElo: clampElo(Number(home?.eloRating ?? DEFAULT_ELO)),
+      awayElo: clampElo(Number(away?.eloRating ?? DEFAULT_ELO)),
       homeMatchesPlayed: home?.matchesPlayed ?? 0,
       awayMatchesPlayed: away?.matchesPlayed ?? 0,
       h2hMatches: h2h,

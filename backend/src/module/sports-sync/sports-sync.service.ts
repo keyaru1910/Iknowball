@@ -10,7 +10,7 @@ import type {
   NormalizedStanding,
 } from '../sports-data/adapters/football-provider.interface';
 import { SPORTS_DATA_PROVIDERS } from '../sports-data/sports-data.module';
-import { computeContentHash } from './untils/hash.util';
+import { computeContentHash } from './utils/hash.util';
 import { EloService } from '../elo/elo.service';
 import { CacheService } from '../shared/cache.service';
 
@@ -412,13 +412,14 @@ export class SportsSyncService {
       }
     }
 
-    // Kích hoạt tính toán ELO cho các trận vừa FINISHED
+    // Kích hoạt tính toán ELO tuần tự theo thứ tự thời gian cho các trận vừa FINISHED
     const finishedMatches = await this.prisma.match.findMany({
       where: {
         externalId: { in: changedIds },
         status: MatchStatus.FINISHED,
         eloProcessedAt: null,
       },
+      orderBy: [{ matchDate: 'asc' }, { id: 'asc' }],
       select: { id: true },
     });
 
@@ -562,9 +563,17 @@ export class SportsSyncService {
    * 5. Đồng bộ các trận đấu đang diễn ra (LIVE)
    */
   async syncLiveMatches(sportName?: string): Promise<SyncResult> {
+    const startOfDay = new Date();
+    startOfDay.setUTCHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
     return this.syncMatches({
       sportName,
       status: 'LIVE',
+      fromDate: startOfDay,
+      toDate: endOfDay,
     });
   }
 
@@ -975,7 +984,12 @@ export class SportsSyncService {
         "awayScore"   = EXCLUDED."awayScore",
         "rawData"     = EXCLUDED."rawData",
         "contentHash" = EXCLUDED."contentHash",
-        "updatedAt"   = EXCLUDED."updatedAt"
+        "updatedAt"   = EXCLUDED."updatedAt",
+        "eloProcessedAt" = CASE
+          WHEN ("Match"."homeScore" IS DISTINCT FROM EXCLUDED."homeScore" OR "Match"."awayScore" IS DISTINCT FROM EXCLUDED."awayScore" OR "Match"."status" IS DISTINCT FROM EXCLUDED."status")
+          THEN NULL
+          ELSE "Match"."eloProcessedAt"
+        END
       WHERE "Match"."contentHash" IS DISTINCT FROM EXCLUDED."contentHash"
     `;
 
@@ -992,9 +1006,15 @@ export class SportsSyncService {
   private async upsertMatchIfChanged(m: ResolvedMatch) {
     const existing = await this.prisma.match.findUnique({
       where: { externalId: m.externalId },
-      select: { contentHash: true },
+      select: { contentHash: true, homeScore: true, awayScore: true, status: true },
     });
     if (existing?.contentHash === m.hash) return;
+
+    const scoreOrStatusChanged =
+      !existing ||
+      existing.homeScore !== m.homeScore ||
+      existing.awayScore !== m.awayScore ||
+      existing.status !== m.status;
 
     await this.prisma.match.upsert({
       where: { externalId: m.externalId },
@@ -1006,6 +1026,7 @@ export class SportsSyncService {
         awayScore: m.awayScore,
         rawData: m.rawData as any,
         contentHash: m.hash,
+        ...(scoreOrStatusChanged ? { eloProcessedAt: null } : {}),
       },
       create: {
         id: m.id,

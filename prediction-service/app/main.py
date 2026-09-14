@@ -46,8 +46,8 @@ class PredictRequest(BaseModel):
     sport: Literal["football", "basketball"] = "football"
     homeTeamId: str
     awayTeamId: str
-    homeElo: float = Field(default=1500.0, ge=800, le=2200, description="Elo đội nhà tại thời điểm trước trận")
-    awayElo: float = Field(default=1500.0, ge=800, le=2200, description="Elo đội khách tại thời điểm trước trận")
+    homeElo: float = Field(default=1500.0, description="Elo đội nhà tại thời điểm trước trận (tự động clamp 800-2200)")
+    awayElo: float = Field(default=1500.0, description="Elo đội khách tại thời điểm trước trận (tự động clamp 800-2200)")
     homeRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng 5 trận gần nhất đội nhà (trước trận)")
     awayRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng 5 trận gần nhất đội khách (trước trận)")
     # Giữ tương thích với schema cũ

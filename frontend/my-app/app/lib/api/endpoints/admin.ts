@@ -206,3 +206,6 @@ export async function getAdminAuditLogs(params?: { page?: number; limit?: number
   const qs = query.toString();
   return apiFetch<AdminAuditLogItem[]>(`/admin/audit-logs${qs ? `?${qs}` : ""}`);
 }
+
+export const getNewsSources = () => apiFetch<Array<{key:string;sport:string;category?:string;name:string}>>("/admin/news/sources");
+export const syncNews = () => apiFetch<{sources:number;recordsProcessed:number;failed:number}>("/admin/news/sync", { method: "POST" });

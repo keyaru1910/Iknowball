@@ -214,24 +214,46 @@ Chạy lệnh sau tại thư mục `backend/` để khởi tạo các quyền (`
 npm run seed --prefix backend
 ```
 
-### 2. Các API Kích hoạt Đồng bộ Dữ liệu Thể thao
-Sau khi backend đã chạy, có thể gọi các API endpoint sau để đồng bộ dữ liệu:
+### 2. Các API Kích hoạt Đồng bộ Dữ liệu Thể thao (Admin)
+Sau khi backend đã chạy, Admin có thể gọi các API endpoint sau để đồng bộ dữ liệu (cần Bearer Token có quyền `admin`):
 
-- **Full Sync (Leagues -> Teams -> Matches)**:
+- **Full Sync (Leagues -> Teams -> Matches -> Standings)**:
   ```bash
-  curl -X POST http://localhost:4000/api/v1/sync/full
+  curl -X POST http://localhost:4000/api/v1/admin/sync/trigger \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" \
+    -d '{"type": "full", "sport": "football"}'
   ```
-- **Đồng bộ riêng Danh sách Giải đấu**:
+- **Đồng bộ riêng Danh sách Giải đấu (`leagues`)**:
   ```bash
-  curl -X POST http://localhost:4000/api/v1/sync/leagues
+  curl -X POST http://localhost:4000/api/v1/admin/sync/trigger \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" \
+    -d '{"type": "leagues", "sport": "football"}'
   ```
-- **Đồng bộ riêng Danh sách Đội bóng**:
+- **Đồng bộ riêng Danh sách Đội bóng (`teams`)**:
   ```bash
-  curl -X POST http://localhost:4000/api/v1/sync/teams
+  curl -X POST http://localhost:4000/api/v1/admin/sync/trigger \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" \
+    -d '{"type": "teams", "sport": "football"}'
   ```
-- **Đồng bộ riêng Lịch thi đấu & Kết quả**:
+- **Đồng bộ riêng Lịch thi đấu & Kết quả (`matches` / `upcoming` / `finished`)**:
   ```bash
-  curl -X POST http://localhost:4000/api/v1/sync/matches
+  curl -X POST http://localhost:4000/api/v1/admin/sync/trigger \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>" \
+    -d '{"type": "matches"}'
+  ```
+- **Kiểm tra trạng thái hàng đợi BullMQ & Cron Jobs**:
+  ```bash
+  curl -X GET http://localhost:4000/api/v1/admin/sync/queues/status \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>"
+  ```
+- **Kích hoạt sinh dự đoán AI cho các trận sắp diễn ra**:
+  ```bash
+  curl -X POST http://localhost:4000/api/v1/predictions/generate \
+    -H "Authorization: Bearer <ADMIN_JWT_TOKEN>"
   ```
 
 ---

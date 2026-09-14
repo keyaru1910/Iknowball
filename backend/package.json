@@ -5,6 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "predev": "prisma generate",
     "dev": "nodemon --watch src --watch .env --ext ts,json --exec \"npm run build && node dist/main.js\"",
     "watch": "tsc -p tsconfig.build.json --watch",
     "start": "node dist/main.js",

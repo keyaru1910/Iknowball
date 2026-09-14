@@ -24,6 +24,8 @@ HOME_ADVANTAGE: float = 65.0   # Điểm lợi thế sân nhà (tương đương
 ELO_SCALE: float = 400.0       # Tham số scale của phân phối Logistic (chuẩn Elo)
 DRAW_BASE: float = 0.28        # Xác suất hòa cơ bản cho bóng đá (tỷ lệ lịch sử trung bình)
 FORM_WEIGHT: float = 40.0      # Ảnh hưởng của phong độ gần đây (điểm Elo tương đương)
+MIN_ELO: float = 800.0         # Ngưỡng Elo tối thiểu (clamp)
+MAX_ELO: float = 2200.0        # Ngưỡng Elo tối đa (clamp)
 MODEL_VERSION: str = "elo-v1"
 
 
@@ -47,8 +49,8 @@ def predict(
 
     Args:
         sport: "football" hoặc "basketball"
-        home_elo: Elo rating hiện tại của đội nhà
-        away_elo: Elo rating hiện tại của đội khách
+        home_elo: Elo rating hiện tại của đội nhà (sẽ được clamp trong [800, 2200])
+        away_elo: Elo rating hiện tại của đội khách (sẽ được clamp trong [800, 2200])
         home_recent_form: Tỷ lệ thắng 5 trận gần nhất đội nhà (0.0 – 1.0)
         away_recent_form: Tỷ lệ thắng 5 trận gần nhất đội khách (0.0 – 1.0)
         h2h_matches: Số lượng trận đối đầu lịch sử
@@ -57,30 +59,46 @@ def predict(
     Returns:
         dict chứa: homeWinProb, drawProb, awayWinProb, predictedOutcome, explanation
     """
-    # Tính chênh lệch điều chỉnh (Elo diff + home advantage + form)
-    elo_diff = home_elo - away_elo
+    # 1. Clamp Elo rating trong khoảng an toàn [MIN_ELO, MAX_ELO]
+    clamped_home_elo = max(MIN_ELO, min(MAX_ELO, float(home_elo)))
+    clamped_away_elo = max(MIN_ELO, min(MAX_ELO, float(away_elo)))
+
+    # 2. Tính chênh lệch điều chỉnh (Elo diff + home advantage + form)
+    elo_diff = clamped_home_elo - clamped_away_elo
     form_adjustment = (home_recent_form - away_recent_form) * FORM_WEIGHT
 
     adjusted_diff = elo_diff + home_advantage + form_adjustment
-    home_two_way = _expected_home_win_two_way(home_elo, away_elo, home_advantage + form_adjustment)
+    home_two_way = _expected_home_win_two_way(clamped_home_elo, clamped_away_elo, home_advantage + form_adjustment)
 
     if sport == "basketball":
-        # Bóng rổ: không có hòa, phân phối 2 chiều
+        # Bóng rổ: không có hòa, phân phối 2 chiều được scale chuẩn
         home_prob = home_two_way
         away_prob = 1.0 - home_two_way
         draw_prob = None
+        
+        # Scale chuẩn hóa xác suất
+        total_p = home_prob + away_prob
+        scaled_home_prob = round(home_prob / total_p, 5)
+        scaled_away_prob = round(1.0 - scaled_home_prob, 5)
+        scaled_draw_prob = None
     else:
         # Bóng đá: xác suất hòa giảm dần theo khoảng cách Elo (Gaussian decay)
-        draw_prob = DRAW_BASE * math.exp(-abs(adjusted_diff) / ELO_SCALE)
-        remaining = 1.0 - draw_prob
-        home_prob = remaining * home_two_way
-        away_prob = remaining * (1.0 - home_two_way)
+        raw_draw_prob = DRAW_BASE * math.exp(-abs(adjusted_diff) / ELO_SCALE)
+        remaining = 1.0 - raw_draw_prob
+        raw_home_prob = remaining * home_two_way
+        raw_away_prob = remaining * (1.0 - home_two_way)
+
+        # Scale chuẩn hóa tổng 3 xác suất chính xác = 1.0
+        total_p = raw_home_prob + raw_draw_prob + raw_away_prob
+        scaled_home_prob = round(raw_home_prob / total_p, 5)
+        scaled_draw_prob = round(raw_draw_prob / total_p, 5)
+        scaled_away_prob = round(1.0 - scaled_home_prob - scaled_draw_prob, 5)
 
     # Xác định kết quả dự đoán
     probs: dict[OutcomeLabel, float] = {
-        "HOME_WIN": home_prob,
-        "DRAW": draw_prob if draw_prob is not None else 0.0,
-        "AWAY_WIN": away_prob,
+        "HOME_WIN": scaled_home_prob,
+        "DRAW": scaled_draw_prob if scaled_draw_prob is not None else 0.0,
+        "AWAY_WIN": scaled_away_prob,
     }
     predicted_outcome: OutcomeLabel = max(probs, key=lambda k: probs[k])  # type: ignore[arg-type]
 
@@ -100,9 +118,9 @@ def predict(
     }
 
     return {
-        "homeWinProb": round(home_prob, 5),
-        "drawProb": round(draw_prob, 5) if draw_prob is not None else None,
-        "awayWinProb": round(away_prob, 5),
+        "homeWinProb": scaled_home_prob,
+        "drawProb": scaled_draw_prob,
+        "awayWinProb": scaled_away_prob,
         "predictedOutcome": predicted_outcome,
         "explanation": explanation,
     }

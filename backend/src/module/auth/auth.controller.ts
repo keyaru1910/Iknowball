@@ -1,7 +1,13 @@
-import { Controller, Post, Body, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, Req, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from '../dto/register.dto';
+import { LoginDto } from '../dto/login.dto';
+import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { ForgotPasswordDto } from '../dto/forgot-password.dto';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { Throttle } from '@nestjs/throttler';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CurrentUser } from '../decorators/current-user.decorator';
 
 @Controller('api/v1/auth')
 export class AuthController {
@@ -15,11 +21,53 @@ export class AuthController {
         return { data: user, meta: null, error: null }; // đúng convention { data, meta, error } trong doc
     }
 
-    // Move phương thức này vào bên trong class AuthController
     @Post('verify-email')
     @HttpCode(200)
     async verifyEmail(@Body('token') token: string) {
         const result = await this.authService.verifyEmail(token);
+        return { data: result, meta: null, error: null };
+    }
+
+    @Post('login')
+    @HttpCode(200)
+    @Throttle({ default: { limit: 10, ttl: 60000 } })
+    async login(@Req() req: any, @Body() dto: LoginDto) {
+        const user = req.user || (await this.authService.validateUser(dto.email, dto.password));
+        if (!user) {
+            throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
+        }
+        const deviceInfo = req.headers?.['user-agent'];
+        const result = deviceInfo ? await this.authService.login(user, deviceInfo) : await this.authService.login(user);
+        return { data: result, meta: null, error: null };
+    }
+
+    @Post('refresh')
+    @HttpCode(200)
+    async refreshToken(@Body() dto: RefreshTokenDto) {
+        const result = await this.authService.refreshToken(dto.refreshToken);
+        return { data: result, meta: null, error: null };
+    }
+
+    @Post('logout')
+    @HttpCode(200)
+    @UseGuards(JwtAuthGuard)
+    async logout(@CurrentUser('id') userId: string, @Body() dto?: RefreshTokenDto) {
+        const result = await this.authService.logout(userId, dto?.refreshToken);
+        return { data: result, meta: null, error: null };
+    }
+
+    @Post('forgot-password')
+    @HttpCode(200)
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
+    async forgotPassword(@Body() dto: ForgotPasswordDto) {
+        const result = await this.authService.forgotPassword(dto);
+        return { data: result, meta: null, error: null };
+    }
+
+    @Post('reset-password')
+    @HttpCode(200)
+    async resetPassword(@Body() dto: ResetPasswordDto) {
+        const result = await this.authService.resetPassword(dto);
         return { data: result, meta: null, error: null };
     }
 }

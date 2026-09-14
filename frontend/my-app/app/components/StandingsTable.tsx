@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { colors, type FormResult } from "../lib/design-tokens";
-import type { TeamInfo } from "./MatchCard";
+import { TeamLogo, type TeamInfo } from "./MatchCard";
 
 export interface StandingRow {
   position: number;
@@ -29,12 +29,7 @@ export interface StandingsTableProps {
 
 type SortKey = "position" | "played" | "goalDifference" | "points";
 
-const columns: { key: SortKey; label: string; align: "left" | "right" }[] = [
-  { key: "position", label: "#", align: "left" },
-  { key: "played", label: "Trận", align: "right" },
-  { key: "goalDifference", label: "HS", align: "right" },
-  { key: "points", label: "Điểm", align: "right" },
-];
+const tableGrid = "32px minmax(190px, 1fr) repeat(8, 34px) 96px";
 
 function formDotColor(result: FormResult) {
   if (result === "W") return colors.win;
@@ -77,23 +72,31 @@ export default function StandingsTable({
   }
 
   return (
-    <div className={`border-t ${className}`} style={{ borderColor: colors.border }}>
+    <div className={`overflow-x-auto ${className}`}>
+      <div className="min-w-[690px] border-t" style={{ borderColor: colors.border }}>
       <div
-        className="grid grid-cols-[32px_1fr_60px_50px_50px_80px] items-center gap-3 border-b py-3 text-[11px]"
-        style={{ borderColor: colors.borderSoft, color: colors.textFaint }}
+        className="grid items-center border-b py-2.5 text-[10px] uppercase tracking-wide"
+        style={{ borderColor: colors.borderSoft, color: colors.textFaint, gridTemplateColumns: tableGrid }}
       >
-        {columns.map((col) => (
-          <button
-            key={col.key}
-            onClick={() => toggleSort(col.key)}
-            className={`${col.align === "right" ? "text-right" : "text-left"} hover:text-white transition-colors`}
-            style={col.key === "position" ? { textAlign: "left" } : undefined}
-          >
-            {col.label}
-            {sort.key === col.key && (sort.dir === "asc" ? " ↑" : " ↓")}
-          </button>
-        ))}
-        <span className="text-right">Phong độ</span>
+        <button type="button" onClick={() => toggleSort("position")} className="text-left transition-colors hover:text-white">
+          # {sort.key === "position" && (sort.dir === "asc" ? "↑" : "↓")}
+        </button>
+        <span>Câu lạc bộ</span>
+        <button type="button" onClick={() => toggleSort("played")} className="text-center transition-colors hover:text-white">
+          ĐĐ {sort.key === "played" && (sort.dir === "asc" ? "↑" : "↓")}
+        </button>
+        <span className="text-center">T</span>
+        <span className="text-center">H</span>
+        <span className="text-center">B</span>
+        <span className="text-center">BT</span>
+        <span className="text-center">SBT</span>
+        <button type="button" onClick={() => toggleSort("goalDifference")} className="text-center transition-colors hover:text-white">
+          HS {sort.key === "goalDifference" && (sort.dir === "asc" ? "↑" : "↓")}
+        </button>
+        <button type="button" onClick={() => toggleSort("points")} className="text-center transition-colors hover:text-white">
+          Đ {sort.key === "points" && (sort.dir === "asc" ? "↑" : "↓")}
+        </button>
+        <span className="text-center normal-case">5 trận gần nhất</span>
       </div>
 
       {sortedRows.map((row) => {
@@ -104,41 +107,53 @@ export default function StandingsTable({
             role={onRowClick ? "button" : undefined}
             tabIndex={onRowClick ? 0 : undefined}
             onClick={() => onRowClick?.(row.team.id)}
-            className={`grid grid-cols-[32px_1fr_60px_50px_50px_80px] items-center gap-3 border-b py-3 text-[13px] ${onRowClick ? "cursor-pointer hover:bg-white/[0.02]" : ""}`}
+            className={`grid items-center border-b py-2 text-[12px] ${onRowClick ? "cursor-pointer hover:bg-white/[0.02]" : ""}`}
             style={{
               borderColor: colors.borderSoft,
               backgroundColor: isHighlighted ? colors.panelAlt : "transparent",
+              gridTemplateColumns: tableGrid,
             }}
           >
             <span className="font-mono" style={{ color: colors.textMuted }}>
               {row.position}
             </span>
-            <span>{row.team.name}</span>
-            <span className="text-right font-mono" style={{ color: colors.textMuted }}>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <TeamLogo team={row.team} className="h-6 w-6 rounded-full" />
+              <span className="truncate font-medium" title={row.team.name}>{row.team.name}</span>
+            </div>
+            <span className="text-center font-mono" style={{ color: colors.textMuted }}>
               {row.played}
             </span>
+            <span className="text-center font-mono">{row.won}</span>
+            <span className="text-center font-mono">{row.drawn}</span>
+            <span className="text-center font-mono">{row.lost}</span>
+            <span className="text-center font-mono">{row.goalsFor}</span>
+            <span className="text-center font-mono">{row.goalsAgainst}</span>
             <span
-              className="text-right font-mono"
+              className="text-center font-mono"
               style={{ color: row.goalDifference >= 0 ? colors.textMuted : colors.loss }}
             >
               {row.goalDifference > 0 ? `+${row.goalDifference}` : row.goalDifference}
             </span>
-            <span className="text-right font-mono font-semibold" style={{ color: colors.text }}>
+            <span className="text-center font-mono font-bold" style={{ color: colors.text }}>
               {row.points}
             </span>
-            <div className="flex justify-end gap-1">
+            <div className="flex justify-center gap-1">
               {(row.form ?? []).slice(-5).map((result, i) => (
                 <span
                   key={i}
-                  className="h-1.5 w-1.5 rounded-full"
+                  className="flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold text-white"
                   style={{ backgroundColor: formDotColor(result) }}
                   title={result}
-                />
+                >
+                  {result === "W" ? "✓" : result === "L" ? "×" : "–"}
+                </span>
               ))}
             </div>
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

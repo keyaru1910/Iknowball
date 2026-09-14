@@ -3,9 +3,42 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "./Navbar";
+import Footer from "./Footer";
 import SportSwitcher from "./SportSwitcher";
 import { useMatches } from "../hooks/useMatches";
 import { useSport } from "../context/SportContext";
+
+// ────────────────────────────────────────────
+// Icon SVG cho từng bước quy trình (How it works)
+// ────────────────────────────────────────────
+function IconDatabase() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <ellipse cx="12" cy="5" rx="9" ry="3" />
+      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+    </svg>
+  );
+}
+
+function IconChart() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v18h18" />
+      <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3" />
+    </svg>
+  );
+}
+
+function IconTarget() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
 
 // Hệ màu chủ đạo (Dark theme & Accent Green, Draw Neutral, Away Coral Red) dùng cho Landing Page
 const bangMau = {
@@ -15,8 +48,8 @@ const bangMau = {
   border: "#232935",
   borderSoft: "#1B2029",
   text: "#EDEFF3",
-  textMuted: "#8890A0",
-  textFaint: "#565E6C",
+  textMuted: "#B0B8C8",     // Tăng sáng để cải thiện contrast (trước: #8890A0)
+  textFaint: "#8891A1",     // Tăng sáng để dễ đọc hơn (trước: #565E6C)
   accent: "#2FD98C",       // Màu xanh lá đại diện cho Đội nhà (Home win)
   accentDim: "#1E9A63",
   live: "#F2A93B",
@@ -142,8 +175,8 @@ export default function LandingPage() {
               </Link>
               <a
                 href="#accuracy"
-                className="relative z-20 text-sm underline-offset-4 hover:underline"
-                style={{ color: bangMau.textMuted }}
+                className="relative z-20 rounded-sm border px-5 py-3 text-sm font-medium transition-all hover:bg-white/5"
+                style={{ borderColor: bangMau.accent, color: bangMau.accent }}
               >
                 Xem độ chính xác mô hình
               </a>
@@ -222,114 +255,193 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Phần Thống kê độ chính xác (Bổ sung Microcopy giải thích Brier Score) */}
+      {/* Phần Thống kê độ chính xác — Glassmorphism Stats Cards */}
       <section
         id="accuracy"
         className="border-y"
         style={{ borderColor: bangMau.borderSoft, backgroundColor: bangMau.panelAlt }}
       >
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-6 py-12 sm:grid-cols-3">
-          {/* Thống kê 1 */}
-          <div>
-            <div className="font-mono text-3xl font-semibold" style={{ color: bangMau.accent }}>
-              55.4%
-            </div>
-            <div className="mt-1.5 text-sm" style={{ color: bangMau.textMuted }}>
-              Độ chính xác 36 ngày qua
-            </div>
-            <p className="mt-1 text-[12px]" style={{ color: bangMau.textFaint }}>
-              Tỷ lệ dự đoán đúng kết quả (Thắng/Hòa/Thua) trong 1 tháng gần nhất.
-            </p>
-          </div>
-
-          {/* Thống kê 2 - Brier Score có giải thích rõ ràng */}
-          <div className="relative">
-            <div className="flex items-center gap-2">
-              <span className="font-mono text-3xl font-semibold" style={{ color: bangMau.accent }}>
-                0.21
-              </span>
-              <button
-                type="button"
-                onClick={() => setHienGiaiThichBrier(!hienGiaiThichBrier)}
-                className="flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors hover:border-white hover:text-white"
-                style={{ borderColor: bangMau.border, color: bangMau.textMuted }}
-                title="Xem giải thích Brier Score"
-                aria-label="Giải thích Brier Score"
-              >
-                ?
-              </button>
-            </div>
-
-            <div className="mt-1.5 flex items-center gap-1.5 text-sm" style={{ color: bangMau.textMuted }}>
-              <span>Brier Score trung bình</span>
-            </div>
-
-            {/* Microcopy giải thích cực ngắn & rõ ràng */}
-            <p className="mt-1 text-[12px] leading-relaxed" style={{ color: bangMau.textFaint }}>
-              Đo lường sai số dự đoán (từ 0 đến 1). <strong className="text-emerald-400 font-normal">Càng thấp càng chính xác</strong> (dưới 0.25 là mô hình tốt).
-            </p>
-
-            {/* Popover/Tooltip chi tiết khi click nút (?) */}
-            {hienGiaiThichBrier && (
-              <div
-                className="absolute top-12 left-0 z-30 w-72 rounded-sm border p-3 text-xs shadow-xl backdrop-blur-md"
-                style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel, color: bangMau.text }}
-              >
-                <div className="flex justify-between items-center mb-1 font-semibold text-emerald-400">
-                  <span>💡 Brier Score là gì?</span>
-                  <button onClick={() => setHienGiaiThichBrier(false)} className="text-gray-400 hover:text-white">✕</button>
-                </div>
-                <p className="leading-relaxed text-gray-300">
-                  Brier Score đánh giá khoảng cách giữa xác suất dự đoán và kết quả thực tế. Điểm số 0 nghĩa là dự đoán hoàn hảo 100%, 0.21 chứng tỏ mô hình có độ tin cậy rất cao.
-                </p>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-6 py-14 sm:grid-cols-3">
+          {/* Card thống kê 1 — Độ chính xác */}
+          <div
+            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            style={{
+              borderColor: bangMau.border,
+              backgroundColor: "rgba(22,27,35,0.5)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            {/* Ánh sáng nền nhẹ khi hover */}
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
+                55.4%
               </div>
-            )}
+              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+                Độ chính xác 36 ngày qua
+              </div>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
+                Tỷ lệ dự đoán đúng kết quả (Thắng/Hòa/Thua) trong 1 tháng gần nhất.
+              </p>
+            </div>
           </div>
 
-          {/* Thống kê 3 */}
-          <div>
-            <div className="font-mono text-3xl font-semibold" style={{ color: bangMau.accent }}>
-              1.240
+          {/* Card thống kê 2 — Brier Score với giải thích */}
+          <div
+            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            style={{
+              borderColor: bangMau.border,
+              backgroundColor: "rgba(22,27,35,0.5)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
+                  0.21
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setHienGiaiThichBrier(!hienGiaiThichBrier)}
+                  className="flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors hover:border-white hover:text-white"
+                  style={{ borderColor: bangMau.border, color: bangMau.textMuted }}
+                  title="Xem giải thích Brier Score"
+                  aria-label="Giải thích Brier Score"
+                >
+                  ?
+                </button>
+              </div>
+
+              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+                Brier Score trung bình
+              </div>
+
+              {/* Microcopy giải thích ngắn gọn */}
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
+                Đo lường sai số dự đoán (từ 0 đến 1). <strong className="text-emerald-400 font-normal">Càng thấp càng chính xác</strong> (dưới 0.25 là mô hình tốt).
+              </p>
+
+              {/* Popover chi tiết khi click nút (?) */}
+              {hienGiaiThichBrier && (
+                <div
+                  className="absolute top-16 left-0 z-30 w-72 rounded-lg border p-4 text-xs shadow-2xl backdrop-blur-xl"
+                  style={{ borderColor: bangMau.border, backgroundColor: "rgba(18,22,29,0.95)", color: bangMau.text }}
+                >
+                  <div className="flex justify-between items-center mb-2 font-semibold text-emerald-400">
+                    <span>💡 Brier Score là gì?</span>
+                    <button onClick={() => setHienGiaiThichBrier(false)} className="text-gray-400 hover:text-white transition-colors">✕</button>
+                  </div>
+                  <p className="leading-relaxed" style={{ color: bangMau.textMuted }}>
+                    Brier Score đánh giá khoảng cách giữa xác suất dự đoán và kết quả thực tế. Điểm số 0 nghĩa là dự đoán hoàn hảo 100%, 0.21 chứng tỏ mô hình có độ tin cậy rất cao.
+                  </p>
+                </div>
+              )}
             </div>
-            <div className="mt-1.5 text-sm" style={{ color: bangMau.textMuted }}>
-              Trận đấu đã theo dõi
+          </div>
+
+          {/* Card thống kê 3 — Trận đấu theo dõi */}
+          <div
+            className="group relative rounded-lg border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            style={{
+              borderColor: bangMau.border,
+              backgroundColor: "rgba(22,27,35,0.5)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="relative z-10">
+              <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
+                1.240
+              </div>
+              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+                Trận đấu đã theo dõi
+              </div>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
+                Tổng số trận đấu được kiểm chứng và lưu trữ dữ liệu công khai.
+              </p>
             </div>
-            <p className="mt-1 text-[12px]" style={{ color: bangMau.textFaint }}>
-              Tổng số trận đấu được kiểm chứng và lưu trữ dữ liệu công khai.
-            </p>
           </div>
         </div>
       </section>
 
-      {/* Quy trình hoạt động (How it works) */}
+      {/* Quy trình hoạt động (How it works) — Có icon + đường nối chuẩn xác giữa các bước */}
       <section id="how-it-works" className="mx-auto max-w-7xl px-6 py-20">
         <h2 className="max-w-lg text-2xl font-semibold tracking-tight md:text-3xl">
           Từ dữ liệu thô đến một con số xác suất
         </h2>
 
-        <div className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-6">
           {[
             {
               buoc: "1",
               tieuDe: "Thu thập dữ liệu thật",
               noiDung: "Đồng bộ tự động lịch thi đấu, kết quả và thống kê từ API-Football, chuẩn hóa về một định dạng chung.",
+              icon: <IconDatabase />,
             },
             {
               buoc: "2",
               tieuDe: "Tính điểm sức mạnh",
               noiDung: "Elo rating được cập nhật sau mỗi trận, kết hợp phong độ gần đây và hiệu suất sân nhà/sân khách.",
+              icon: <IconChart />,
             },
             {
               buoc: "3",
               tieuDe: "Dự đoán & đánh giá công khai",
               noiDung: "Mô hình đưa ra xác suất thắng/hòa/thua, sai số đo bằng Log Loss và Brier Score sau mỗi trận.",
+              icon: <IconTarget />,
             },
           ].map((buocXuly, idx) => (
-            <div key={idx} className="border-t pt-5" style={{ borderColor: bangMau.border }}>
-              <span className="font-mono text-xs" style={{ color: bangMau.accent }}>
-                {buocXuly.buoc}
+            <div key={idx} className="relative flex flex-col items-start">
+              {/* Hàng chứa Icon và Mũi tên kết nối sang bước tiếp theo */}
+              <div className="flex w-full items-center">
+                {/* Icon tượng trưng cho bước */}
+                <div
+                  className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border transition-all duration-300 hover:shadow-[0_0_20px_rgba(47,217,140,0.15)]"
+                  style={{
+                    borderColor: bangMau.border,
+                    backgroundColor: "rgba(22,27,35,0.6)",
+                    color: bangMau.accent,
+                  }}
+                >
+                  {buocXuly.icon}
+                </div>
+
+                {/* Mũi tên kết nối sang bước kế tiếp (hiện trên Desktop giữa bước 1-2 và bước 2-3) */}
+                {idx < 2 && (
+                  <div className="hidden md:flex flex-1 items-center pl-4 pr-2">
+                    <div
+                      className="relative h-[2px] w-full"
+                      style={{
+                        background: `linear-gradient(90deg, ${bangMau.accent}80, ${bangMau.accent}25)`,
+                      }}
+                    >
+                      {/* Đầu mũi tên căn giữa chính xác với đường kẻ */}
+                      <div
+                        className="absolute right-0 top-1/2 -translate-y-1/2 h-0 w-0"
+                        style={{
+                          borderTop: "4px solid transparent",
+                          borderBottom: "4px solid transparent",
+                          borderLeft: `7px solid ${bangMau.accent}90`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Nhãn số bước nhỏ */}
+              <span
+                className="mt-4 inline-block rounded-full px-2.5 py-0.5 font-mono text-[11px] font-semibold"
+                style={{
+                  backgroundColor: `${bangMau.accent}15`,
+                  color: bangMau.accent,
+                }}
+              >
+                Bước {buocXuly.buoc}
               </span>
-              <h3 className="mt-3 text-[15px] font-medium">{buocXuly.tieuDe}</h3>
+
+              <h3 className="mt-3 text-[15px] font-semibold">{buocXuly.tieuDe}</h3>
               <p className="mt-2 text-sm leading-relaxed" style={{ color: bangMau.textMuted }}>
                 {buocXuly.noiDung}
               </p>
@@ -439,20 +551,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Chân trang (Footer) */}
-      <footer className="border-t" style={{ borderColor: bangMau.borderSoft }}>
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-4 px-6 py-10 text-sm sm:flex-row sm:items-center">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-            <img
-              src="/img/fasvicon.png"
-              alt="iKnowBall Logo"
-              className="h-6 w-6 object-contain rounded-md"
-            />
-            <span style={{ color: bangMau.textMuted }}>iKnowBall — dự đoán dựa trên dữ liệu</span>
-          </Link>
-          <span style={{ color: bangMau.textFaint }}>Số liệu chỉ mang tính tham khảo</span>
-        </div>
-      </footer>
+      {/* Chân trang (Footer) dùng chung toàn hệ thống */}
+      <Footer />
     </div>
   );
 }

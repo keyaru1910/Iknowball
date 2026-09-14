@@ -15,6 +15,8 @@ import { HealthModule } from './module/health/health.module';
 import { PaymentModule } from './module/payment/payment.module';
 import { AdminModule } from './module/admin/admin.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
+import { NewsModule } from './module/news/news.module';
+import { CommentsModule } from './module/comments/comments.module';
 
 const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQueueModule, SportsSyncModule] : [];
 
@@ -36,6 +38,8 @@ const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQu
     PredictionModule,
     PaymentModule,
     AdminModule,
+    NewsModule,
+    CommentsModule,
     ...optionalModules,
   ],
   controllers: [AppController],

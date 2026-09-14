@@ -32,8 +32,13 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
    * Đăng ký các Repeatable Cron Jobs khi Module khởi động
    */
   async onModuleInit() {
-    if (process.env.ENABLE_FOOTBALL_2026_27_SYNC !== 'true') {
-      this.logger.log('Pipeline football 2026/27 đang tắt; không đăng ký lịch đồng bộ dữ liệu thật.');
+    const isCronEnabled =
+      process.env.ENABLE_SYNC_CRON === 'true' ||
+      process.env.ENABLE_CRON === 'true' ||
+      process.env.ENABLE_FOOTBALL_2026_27_SYNC === 'true';
+
+    if (!isCronEnabled) {
+      this.logger.log('Pipeline sports sync cron đang tắt; không đăng ký lịch đồng bộ tự động.');
       return;
     }
     try {
@@ -43,80 +48,82 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
         await this.schedulerQueue.removeRepeatableByKey(job.key);
       }
 
+      const cronTz = process.env.CRON_TZ || 'Asia/Ho_Chi_Minh';
+
       // ────────────────────────────────────────────────────────────────
       // Chiến lược Free plan — ~30 req/ngày (tổng giới hạn 100 req/ngày)
       // ────────────────────────────────────────────────────────────────
 
-      // 1. Full sync (Leagues + Teams) mỗi ngày lúc 03:00 sáng
+      // 1. Full sync (Leagues + Teams) mỗi ngày lúc 03:00 sáng VN
       //    → Dữ liệu tĩnh ít thay đổi, chỉ cần sync 1 lần/ngày
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FULL_SYNC,
         {},
         {
-          repeat: { pattern: '0 3 * * *' },
+          repeat: { pattern: '0 3 * * *', tz: cronTz },
           jobId: 'daily-full-sync',
         },
       );
 
-      // 2. Sync kết quả trận vừa kết thúc — 01:00 sáng
+      // 2. Sync kết quả trận vừa kết thúc — 01:00 sáng VN
       //    → Bắt các trận tối hôm trước (Premier League, Serie A đá ~22:00-23:00 VN)
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FINISHED_SYNC,
         {},
         {
-          repeat: { pattern: '0 1 * * *' },
+          repeat: { pattern: '0 1 * * *', tz: cronTz },
           jobId: 'finished-matches-sync-1am',
         },
       );
 
-      // 3. Sync kết quả trận vừa kết thúc — 04:00 sáng
+      // 3. Sync kết quả trận vừa kết thúc — 04:00 sáng VN
       //    → Bắt các trận muộn (La Liga đá ~02:00-03:00 VN)
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FINISHED_SYNC,
         {},
         {
-          repeat: { pattern: '0 4 * * *' },
+          repeat: { pattern: '0 4 * * *', tz: cronTz },
           jobId: 'finished-matches-sync-4am',
         },
       );
 
-      // 4. Sync Bảng xếp hạng — 02:00 sáng
+      // 4. Sync Bảng xếp hạng — 02:00 sáng VN
       //    → Sau khi hết trận buổi tối, cập nhật BXH mỗi ngày
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_STANDINGS_SYNC,
         {},
         {
-          repeat: { pattern: '0 2 * * *' },
+          repeat: { pattern: '0 2 * * *', tz: cronTz },
           jobId: 'standings-sync-2am',
         },
       );
 
-      // 5. Sync lịch thi đấu giới hạn (≤10 trận, ưu tiên giải lớn) — 07:00 sáng
+      // 5. Sync lịch thi đấu giới hạn (≤10 trận, ưu tiên giải lớn) — 07:00 sáng VN
       //    → Cập nhật fixtures 7 ngày tới mỗi sáng, tiết kiệm API
       //    NBA cũng nằm trong danh sách này (externalId: 'nba')
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FIXTURES_LIMITED_SYNC,
         {},
         {
-          repeat: { pattern: '0 7 * * *' },
+          repeat: { pattern: '0 7 * * *', tz: cronTz },
           jobId: 'fixtures-limited-sync-7am',
         },
       );
 
-      // 6. Sync kết quả và BXH NBA — 14:00 chiều (giờ VN)
+      // 6. Sync kết quả và BXH NBA — 14:00 chiều VN
       //    Trận NBA thường đá từ 08:00–12:00 VN, kết thúc trước 14:00
       //    BXH NBA được tính lại từ DB, không gọi thêm API standings
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_NBA_FINISHED_SYNC,
         {},
         {
-          repeat: { pattern: '0 14 * * *' },
+          repeat: { pattern: '0 14 * * *', tz: cronTz },
           jobId: 'nba-finished-sync-2pm',
         },
       );
 
       this.logger.log(
-        'Đã đăng ký lịch đồng bộ Free-plan: ' +
+        `Đã đăng ký lịch đồng bộ Free-plan (${cronTz}): ` +
         'Full(03:00) | Finished-Football(01:00+04:00) | Standings(02:00) | Fixtures(07:00) | NBA(14:00)',
       );
     } catch (err: any) {

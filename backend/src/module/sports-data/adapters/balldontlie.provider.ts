@@ -76,6 +76,20 @@ export class BalldontlieProvider implements SportsDataProvider {
   }
 
   /**
+   * Chuẩn hóa mùa giải sang định dạng năm 4 chữ số (ví dụ: '24/25' | '2024-2025' -> '2024')
+   */
+  private normalizeSeason(season?: string): string {
+    if (!season) return String(new Date().getUTCFullYear());
+    const clean = season.trim();
+    if (clean.includes('-')) return clean.split('-')[0];
+    if (clean.includes('/')) {
+      const parts = clean.split('/');
+      return parts[0].length === 2 ? `20${parts[0]}` : parts[0];
+    }
+    return clean;
+  }
+
+  /**
    * Lấy danh sách giải đấu NBA
    */
   async fetchLeagues(): Promise<NormalizedLeague[]> {
@@ -91,11 +105,26 @@ export class BalldontlieProvider implements SportsDataProvider {
   }
 
   /**
-   * Lấy danh sách toàn bộ các đội bóng rổ NBA
+   * Lấy danh sách toàn bộ các đội bóng rổ NBA (hỗ trợ phân trang cursor)
    */
   async fetchTeams(): Promise<NormalizedTeam[]> {
-    const data = await this.requestWithRetry<{ data: any[] }>('/teams');
-    return (data.data ?? []).map((team: any) => ({
+    const allTeams: any[] = [];
+    let nextCursor: number | null | undefined = undefined;
+    let pageCount = 0;
+    const maxPages = 10;
+
+    do {
+      pageCount++;
+      const params: Record<string, any> = { per_page: 100 };
+      if (nextCursor !== undefined && nextCursor !== null) {
+        params.cursor = nextCursor;
+      }
+      const data = await this.requestWithRetry<{ data: any[]; meta?: { next_cursor?: number | null } }>('/teams', params);
+      allTeams.push(...(data.data ?? []));
+      nextCursor = data.meta?.next_cursor;
+    } while (nextCursor && pageCount < maxPages);
+
+    return allTeams.map((team: any) => ({
       externalId: String(team.id),
       leagueExternalId: 'nba',
       name: team.full_name,
@@ -106,7 +135,7 @@ export class BalldontlieProvider implements SportsDataProvider {
   }
 
   /**
-   * Lấy danh sách trận đấu NBA theo mùa giải và bộ lọc trạng thái
+   * Lấy danh sách trận đấu NBA theo mùa giải và bộ lọc trạng thái (hỗ trợ phân trang cursor)
    */
   async fetchFixtures(
     _leagueExternalId: string,
@@ -117,21 +146,38 @@ export class BalldontlieProvider implements SportsDataProvider {
       toDate?: Date;
     },
   ): Promise<NormalizedFixture[]> {
-    const params: Record<string, any> = {
-      'seasons[]': season,
+    const normalizedSeason = this.normalizeSeason(season);
+    const baseParams: Record<string, any> = {
+      'seasons[]': normalizedSeason,
       per_page: 100,
     };
 
     if (options?.fromDate) {
-      params.start_date = options.fromDate.toISOString().split('T')[0];
+      baseParams.start_date = options.fromDate.toISOString().split('T')[0];
     }
     if (options?.toDate) {
-      params.end_date = options.toDate.toISOString().split('T')[0];
+      baseParams.end_date = options.toDate.toISOString().split('T')[0];
     }
 
-    const data = await this.requestWithRetry<{ data: any[] }>('/games', params);
+    const allGames: any[] = [];
+    let nextCursor: number | null | undefined = undefined;
+    let pageCount = 0;
+    const maxPages = 30; // Giới hạn an toàn chống vòng lặp
 
-    return (data.data ?? []).map((game: any) => {
+    do {
+      pageCount++;
+      const params: Record<string, any> = { ...baseParams };
+      if (nextCursor !== undefined && nextCursor !== null) {
+        params.cursor = nextCursor;
+      }
+
+      const res = await this.requestWithRetry<{ data: any[]; meta?: { next_cursor?: number | null } }>('/games', params);
+      const games = res.data ?? [];
+      allGames.push(...games);
+      nextCursor = res.meta?.next_cursor;
+    } while (nextCursor && pageCount < maxPages);
+
+    let fixtures: NormalizedFixture[] = allGames.map((game: any) => {
       let status: 'SCHEDULED' | 'LIVE' | 'FINISHED' | 'POSTPONED' | 'CANCELED' =
         'SCHEDULED';
 
@@ -162,6 +208,12 @@ export class BalldontlieProvider implements SportsDataProvider {
         rawData: game,
       };
     });
+
+    if (options?.status) {
+      fixtures = fixtures.filter((f) => f.status === options.status);
+    }
+
+    return fixtures;
   }
 
   /**

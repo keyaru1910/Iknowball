@@ -26,6 +26,8 @@ model User {
   subscriptions   Subscription[]
   payments        Payment[]
   notifications   Notification[]
+  comments        Comment[]
+  commentReports  CommentReport[] @relation("CommentReporter")
   targetAuditLogs AuditLog[]           @relation("TargetUser")
   actorAuditLogs  AuditLog[]           @relation("ActorUser")
   createdAt       DateTime             @default(now())
@@ -90,6 +92,69 @@ enum SyncJobStatus {
   SUCCESS
   FAILED
   PARTIAL
+}
+
+enum NewsSport {
+  FOOTBALL
+  BASKETBALL
+}
+enum CommentableType {
+  NEWS_ARTICLE
+  MATCH
+  PREDICTION
+}
+enum CommentStatus {
+  VISIBLE
+  HIDDEN
+  DELETED
+}
+
+model NewsArticle {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  sport        NewsSport
+  category     String?
+  sourceName   String
+  sourceUrl    String    @unique
+  title        String
+  excerpt      String?
+  imageUrl     String?
+  publishedAt  DateTime?
+  syncedAt     DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([sport, category, publishedAt])
+}
+
+model Comment {
+  id         String          @id @default(uuid())
+  content    String          @db.VarChar(2000)
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType CommentableType
+  entityId   String
+  parentId   String?
+  parent     Comment?        @relation("CommentReplies", fields: [parentId], references: [id])
+  replies    Comment[]       @relation("CommentReplies")
+  depth      Int             @default(0)
+  status     CommentStatus   @default(VISIBLE)
+  isEdited   Boolean         @default(false)
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  reports    CommentReport[]
+  @@index([entityType, entityId, status, createdAt])
+  @@index([parentId])
+}
+
+model CommentReport {
+  id         String   @id @default(uuid())
+  commentId  String
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User     @relation("CommentReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reason     String   @db.VarChar(500)
+  createdAt  DateTime @default(now())
+  @@unique([commentId, reporterId])
 }
 
 enum PredictionOutcome {

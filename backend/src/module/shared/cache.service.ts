@@ -108,6 +108,12 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
       this.logger.warn(`Cache DEL error for key ${key}: ${err.message}`);
     }
   }
+  async increment(key: string, ttlSeconds: number): Promise<number | null> {
+    if (!this.client || !this.isConnected) return null;
+    const value = await this.client.incr(key);
+    if (value === 1) await this.client.expire(key, ttlSeconds);
+    return value;
+  }
 
   /**
    * Xóa danh sách key khớp với pattern (vd: "matches:*")

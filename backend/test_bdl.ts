@@ -1,0 +1,1 @@
+import { BalldontlieProvider } from './src/module/sports-data/adapters/balldontlie.provider'; async function test() { const p = new BalldontlieProvider(); try { await p.fetchFixtures('nba', '2024'); } catch(e:any) { console.error('Error details:', e.response?.data || e.message); } } test();

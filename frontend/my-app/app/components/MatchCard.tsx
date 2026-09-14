@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { colors, type MatchStatus } from "../lib/design-tokens";
 import ProbBar from "./ProbBar";
 
@@ -43,19 +44,46 @@ function formatKickoff(iso: string): string {
   }
 }
 
-function TeamLogo({ team }: { team: TeamInfo }) {
-  if (team.logoUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={team.logoUrl} alt={team.name} className="h-5 w-5 object-contain" />;
-  }
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
+}
+
+function TeamLogoFallback({ team, className }: { team: TeamInfo; className: string }) {
   return (
     <div
-      className="flex h-5 w-5 items-center justify-center rounded-sm text-[10px] font-medium"
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-sm text-[9px] font-semibold ${className}`}
       style={{ backgroundColor: colors.borderSoft, color: colors.textMuted }}
+      title={`${team.name} chưa có logo`}
     >
-      {team.name.charAt(0)}
+      {initials(team.name)}
     </div>
   );
+}
+
+function TeamLogoImage({ team, className }: { team: TeamInfo; className: string }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  if (imageFailed || !team.logoUrl) return <TeamLogoFallback team={team} className={className} />;
+
+  return (
+    <img
+      src={team.logoUrl}
+      alt={`${team.name} logo`}
+      className={`h-5 w-5 shrink-0 object-contain ${className}`}
+      onError={() => setImageFailed(true)}
+    />
+  );
+}
+
+/** Shows the supplied crest, with a legible fallback while historical data has no crest URL. */
+export function TeamLogo({ team, className = "" }: { team: TeamInfo; className?: string }) {
+  if (!team.logoUrl) return <TeamLogoFallback team={team} className={className} />;
+  return <TeamLogoImage key={`${team.id}:${team.logoUrl}`} team={team} className={className} />;
 }
 
 /**
@@ -115,24 +143,28 @@ export default function MatchCard({
         )}
       </div>
 
-      <div className="mb-3 flex items-center justify-between text-[14px]">
-        <div className="flex items-center gap-2">
+      <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 text-[14px]">
+        <div className="flex min-w-0 items-center gap-2">
           <TeamLogo team={homeTeam} />
-          <span style={{ fontWeight: homeWon ? 600 : 400 }}>{homeTeam.name}</span>
+          <span className="truncate" title={homeTeam.name} style={{ fontWeight: homeWon ? 600 : 400 }}>
+            {homeTeam.name}
+          </span>
         </div>
 
         {(status === "live" || status === "finished") ? (
-          <span className="font-mono text-[15px]" style={{ color: colors.text }}>
+          <span className="min-w-[54px] whitespace-nowrap text-center font-mono text-[15px]" style={{ color: colors.text }}>
             {homeScore ?? 0} – {awayScore ?? 0}
           </span>
         ) : (
-          <span className="text-[12px]" style={{ color: colors.textFaint }}>
+          <span className="min-w-[54px] whitespace-nowrap text-center text-[12px]" style={{ color: colors.textFaint }}>
             vs
           </span>
         )}
 
-        <div className="flex items-center gap-2">
-          <span style={{ fontWeight: awayWon ? 600 : 400 }}>{awayTeam.name}</span>
+        <div className="flex min-w-0 items-center justify-end gap-2">
+          <span className="truncate text-right" title={awayTeam.name} style={{ fontWeight: awayWon ? 600 : 400 }}>
+            {awayTeam.name}
+          </span>
           <TeamLogo team={awayTeam} />
         </div>
       </div>

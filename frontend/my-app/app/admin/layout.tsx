@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ArrowLeft,
   Activity,
+  Newspaper,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/admin/users", label: "Người Dùng", icon: Users },
   { href: "/admin/subscriptions", label: "Thanh Toán & Gói", icon: CreditCard },
   { href: "/admin/sync-logs", label: "Nhật Ký Đồng Bộ", icon: RefreshCw },
+  { href: "/admin/news", label: "Tin tức & RSS", icon: Newspaper },
   { href: "/admin/model-performance", label: "Hiệu Năng AI", icon: TrendingUp },
   { href: "/admin/audit-logs", label: "Audit Logs", icon: ShieldCheck },
 ];
@@ -176,4 +178,3 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     </AdminGuard>
   );
 }
-

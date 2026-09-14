@@ -1,0 +1,1 @@
+const axios = require('axios'); axios.get('https://api.balldontlie.io/v1/games', { params: { 'seasons[]': '2024', per_page: 100, cursor: 15907537 }, headers: { Authorization: 'ab32395e-59e1-4f82-9d5d-c152906128ca' } }).then(r => console.log('OK', r.data.data.length)).catch(e => console.log('ERR', e.response.status, e.response.data));

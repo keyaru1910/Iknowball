@@ -5,6 +5,7 @@ import {
     HttpCode,
     Param,
     Patch,
+    Post,
     Query,
     Req,
     UseGuards,
@@ -16,12 +17,19 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
 import { CurrentUser } from '../decorators/current-user.decorator';
+import { NewsService } from '../news/news.service';
 
 @Controller('api/v1/admin')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('admin')
 export class AdminController {
-    constructor(private readonly adminService: AdminService) {}
+    constructor(private readonly adminService: AdminService, private readonly newsService: NewsService) {}
+
+    @Get('news/sources')
+    async getNewsSources() { return { data: this.newsService.sources(), meta: null, error: null }; }
+
+    @Post('news/sync')
+    async syncNews() { return { data: await this.newsService.syncAll(), meta: null, error: null }; }
 
     @Get('dashboard')
     @HttpCode(200)

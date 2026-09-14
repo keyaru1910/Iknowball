@@ -8,7 +8,7 @@ export class SportsApiService {
     private readonly logger = new Logger(SportsApiService.name);
     private readonly baseUrl = 'https://v3.football.api-sports.io';
     private readonly authHeaders = {
-        'x-apisports-key': process.env.API_FOOTBALL_KEY || '',
+        'x-apisports-key': process.env.API_FOOTBALL_KEY || process.env.RAPIDAPI_KEY || '',
     };
 
     constructor(private readonly rateLimiter: RateLimiterService) { }

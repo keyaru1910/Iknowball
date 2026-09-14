@@ -12,7 +12,7 @@ export class ApiFootballAdapter {
       baseURL: 'https://v3.football.api-sports.io',
       timeout: 8000,
       headers: {
-        'x-apisports-key': process.env.API_FOOTBALL_KEY || '',
+        'x-apisports-key': process.env.API_FOOTBALL_KEY || process.env.RAPIDAPI_KEY || '',
       },
     });
   }

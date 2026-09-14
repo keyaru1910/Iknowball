@@ -103,6 +103,28 @@ export class PredictionController {
     return { data: { processed }, meta: null, error: null };
   }
 
+  /**
+   * Kích hoạt sinh dự đoán cho các trận sắp diễn ra trong 48h (admin only).
+   */
+  @Post('generate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async generateUpcoming() {
+    const result = await this.service.generateUpcoming();
+    return { data: result, meta: null, error: null };
+  }
+
+  /**
+   * Kích hoạt sinh dự đoán cho một trận cụ thể (admin only).
+   */
+  @Post('generate/:matchId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async generateForMatch(@Param('matchId') matchId: string) {
+    const result = await this.service.generateForMatch(matchId);
+    return { data: result, meta: null, error: null };
+  }
+
   /** Chi tiết dự đoán cho một trận đấu (optional auth – premium thấy explanation) */
   @Get(':matchId')
   @UseGuards(OptionalJwtAuthGuard)

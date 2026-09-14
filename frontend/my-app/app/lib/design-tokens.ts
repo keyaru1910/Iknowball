@@ -9,8 +9,8 @@ export const colors = {
   border: "#232935",
   borderSoft: "#1B2029",
   text: "#EDEFF3",
-  textMuted: "#8890A0",
-  textFaint: "#565E6C",
+  textMuted: "#B0B8C8", // Cải thiện tương phản (trước: #8890A0)
+  textFaint: "#8891A1", // Cải thiện độ rõ nét (trước: #565E6C)
 
   // Accent chính — dùng cho CTA, số liệu nổi bật, kết quả thắng
   accent: "#2FD98C",
