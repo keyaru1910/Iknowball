@@ -170,22 +170,22 @@ export default function Navbar() {
         backgroundColor: `${colors.bg}E6`,
       }}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 py-3.5">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3.5 sm:px-6 py-3">
         {/* Logo & Brand & Sport Switcher */}
-        <div className="flex items-center gap-5">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+        <div className="flex items-center gap-2 sm:gap-5">
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 transition-opacity hover:opacity-90">
             <img
               src="/img/fasvicon.png"
               alt="iKnowBall Logo"
               className="h-7 w-7 rounded-md object-contain"
             />
-            <span className="text-base font-bold tracking-tight text-white">
+            <span className="text-sm sm:text-base font-bold tracking-tight text-white">
               iKnowBall
             </span>
           </Link>
 
-          {/* Sport Switcher Toggle */}
-          <div className="hidden sm:block">
+          {/* Sport Switcher Toggle - Hiển thị cạnh logo trên cả điện thoại & desktop */}
+          <div className="flex items-center">
             <SportSwitcher size="sm" />
           </div>
         </div>
@@ -262,11 +262,6 @@ export default function Navbar() {
           className="flex flex-col gap-3 border-t px-5 py-4 md:hidden"
           style={{ borderColor: colors.borderSoft, backgroundColor: colors.panel }}
         >
-          <div className="pb-2 border-b" style={{ borderColor: colors.borderSoft }}>
-            <span className="text-[11px] text-gray-400 block mb-1.5 font-medium">Chọn môn thể thao:</span>
-            <SportSwitcher size="sm" />
-          </div>
-
           {navLinks.map((item) => {
             const isActive =
               item.href === "/"

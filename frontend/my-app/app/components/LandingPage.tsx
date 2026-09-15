@@ -154,7 +154,7 @@ export default function LandingPage() {
           {/* Cột bên trái: Tiêu đề & mô tả */}
           <div className="flex flex-col justify-center text-center sm:text-left max-w-xl xl:max-w-2xl">
             <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[52px] 2xl:text-[58px]">
-              Nhìn thể thao qua con số, không qua cảm xúc.
+              Cảm xúc là của người hâm mộ, con số là của chúng tôi.
             </h1>
             <p
               className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-[18px] leading-relaxed mx-auto sm:mx-0 font-normal"
@@ -162,7 +162,7 @@ export default function LandingPage() {
             >
               Mỗi trận đấu được chấm điểm từ dữ liệu thật: phong độ gần đây, Elo
               rating, hiệu suất sân nhà/sân khách. Sai số của mô hình được đo và
-              công khai rõ ràng.
+              tính toán rõ ràng.
             </p>
 
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-5 justify-center sm:justify-start">
@@ -552,16 +552,24 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Dải Card chạy vô tận từ Trái sang Phải với CSS Mask mờ 2 bên */}
-        <div
-          className="relative w-full overflow-hidden py-3 sm:py-4"
-          style={{
-            maskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
-            WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)",
-          }}
-        >
+        {/* Dải Card chạy vô tận từ Trái sang Phải */}
+        <div className="relative w-full overflow-hidden py-3 sm:py-4">
+          {/* Lớp gradient mờ 2 bên nhẹ mượt không gây lag */}
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-28 z-10"
+            style={{
+              background: `linear-gradient(to right, ${bangMau.panelAlt}, transparent)`,
+            }}
+          />
+          <div
+            className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-28 z-10"
+            style={{
+              background: `linear-gradient(to left, ${bangMau.panelAlt}, transparent)`,
+            }}
+          />
+
           {/* Hàng card chạy với hiệu ứng animate-marquee-ltr */}
-          <div className="animate-marquee-ltr flex gap-4 sm:gap-6 px-4 will-change-transform">
+          <div className="animate-marquee-ltr flex gap-4 sm:gap-6 px-4">
             {[
               {
                 ten: "Trần Hoàng Nam",
@@ -675,11 +683,11 @@ export default function LandingPage() {
             ].map((nhanXet, idx) => (
               <div
                 key={idx}
-                className="group relative flex w-[280px] sm:w-[340px] md:w-[380px] min-h-[210px] sm:min-h-[220px] shrink-0 flex-col justify-between rounded-xl border p-4 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/60 hover:shadow-[0_4px_28px_rgba(47,217,140,0.12)] select-none"
+                className="group relative flex w-[280px] sm:w-[340px] md:w-[380px] min-h-[210px] sm:min-h-[220px] shrink-0 flex-col justify-between rounded-xl border p-4 sm:p-6 select-none"
                 style={{
                   borderColor: bangMau.border,
-                  backgroundColor: "rgba(18,22,29,0.85)",
-                  backdropFilter: "blur(12px)",
+                  backgroundColor: "#12161D",
+                  transform: "translateZ(0)",
                 }}
               >
                 <div
