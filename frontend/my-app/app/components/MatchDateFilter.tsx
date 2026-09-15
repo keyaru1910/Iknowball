@@ -98,6 +98,33 @@ export default function MatchDateFilter({
             </button>
           );
         })}
+
+        {/* Chọn ngày tùy chỉnh */}
+        <div className="flex items-center gap-1">
+          <input
+            type="date"
+            value={selectedDate || ""}
+            onChange={(e) => onSelectDate(e.target.value || undefined)}
+            className="rounded-sm border px-2 py-1.5 text-xs font-medium outline-none transition-colors focus:border-emerald-500 cursor-pointer"
+            style={{
+              borderColor: selectedDate && !dateOptions.some(d => d.dateStr === selectedDate) ? colors.accent : colors.border,
+              backgroundColor: colors.panelAlt,
+              color: colors.text,
+            }}
+            title="Chọn ngày tùy chỉnh"
+          />
+          {selectedDate && (
+            <button
+              type="button"
+              onClick={() => onSelectDate(undefined)}
+              className="text-xs px-1.5 py-1 rounded hover:bg-white/10 transition-colors"
+              style={{ color: colors.textMuted }}
+              title="Xóa lọc ngày"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Bộ lọc Mùa giải & Giải đấu */}

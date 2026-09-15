@@ -15,6 +15,7 @@
     "seed": "npm run build && node dist/module/prisma/seed.js",
     "seed:admin": "npm run build && node -e \"require('./dist/seed-admin')\"",
     "seed:sports": "npm run build && node -e \"require('./dist/seed-sports')\"",
+    "seed:basketball": "npm run build && node -e \"require('./dist/seed-basketball')\"",
     "postinstall": "prisma skills sync || exit 0"
   },
   "dependencies": {

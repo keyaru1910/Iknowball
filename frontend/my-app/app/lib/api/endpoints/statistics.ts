@@ -163,161 +163,28 @@ const mockFootballPlayers: PlayerStatisticDto[] = [
   }
 ];
 
-// Fallback mock data cho Basketball Cầu thủ
-const mockBasketballPlayers: PlayerStatisticDto[] = [
-  {
-    id: "bp-1",
-    playerId: "b-1",
-    playerName: "Luka Dončić",
-    teamId: "tb-1",
-    teamName: "Dallas Mavericks",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/138.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Guard",
-    appearances: 55,
-    minutesPlayed: 2050,
-    pointsAvg: 33.8,
-    reboundsAvg: 9.2,
-    assistsAvg: 9.8,
-    stealsAvg: 1.5,
-    blocksAvg: 0.6,
-    fieldGoalPercentage: 48.7,
-  },
-  {
-    id: "bp-2",
-    playerId: "b-2",
-    playerName: "Giannis Antetokounmpo",
-    teamId: "tb-2",
-    teamName: "Milwaukee Bucks",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/146.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Forward",
-    appearances: 58,
-    minutesPlayed: 2030,
-    pointsAvg: 30.6,
-    reboundsAvg: 11.4,
-    assistsAvg: 6.4,
-    stealsAvg: 1.2,
-    blocksAvg: 1.1,
-    fieldGoalPercentage: 60.5,
-  },
-  {
-    id: "bp-3",
-    playerId: "b-3",
-    playerName: "Shai Gilgeous-Alexander",
-    teamId: "tb-3",
-    teamName: "Oklahoma City Thunder",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/150.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Guard",
-    appearances: 60,
-    minutesPlayed: 2070,
-    pointsAvg: 31.1,
-    reboundsAvg: 5.6,
-    assistsAvg: 6.3,
-    stealsAvg: 2.1,
-    blocksAvg: 0.9,
-    fieldGoalPercentage: 53.8,
-  },
-  {
-    id: "bp-4",
-    playerId: "b-4",
-    playerName: "Nikola Jokić",
-    teamId: "tb-4",
-    teamName: "Denver Nuggets",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/139.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Center",
-    appearances: 62,
-    minutesPlayed: 2150,
-    pointsAvg: 26.4,
-    reboundsAvg: 12.3,
-    assistsAvg: 9.0,
-    stealsAvg: 1.4,
-    blocksAvg: 0.9,
-    fieldGoalPercentage: 58.2,
-  },
-  {
-    id: "bp-5",
-    playerId: "b-5",
-    playerName: "Jayson Tatum",
-    teamId: "tb-5",
-    teamName: "Boston Celtics",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/133.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Forward",
-    appearances: 59,
-    minutesPlayed: 2110,
-    pointsAvg: 27.2,
-    reboundsAvg: 8.3,
-    assistsAvg: 4.9,
-    stealsAvg: 1.0,
-    blocksAvg: 0.6,
-    fieldGoalPercentage: 47.3,
-  },
-  {
-    id: "bp-6",
-    playerId: "b-6",
-    playerName: "Stephen Curry",
-    teamId: "tb-6",
-    teamName: "Golden State Warriors",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/141.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Guard",
-    appearances: 56,
-    minutesPlayed: 1840,
-    pointsAvg: 26.8,
-    reboundsAvg: 4.4,
-    assistsAvg: 5.1,
-    stealsAvg: 0.8,
-    blocksAvg: 0.4,
-    fieldGoalPercentage: 45.1,
-  },
-  {
-    id: "bp-7",
-    playerId: "b-7",
-    playerName: "LeBron James",
-    teamId: "tb-7",
-    teamName: "Los Angeles Lakers",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/144.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Forward",
-    appearances: 54,
-    minutesPlayed: 1900,
-    pointsAvg: 25.5,
-    reboundsAvg: 7.2,
-    assistsAvg: 8.2,
-    stealsAvg: 1.2,
-    blocksAvg: 0.6,
-    fieldGoalPercentage: 53.5,
-  },
-  {
-    id: "bp-8",
-    playerId: "b-8",
-    playerName: "Anthony Edwards",
-    teamId: "tb-8",
-    teamName: "Minnesota Timberwolves",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/147.png",
-    season: "2025-2026",
-    sport: "basketball",
-    position: "Guard",
-    appearances: 61,
-    minutesPlayed: 2140,
-    pointsAvg: 26.1,
-    reboundsAvg: 5.5,
-    assistsAvg: 5.2,
-    stealsAvg: 1.3,
-    blocksAvg: 0.5,
-    fieldGoalPercentage: 46.5,
-  }
-];
+import mockNbaData from "./mock_nba.json";
+
+// Fallback mock data cho Basketball Cầu thủ từ dữ liệu 2 mùa 24/25 & 25/26
+const mockBasketballPlayers: PlayerStatisticDto[] = (mockNbaData.players as any[]).map((p, idx) => ({
+  id: `bp-${idx + 1}`,
+  playerId: p.externalId,
+  playerName: p.playerName,
+  teamId: `t-${p.teamName.toLowerCase().replace(/\s+/g, '-')}`,
+  teamName: p.teamName,
+  teamLogoUrl: p.teamLogoUrl,
+  season: p.season,
+  sport: "basketball",
+  position: p.position || "Guard",
+  appearances: p.appearances,
+  minutesPlayed: p.minutesPlayed,
+  pointsAvg: p.pointsAvg,
+  reboundsAvg: p.reboundsAvg,
+  assistsAvg: p.assistsAvg,
+  stealsAvg: p.stealsAvg,
+  blocksAvg: p.blocksAvg,
+  fieldGoalPercentage: p.fieldGoalPercentage,
+}));
 
 // Mock Football Đội bóng
 const mockFootballTeams: TeamSeasonStatisticDto[] = [
@@ -403,89 +270,23 @@ const mockFootballTeams: TeamSeasonStatisticDto[] = [
   }
 ];
 
-// Mock Basketball Đội bóng
-const mockBasketballTeams: TeamSeasonStatisticDto[] = [
-  {
-    id: "bt-1",
-    teamId: "tb-5",
-    teamName: "Boston Celtics",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/133.png",
-    season: "2025-2026",
-    sport: "basketball",
-    played: 64,
-    wins: 48,
-    draws: null,
-    losses: 16,
-    winPercentage: 0.75,
-    pointsForAvg: 120.5,
-    pointsAgainstAvg: 109.2,
-    pointDifferential: 11.3,
-  },
-  {
-    id: "bt-2",
-    teamId: "tb-3",
-    teamName: "Oklahoma City Thunder",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/150.png",
-    season: "2025-2026",
-    sport: "basketball",
-    played: 63,
-    wins: 47,
-    draws: null,
-    losses: 16,
-    winPercentage: 0.746,
-    pointsForAvg: 119.8,
-    pointsAgainstAvg: 111.4,
-    pointDifferential: 8.4,
-  },
-  {
-    id: "bt-3",
-    teamId: "tb-4",
-    teamName: "Denver Nuggets",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/139.png",
-    season: "2025-2026",
-    sport: "basketball",
-    played: 65,
-    wins: 44,
-    draws: null,
-    losses: 21,
-    winPercentage: 0.677,
-    pointsForAvg: 115.6,
-    pointsAgainstAvg: 110.1,
-    pointDifferential: 5.5,
-  },
-  {
-    id: "bt-4",
-    teamId: "tb-2",
-    teamName: "Milwaukee Bucks",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/146.png",
-    season: "2025-2026",
-    sport: "basketball",
-    played: 64,
-    wins: 42,
-    draws: null,
-    losses: 22,
-    winPercentage: 0.656,
-    pointsForAvg: 118.9,
-    pointsAgainstAvg: 115.8,
-    pointDifferential: 3.1,
-  },
-  {
-    id: "bt-5",
-    teamId: "tb-7",
-    teamName: "Los Angeles Lakers",
-    teamLogoUrl: "https://media.api-sports.io/basketball/teams/144.png",
-    season: "2025-2026",
-    sport: "basketball",
-    played: 64,
-    wins: 38,
-    draws: null,
-    losses: 26,
-    winPercentage: 0.594,
-    pointsForAvg: 117.2,
-    pointsAgainstAvg: 116.5,
-    pointDifferential: 0.7,
-  }
-];
+// Fallback Mock Basketball Đội bóng từ dữ liệu 2 mùa 24/25 & 25/26
+const mockBasketballTeams: TeamSeasonStatisticDto[] = (mockNbaData.teams as any[]).map((t, idx) => ({
+  id: `bt-${idx + 1}`,
+  teamId: `tb-${t.teamName.toLowerCase().replace(/\s+/g, '-')}`,
+  teamName: t.teamName,
+  teamLogoUrl: t.teamLogoUrl,
+  season: t.season,
+  sport: "basketball",
+  played: t.played,
+  wins: t.wins,
+  draws: null,
+  losses: t.losses,
+  winPercentage: t.winPercentage,
+  pointsForAvg: t.pointsForAvg,
+  pointsAgainstAvg: t.pointsAgainstAvg,
+  pointDifferential: t.pointDifferential,
+}));
 
 export async function getPlayerStatistics(params: {
   sport: "football" | "basketball";
@@ -504,8 +305,15 @@ export async function getPlayerStatistics(params: {
     const response = await apiFetch<unknown>(`/statistics/players?${query}`);
     return z.array(playerStatisticSchema).parse(response.data);
   } catch (error) {
-    // Trả về mock data chất lượng cao khi API backend đang hoàn thiện
-    const list = params.sport === "basketball" ? mockBasketballPlayers : mockFootballPlayers;
+    // Trả về mock data chất lượng cao khi API backend đang load/offline
+    let list = params.sport === "basketball" ? mockBasketballPlayers : mockFootballPlayers;
+    
+    if (params.season) {
+      const filtered = list.filter((p) => p.season === params.season);
+      if (filtered.length > 0) {
+        list = filtered;
+      }
+    }
     
     // Sort logic cho mock
     if (params.sortBy) {
@@ -535,6 +343,13 @@ export async function getTeamSeasonStatistics(params: {
     return z.array(teamSeasonStatisticSchema).parse(response.data);
   } catch (error) {
     // Trả về mock data khi API backend chưa có sẵn
-    return params.sport === "basketball" ? mockBasketballTeams : mockFootballTeams;
+    const list = params.sport === "basketball" ? mockBasketballTeams : mockFootballTeams;
+    if (params.season) {
+      const filtered = list.filter((t) => t.season === params.season);
+      if (filtered.length > 0) {
+        return filtered;
+      }
+    }
+    return list;
   }
 }

@@ -54,5 +54,38 @@ export class SportsDataController {
     const data = await this.sportsDataService.getTeamStats(id);
     return { data, meta: null, error: null };
   }
+
+  @Get('statistics/players')
+  async getPlayerStatistics(
+    @Query('sport') sport?: string,
+    @Query('leagueId') leagueId?: string,
+    @Query('season') season?: string,
+    @Query('sortBy') sortBy?: string,
+    @Query('limit') limit?: string,
+  ) {
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit || '50', 10) || 50));
+    const data = await this.sportsDataService.getPlayerStatistics({
+      sport,
+      leagueId,
+      season,
+      sortBy,
+      limit: limitNum,
+    });
+    return { data, meta: { total: data.length }, error: null };
+  }
+
+  @Get('statistics/teams')
+  async getTeamSeasonStatistics(
+    @Query('sport') sport?: string,
+    @Query('leagueId') leagueId?: string,
+    @Query('season') season?: string,
+  ) {
+    const data = await this.sportsDataService.getTeamSeasonStatistics({
+      sport,
+      leagueId,
+      season,
+    });
+    return { data, meta: { total: data.length }, error: null };
+  }
 }
 
