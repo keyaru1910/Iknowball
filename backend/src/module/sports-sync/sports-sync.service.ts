@@ -87,8 +87,9 @@ export class SportsSyncService {
         this.cacheService.delByPattern('standings:*'),
         this.cacheService.delByPattern('leagues:*'),
         this.cacheService.delByPattern('team_detail:*'),
+        this.cacheService.delByPattern('statistics:*'),
       ]);
-      this.logger.log('Đã làm mới (invalidation) cache Redis sau khi đồng bộ.');
+      this.logger.log('Đã làm mới (invalidation) toàn bộ cache Redis (matches, standings, leagues, statistics) sau khi đồng bộ.');
     } catch (err: any) {
       this.logger.warn(`Lỗi khi xóa cache: ${err.message}`);
     }

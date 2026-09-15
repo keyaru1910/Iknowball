@@ -16,11 +16,13 @@ export class ApiFootballMapper {
     const currentSeason =
       raw.seasons?.find((s: any) => s.current) ??
       raw.seasons?.[raw.seasons.length - 1];
+    const year = currentSeason?.year ?? new Date().getFullYear();
+    const formattedSeason = `${year}-${Number(year) + 1}`;
     return {
       externalId: String(raw.league.id),
       name: raw.league.name,
       country: raw.country?.name ?? null,
-      season: String(currentSeason?.year ?? new Date().getFullYear()),
+      season: formattedSeason,
     };
   }
 

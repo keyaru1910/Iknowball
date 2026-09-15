@@ -17,6 +17,17 @@ export class ApiFootballAdapter {
     });
   }
 
+  private normalizeSeason(season?: string): string {
+    if (!season) return String(new Date().getUTCFullYear());
+    const clean = season.trim();
+    if (clean.includes('-')) return clean.split('-')[0];
+    if (clean.includes('/')) {
+      const parts = clean.split('/');
+      return parts[0].length === 2 ? `20${parts[0]}` : parts[0];
+    }
+    return clean;
+  }
+
   async getLeagues(country?: string, id?: number): Promise<any[]> {
     const params: Record<string, any> = { current: 'true' };
     if (country) params.country = country;
@@ -25,7 +36,8 @@ export class ApiFootballAdapter {
   }
 
   async getTeams(leagueId: string, season: string): Promise<any[]> {
-    return this.requestWithRetry('/teams', { league: leagueId, season });
+    const normSeason = this.normalizeSeason(season);
+    return this.requestWithRetry('/teams', { league: leagueId, season: normSeason });
   }
 
   async getFixtures(
@@ -38,7 +50,8 @@ export class ApiFootballAdapter {
       live?: string;
     },
   ): Promise<any[]> {
-    const params: Record<string, any> = { league: leagueId, season };
+    const normSeason = this.normalizeSeason(season);
+    const params: Record<string, any> = { league: leagueId, season: normSeason };
     if (options?.status) params.status = options.status;
     if (options?.from) params.from = options.from;
     if (options?.to) params.to = options.to;
@@ -47,7 +60,8 @@ export class ApiFootballAdapter {
   }
 
   async getStandings(leagueId: string, season: string): Promise<any[]> {
-    return this.requestWithRetry('/standings', { league: leagueId, season });
+    const normSeason = this.normalizeSeason(season);
+    return this.requestWithRetry('/standings', { league: leagueId, season: normSeason });
   }
 
   // Retry + exponential backoff cho rate limit (429) và lỗi mạng tạm thời

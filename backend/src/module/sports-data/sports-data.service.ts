@@ -8,19 +8,27 @@ function getSeasonVariants(season?: string): string[] {
   if (!season) return [];
   const clean = season.trim();
   const variants = new Set<string>([clean]);
-  if (clean === '24/25' || clean === '2024-2025' || clean === '2024') {
-    variants.add('24/25');
-    variants.add('2024-2025');
-    variants.add('2024');
-  } else if (clean === '25/26' || clean === '2025-2026' || clean === '2025') {
-    variants.add('25/26');
-    variants.add('2025-2026');
-    variants.add('2025');
-  } else if (clean === '26/27' || clean === '2026-2027' || clean === '2026') {
-    variants.add('26/27');
-    variants.add('2026-2027');
-    variants.add('2026');
+
+  if (clean.includes('-')) {
+    const parts = clean.split('-');
+    if (parts.length === 2 && parts[0].length === 4 && parts[1].length === 4) {
+      variants.add(parts[0]);
+      variants.add(`${parts[0].slice(2)}/${parts[1].slice(2)}`);
+    }
+  } else if (clean.includes('/')) {
+    const parts = clean.split('/');
+    if (parts.length === 2) {
+      const y1 = parts[0].length === 2 ? `20${parts[0]}` : parts[0];
+      const y2 = parts[1].length === 2 ? `20${parts[1]}` : parts[1];
+      variants.add(`${y1}-${y2}`);
+      variants.add(y1);
+    }
+  } else if (/^\d{4}$/.test(clean)) {
+    const y1 = Number(clean);
+    variants.add(`${y1}-${y1 + 1}`);
+    variants.add(`${String(y1).slice(2)}/${String(y1 + 1).slice(2)}`);
   }
+
   return Array.from(variants);
 }
 
@@ -46,7 +54,7 @@ export class SportsDataService {
   async getLeagues(sport?: string, page = 1, limit = 50) {
     const cacheKey = `leagues:${sport || 'all'}:p${page}:l${limit}`;
 
-    return this.cacheService.getOrSet(cacheKey, 3600, async () => {
+    return this.cacheService.getOrSet(cacheKey, 600, async () => {
       const where: any = {};
       if (sport) {
         where.sport = {
@@ -162,7 +170,7 @@ export class SportsDataService {
   async getStandings(leagueId: string, season?: string) {
     const cacheKey = `standings:${leagueId}:${season || 'latest'}`;
 
-    return this.cacheService.getOrSet(cacheKey, 1800, async () => {
+    return this.cacheService.getOrSet(cacheKey, 300, async () => {
       const league = await this.prisma.league.findUnique({
         where: { id: leagueId },
         include: { sport: true },
@@ -285,7 +293,7 @@ export class SportsDataService {
   async getTeamById(id: string) {
     const cacheKey = `team_detail:${id}`;
 
-    return this.cacheService.getOrSet(cacheKey, 3600, async () => {
+    return this.cacheService.getOrSet(cacheKey, 600, async () => {
       const team = await this.prisma.team.findUnique({
         where: { id },
         include: {
@@ -394,12 +402,12 @@ export class SportsDataService {
     limit?: number;
   }) {
     const sport = params.sport?.toLowerCase() || 'football';
-    const season = params.season || '2025-2026';
+    const season = params.season || process.env.CURRENT_SEASON || '2026-2027';
     const seasonVariants = getSeasonVariants(season);
     const limit = Math.min(100, Math.max(1, params.limit || 50));
     const cacheKey = `statistics:players:${sport}:${params.leagueId || 'all'}:${season}:${params.sortBy || 'default'}:${limit}`;
 
-    return this.cacheService.getOrSet(cacheKey, 1800, async () => {
+    return this.cacheService.getOrSet(cacheKey, 300, async () => {
       const where: any = {
         sport: { equals: sport, mode: 'insensitive' },
         season: { in: seasonVariants },
@@ -483,11 +491,11 @@ export class SportsDataService {
     season?: string;
   }) {
     const sport = params.sport?.toLowerCase() || 'football';
-    const season = params.season || '2025-2026';
+    const season = params.season || process.env.CURRENT_SEASON || '2026-2027';
     const seasonVariants = getSeasonVariants(season);
     const cacheKey = `statistics:teams:${sport}:${params.leagueId || 'all'}:${season}`;
 
-    return this.cacheService.getOrSet(cacheKey, 1800, async () => {
+    return this.cacheService.getOrSet(cacheKey, 300, async () => {
       const where: any = {
         sport: { equals: sport, mode: 'insensitive' },
         season: { in: seasonVariants },

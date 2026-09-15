@@ -21,6 +21,13 @@ export interface HealthCheckResult {
     redis: ServiceHealthDetail;
     predictionService: ServiceHealthDetail;
   };
+  pipelineStatus?: {
+    currentSeasonInDb: string;
+    totalActiveLeagues: number;
+    totalMatchesCurrentSeason: number;
+    seasonAligned: boolean;
+    message: string;
+  };
 }
 
 @Injectable()
@@ -39,17 +46,22 @@ export class HealthService {
    * - Prediction Service (Python ML microservice)
    */
   async checkHealth(): Promise<HealthCheckResult> {
-    const [dbHealth, redisHealth, predictionHealth] = await Promise.all([
+    const [dbHealth, redisHealth, predictionHealth, pipelineStatus] = await Promise.all([
       this.checkDatabase(),
       this.checkRedis(),
       this.checkPredictionService(),
+      this.checkPipelineStatus(),
     ]);
 
     let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
 
     if (dbHealth.status === 'down') {
       overallStatus = 'unhealthy';
-    } else if (redisHealth.status === 'down' || predictionHealth.status === 'down') {
+    } else if (
+      redisHealth.status === 'down' ||
+      predictionHealth.status === 'down' ||
+      !pipelineStatus.seasonAligned
+    ) {
       overallStatus = 'degraded';
     }
 
@@ -64,7 +76,42 @@ export class HealthService {
         redis: redisHealth,
         predictionService: predictionHealth,
       },
+      pipelineStatus,
     };
+  }
+
+  private async checkPipelineStatus() {
+    try {
+      const leagues = await this.prisma.league.findMany({
+        where: { sport: { name: 'football' } },
+        select: { season: true },
+      });
+
+      const currentExpectedSeason = process.env.CURRENT_SEASON || '2026-2027';
+      const allAligned = leagues.length > 0 && leagues.every((l) => l.season === currentExpectedSeason);
+
+      const matchCount = await this.prisma.match.count({
+        where: { season: currentExpectedSeason },
+      });
+
+      return {
+        currentSeasonInDb: leagues[0]?.season || 'none',
+        totalActiveLeagues: leagues.length,
+        totalMatchesCurrentSeason: matchCount,
+        seasonAligned: allAligned,
+        message: allAligned
+          ? `Mùa giải DB đã khớp với mùa hiện tại (${currentExpectedSeason})`
+          : `Cảnh báo: Phát hiện độ lệch mùa giải giữa DB (${leagues[0]?.season}) và cấu hình (${currentExpectedSeason})`,
+      };
+    } catch (err: any) {
+      return {
+        currentSeasonInDb: 'error',
+        totalActiveLeagues: 0,
+        totalMatchesCurrentSeason: 0,
+        seasonAligned: false,
+        message: `Lỗi kiểm tra pipeline: ${err.message}`,
+      };
+    }
   }
 
   private async checkDatabase(): Promise<ServiceHealthDetail> {

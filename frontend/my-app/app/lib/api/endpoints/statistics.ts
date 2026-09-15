@@ -309,7 +309,7 @@ export async function getPlayerStatistics(params: {
     let list = params.sport === "basketball" ? mockBasketballPlayers : mockFootballPlayers;
     
     if (params.season) {
-      const filtered = list.filter((p) => p.season === params.season);
+      const filtered = list.filter((p) => p.season === params.season || params.season.includes(p.season.slice(0, 4)));
       if (filtered.length > 0) {
         list = filtered;
       }
@@ -345,7 +345,7 @@ export async function getTeamSeasonStatistics(params: {
     // Trả về mock data khi API backend chưa có sẵn
     const list = params.sport === "basketball" ? mockBasketballTeams : mockFootballTeams;
     if (params.season) {
-      const filtered = list.filter((t) => t.season === params.season);
+      const filtered = list.filter((t) => t.season === params.season || params.season.includes(t.season.slice(0, 4)));
       if (filtered.length > 0) {
         return filtered;
       }
