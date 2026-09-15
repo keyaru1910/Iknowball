@@ -91,10 +91,10 @@ export class AuthController {
         const deviceInfo = req.headers?.['user-agent'];
         const { tokens } = await this.authService.login(user, deviceInfo);
 
-        // Chuyển hướng về Frontend kèm token
+        // Chuyển hướng về Frontend kèm token (route của Next.js app router là /callback)
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
         return res.redirect(
-            `${frontendUrl}/auth/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
+            `${frontendUrl}/callback?accessToken=${tokens.accessToken}&refreshToken=${tokens.refreshToken}`
         );
     }
 }

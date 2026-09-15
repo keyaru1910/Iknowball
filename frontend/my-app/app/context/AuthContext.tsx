@@ -13,6 +13,7 @@ import {
   type AuthUser,
   type LoginPayload,
   type RegisterPayload,
+  getCurrentUser,
   loginWithCredentials,
   logoutUser,
   refreshAccessToken,
@@ -37,7 +38,7 @@ interface AuthContextValue {
   /** Đăng nhập bằng email + password */
   login: (payload: LoginPayload) => Promise<void>;
   /** Đăng nhập bằng token nhận được từ OAuth */
-  loginWithToken: (token: string) => Promise<void>;
+  loginWithToken: (token: string, refreshToken?: string) => Promise<void>;
   /** Đăng ký tài khoản mới */
   register: (payload: RegisterPayload) => Promise<void>;
   /** Đăng xuất */
@@ -95,9 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /** Đăng nhập với Token có sẵn từ OAuth (Google) */
-  const loginWithToken = useCallback(async (token: string) => {
+  const loginWithToken = useCallback(async (token: string, refreshToken?: string) => {
     setAccessToken(token);
     setApiAccessToken(token);
+    if (refreshToken && typeof window !== "undefined") {
+      localStorage.setItem("refreshToken", refreshToken);
+    }
     const currentUser = await getCurrentUser(token);
     if (currentUser) {
       setUser(currentUser);

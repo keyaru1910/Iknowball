@@ -149,15 +149,15 @@ export default function LandingPage() {
       <Navbar />
 
       {/* Phần Hero - Giới thiệu dịch vụ */}
-      <section className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-12 pb-16 pt-12 md:pb-24 md:pt-20 lg:pt-24">
-        <div className="relative grid grid-cols-1 gap-12 lg:grid-cols-[1fr_420px] xl:grid-cols-[1fr_460px] items-center">
+      <section className="relative mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-8 xl:px-12 min-h-[calc(100vh-64px)] flex flex-col justify-center py-10 lg:py-16">
+        <div className="relative grid grid-cols-1 gap-8 lg:gap-12 lg:grid-cols-[1fr_auto] items-center justify-between">
           {/* Cột bên trái: Tiêu đề & mô tả */}
-          <div className="flex flex-col justify-center text-center sm:text-left">
-            <h1 className="max-w-2xl text-3xl font-bold leading-[1.2] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-5xl">
+          <div className="flex flex-col justify-center text-center sm:text-left max-w-xl xl:max-w-2xl">
+            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[52px] 2xl:text-[58px]">
               Nhìn thể thao qua con số, không qua cảm xúc.
             </h1>
             <p
-              className="mt-4 sm:mt-6 max-w-lg text-sm sm:text-[15px] leading-relaxed mx-auto sm:mx-0"
+              className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-[18px] leading-relaxed mx-auto sm:mx-0 font-normal"
               style={{ color: bangMau.textMuted }}
             >
               Mỗi trận đấu được chấm điểm từ dữ liệu thật: phong độ gần đây, Elo
@@ -165,17 +165,17 @@ export default function LandingPage() {
               công khai rõ ràng.
             </p>
 
-            <div className="mt-8 sm:mt-9 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-5 justify-center sm:justify-start">
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-5 justify-center sm:justify-start">
               <Link
                 href="/matches"
-                className="relative z-20 rounded-md px-6 py-3 text-sm font-semibold transition-all hover:opacity-90 shadow-lg text-center"
+                className="relative z-20 rounded-lg px-7 py-3.5 sm:px-8 sm:py-4 text-base font-bold transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] shadow-lg text-center shadow-[#2FD98C]/20"
                 style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
               >
                 Xem trận hôm nay
               </Link>
               <a
                 href="#accuracy"
-                className="relative z-20 rounded-md border px-6 py-3 text-sm font-medium transition-all hover:bg-white/5 text-center"
+                className="relative z-20 rounded-lg border px-7 py-3.5 sm:px-8 sm:py-4 text-base font-semibold transition-all hover:bg-white/5 hover:scale-[1.02] active:scale-[0.98] text-center"
                 style={{ borderColor: bangMau.border, color: bangMau.text }}
               >
                 Xem độ chính xác mô hình
@@ -183,73 +183,75 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Cột bên phải: cầu thủ + Bảng Danh sách trận sắp diễn ra */}
-          <div className="relative flex justify-center w-full">
-            {/* Cầu thủ bên trái (chỉ hiển thị từ màn hình XL >= 1280px để không đè chữ trên Laptop nhỏ) */}
-            <div className="hidden xl:block absolute right-[calc(100%-8px)] bottom-0 z-10 w-36 2xl:w-44 pointer-events-none transition-transform duration-300 hover:scale-105">
-              <img
-                src={sport === "basketball" ? "/img/lebron.png" : "/img/messi.png"}
-                alt={sport === "basketball" ? "LeBron James" : "Lionel Messi"}
-                className="w-full h-auto object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
-              />
-            </div>
-
-            {/* Bảng Danh sách trận sắp diễn ra */}
-            <div
-              className="relative z-20 w-full max-w-md lg:max-w-none rounded-xl border p-4 sm:p-5 shadow-2xl backdrop-blur-sm"
-              style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
-            >
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-xs sm:text-[13px] font-semibold" style={{ color: bangMau.textMuted }}>
-                  Trận sắp diễn ra
-                </span>
-                <span
-                  className="flex items-center gap-1.5 text-[11px] font-mono font-medium"
-                  style={{ color: bangMau.live }}
-                >
-                  <span
-                    className="h-1.5 w-1.5 animate-pulse rounded-full"
-                    style={{ backgroundColor: bangMau.live }}
-                  />
-                  hôm nay
-                </span>
+          {/* Cột bên phải: Cụm Bảng Danh sách trận + 2 cầu thủ 2 bên (Dời vào trong để Ronaldo hiển thị trọn vẹn) */}
+          <div className="flex justify-center items-center w-full lg:w-auto lg:mr-14 xl:mr-20 2xl:mr-24">
+            <div className="relative w-full sm:w-[350px] lg:w-[360px] xl:w-[380px]">
+              {/* Cầu thủ bên trái (Messi / LeBron) — Nằm hoàn toàn bên ngoài mép trái */}
+              <div className="hidden xl:block absolute right-[calc(100%+10px)] bottom-0 z-10 w-36 xl:w-40 pointer-events-none transition-transform duration-300 hover:scale-105">
+                <img
+                  src={sport === "basketball" ? "/img/lebron.png" : "/img/messi.png"}
+                  alt={sport === "basketball" ? "LeBron James" : "Lionel Messi"}
+                  className="w-full h-auto object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)]"
+                />
               </div>
 
-              {danhSachTranDauSapToi.length === 0 ? (
-                <div className="flex min-h-[220px] items-center justify-center rounded-lg border border-dashed px-4 text-center text-sm" style={{ borderColor: bangMau.borderSoft, color: bangMau.textMuted }}>
-                  Chưa có trận nào hôm nay
+              {/* Bảng Danh sách trận sắp diễn ra */}
+              <div
+                className="relative z-10 w-full rounded-2xl border p-5 sm:p-6 shadow-2xl backdrop-blur-md"
+                style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
+              >
+                <div className="mb-4 flex items-center justify-between">
+                  <span className="text-sm font-bold tracking-wide" style={{ color: bangMau.textMuted }}>
+                    Trận sắp diễn ra
+                  </span>
+                  <span
+                    className="flex items-center gap-1.5 text-xs font-mono font-semibold px-2.5 py-1 rounded-full bg-red-500/10"
+                    style={{ color: bangMau.live }}
+                  >
+                    <span
+                      className="h-2 w-2 animate-pulse rounded-full"
+                      style={{ backgroundColor: bangMau.live }}
+                    />
+                    hôm nay
+                  </span>
                 </div>
-              ) : (
-                <div className="flex flex-col divide-y" style={{ borderColor: bangMau.borderSoft }}>
-                  {danhSachTranDauSapToi.map((tranDau, idx) => (
-                    <div key={idx} className="py-3.5 first:pt-0 last:pb-0" style={{ borderColor: bangMau.borderSoft }}>
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[11px]" style={{ color: bangMau.textFaint }}>
-                          {tranDau.league}
-                        </span>
-                        <span className="font-mono text-[11px]" style={{ color: bangMau.textFaint }}>
-                          {tranDau.time}
-                        </span>
-                      </div>
-                      <div className="mb-2 flex items-center justify-between text-[13px] sm:text-[14px]">
-                        <span className="font-semibold truncate max-w-[130px] sm:max-w-[150px]">{tranDau.home}</span>
-                        <span className="text-xs px-2" style={{ color: bangMau.textFaint }}>vs</span>
-                        <span className="font-semibold truncate max-w-[130px] sm:max-w-[150px] text-right">{tranDau.away}</span>
-                      </div>
-                      <ThanhXacSuat home={tranDau.probHome} draw={tranDau.probDraw} away={tranDau.probAway} />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
 
-            {/* Cầu thủ bên phải (chỉ hiển thị từ màn hình XL >= 1280px) */}
-            <div className={`hidden xl:block absolute left-[calc(100%-8px)] bottom-0 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-52 2xl:w-60" : "w-36 2xl:w-44"}`}>
-              <img
-                src={sport === "basketball" ? "/img/curry.png" : "/img/ronaldo.png"}
-                alt={sport === "basketball" ? "Stephen Curry" : "Cristiano Ronaldo"}
-                className="w-full h-auto object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)]"
-              />
+                {danhSachTranDauSapToi.length === 0 ? (
+                  <div className="flex min-h-[240px] sm:min-h-[260px] items-center justify-center rounded-xl border border-dashed px-6 text-center text-sm sm:text-base" style={{ borderColor: bangMau.borderSoft, color: bangMau.textMuted }}>
+                    Chưa có trận nào hôm nay
+                  </div>
+                ) : (
+                  <div className="flex flex-col divide-y" style={{ borderColor: bangMau.borderSoft }}>
+                    {danhSachTranDauSapToi.map((tranDau, idx) => (
+                      <div key={idx} className="py-3.5 first:pt-0 last:pb-0" style={{ borderColor: bangMau.borderSoft }}>
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-xs font-medium" style={{ color: bangMau.textFaint }}>
+                            {tranDau.league}
+                          </span>
+                          <span className="font-mono text-xs font-medium" style={{ color: bangMau.textFaint }}>
+                            {tranDau.time}
+                          </span>
+                        </div>
+                        <div className="mb-2.5 flex items-center justify-between text-sm sm:text-base font-bold">
+                          <span className="truncate max-w-[130px] sm:max-w-[150px]">{tranDau.home}</span>
+                          <span className="text-xs px-2 font-normal" style={{ color: bangMau.textFaint }}>vs</span>
+                          <span className="truncate max-w-[130px] sm:max-w-[150px] text-right">{tranDau.away}</span>
+                        </div>
+                        <ThanhXacSuat home={tranDau.probHome} draw={tranDau.probDraw} away={tranDau.probAway} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Cầu thủ bên phải (Ronaldo / Curry) — Nằm hoàn toàn bên ngoài mép phải */}
+              <div className={`hidden xl:block absolute left-[calc(100%+10px)] bottom-0 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-44 xl:w-48" : "w-36 xl:w-40"}`}>
+                <img
+                  src={sport === "basketball" ? "/img/curry.png" : "/img/ronaldo.png"}
+                  alt={sport === "basketball" ? "Stephen Curry" : "Cristiano Ronaldo"}
+                  className="w-full h-auto object-contain drop-shadow-[0_16px_32px_rgba(0,0,0,0.7)]"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -730,43 +732,50 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Bổ sung Banner Call-to-Action (CTA) phụ ở cuối trang trước Footer */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16 md:pb-24">
+      {/* Banner Call-to-Action (CTA) phủ full toàn bộ chiều ngang trang web */}
+      <section
+        className="relative w-full border-t py-16 sm:py-20 md:py-24 overflow-hidden text-center"
+        style={{
+          borderColor: bangMau.borderSoft,
+          backgroundColor: bangMau.panel,
+        }}
+      >
+        {/* Hiệu ứng ánh sáng nền gradient lan tỏa toàn màn hình */}
         <div
-          className="relative overflow-hidden rounded-2xl border p-6 sm:p-10 md:p-14 text-center"
-          style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
-        >
-          {/* Vùng tạo hiệu ứng ánh sáng gradient làm điểm nhấn */}
-          <div
-            className="absolute -top-24 -left-24 h-64 w-64 rounded-full opacity-15 blur-3xl pointer-events-none"
-            style={{ backgroundColor: bangMau.accent }}
-          />
-          <div
-            className="absolute -bottom-24 -right-24 h-64 w-64 rounded-full opacity-15 blur-3xl pointer-events-none"
-            style={{ backgroundColor: bangMau.probAway }}
-          />
+          className="absolute -top-32 -left-20 h-96 w-96 rounded-full opacity-20 blur-[100px] pointer-events-none"
+          style={{ backgroundColor: bangMau.accent }}
+        />
+        <div
+          className="absolute -bottom-32 -right-20 h-96 w-96 rounded-full opacity-15 blur-[100px] pointer-events-none"
+          style={{ backgroundColor: bangMau.probAway }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-[600px] rounded-full opacity-10 blur-[120px] pointer-events-none"
+          style={{ backgroundColor: bangMau.accent }}
+        />
 
-          <h2 className="relative z-10 text-xl sm:text-2xl md:text-3xl font-bold tracking-tight max-w-2xl mx-auto leading-snug">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mx-auto leading-tight text-white">
             Bắt đầu theo dõi dự đoán thể thao bằng dữ liệu ngay hôm nay
           </h2>
           <p
-            className="relative z-10 mx-auto mt-3 max-w-xl text-xs sm:text-sm leading-relaxed"
+            className="mx-auto mt-4 max-w-2xl text-sm sm:text-base leading-relaxed"
             style={{ color: bangMau.textMuted }}
           >
             Trải nghiệm nền tảng phân tích thể thao chuẩn Data Science. Đăng ký tài khoản miễn phí để mở khóa toàn bộ số liệu và dự đoán chuyên sâu.
           </p>
 
-          <div className="relative z-10 mt-6 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3.5 sm:gap-4">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3.5 sm:gap-4">
             <Link
               href="/register"
-              className="rounded-md px-6 py-3 text-sm font-semibold transition-all hover:opacity-90 shadow-md text-center"
+              className="w-full sm:w-auto rounded-md px-7 py-3 text-sm font-semibold transition-all duration-200 hover:opacity-90 hover:shadow-[0_0_20px_rgba(47,217,140,0.3)] shadow-md text-center"
               style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
             >
               Tạo tài khoản miễn phí
             </Link>
             <Link
               href="/matches"
-              className="rounded-md border px-6 py-3 text-sm font-medium transition-colors hover:bg-white/5 text-center"
+              className="w-full sm:w-auto rounded-md border px-7 py-3 text-sm font-medium transition-all duration-200 hover:bg-white/5 hover:border-white/40 text-center"
               style={{ borderColor: bangMau.border, color: bangMau.text }}
             >
               Xem lịch thi đấu
