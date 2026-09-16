@@ -12,6 +12,12 @@ describe('HealthService', () => {
   beforeEach(() => {
     mockPrisma = {
       $queryRaw: vi.fn().mockResolvedValue([{ 1: 1 }]),
+      league: {
+        findMany: vi.fn().mockResolvedValue([{ season: '2026-2027' }]),
+      },
+      match: {
+        count: vi.fn().mockResolvedValue(100),
+      },
     };
     mockCache = {
       ping: vi.fn().mockResolvedValue(true),

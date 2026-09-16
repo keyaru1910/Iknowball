@@ -43,21 +43,19 @@ export default function PricingPage() {
         <div className="mt-8 inline-flex items-center p-1 bg-neutral-900 border border-neutral-800 rounded-xl">
           <button
             onClick={() => setBillingCycle("monthly")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              billingCycle === "monthly"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${billingCycle === "monthly"
                 ? "bg-emerald-500 text-neutral-950 font-semibold shadow-lg"
                 : "text-neutral-400 hover:text-white"
-            }`}
+              }`}
           >
             Hàng Tháng
           </button>
           <button
             onClick={() => setBillingCycle("yearly")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${
-              billingCycle === "yearly"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${billingCycle === "yearly"
                 ? "bg-emerald-500 text-neutral-950 font-semibold shadow-lg"
                 : "text-neutral-400 hover:text-white"
-            }`}
+              }`}
           >
             Hàng Năm
             <span className="text-[10px] uppercase font-bold bg-neutral-950/30 px-1.5 py-0.5 rounded text-neutral-900">
@@ -101,7 +99,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Xem 3 dự đoán AI mỗi ngày</span>
+                <span>Xem 3 dự đoán  mỗi ngày</span>
               </li>
             </ul>
           </div>

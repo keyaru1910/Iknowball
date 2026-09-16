@@ -1,25 +1,31 @@
 "use client";
 
+import { useMemo } from "react";
 import { colors } from "../lib/design-tokens";
-import { SUPPORTED_SEASONS, type SeasonOption } from "../lib/constants/seasons";
+import { taoDanhSachMuaGiai, type SeasonOption } from "../lib/constants/seasons";
 
 interface SeasonSelectorProps {
   selectedSeason: string;
   onSelectSeason: (season: string) => void;
+  sport?: "football" | "basketball";
   variant?: "pill" | "select";
   className?: string;
 }
 
 /**
- * Component lựa chọn mùa giải (24/25, 25/26, 26/27)
- * Áp dụng thống nhất cho cả trang Trận đấu (Matches) và Bảng xếp hạng (Standings)
+ * Component lựa chọn mùa giải (24/25, 25/26, 26/27,...)
+ * Áp dụng thống nhất cho cả trang Trận đấu (Matches), Thống kê (Statistics) và Bảng xếp hạng (Standings)
  */
 export default function SeasonSelector({
   selectedSeason,
   onSelectSeason,
+  sport = "football",
   variant = "pill",
   className = "",
 }: SeasonSelectorProps) {
+  const danhSachMuaGiai = useMemo(() => {
+    return taoDanhSachMuaGiai(sport);
+  }, [sport]);
   if (variant === "select") {
     return (
       <div className={`inline-flex items-center gap-2 ${className}`}>
@@ -37,7 +43,7 @@ export default function SeasonSelector({
             color: colors.text,
           }}
         >
-          {SUPPORTED_SEASONS.map((s: SeasonOption) => (
+          {danhSachMuaGiai.map((s: SeasonOption) => (
             <option key={s.value} value={s.value}>
               Mùa {s.label} ({s.value})
             </option>
@@ -56,7 +62,7 @@ export default function SeasonSelector({
         <span>Mùa</span>
       </div>
       <div className="flex items-center gap-1">
-        {SUPPORTED_SEASONS.map((season: SeasonOption) => {
+        {danhSachMuaGiai.map((season: SeasonOption) => {
           const isSelected = selectedSeason === season.value || selectedSeason === season.label;
           return (
             <button

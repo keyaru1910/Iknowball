@@ -1,0 +1,263 @@
+# Tái cấu trúc iKnowBall — Focus 100% vào Prediction
+
+## Bối cảnh
+
+API free không đủ quota để chạy đồng thời Standings + Live Scores + Predictions. Quyết định chiến lược: **bỏ phần Matches (lịch thi đấu / live scores) và Standings (bảng xếp hạng) khỏi giao diện người dùng**, tập trung toàn bộ quota API và effort phát triển vào **hệ thống dự đoán (Prediction)** — tính năng cốt lõi tạo giá trị khác biệt cho sản phẩm.
+
+> [!IMPORTANT]
+> **Không xóa backend data pipeline.** Hệ thống sync trận đấu, standings từ API bên ngoài vẫn cần hoạt động "ngầm" vì Prediction phụ thuộc hoàn toàn vào dữ liệu trận đấu để:
+> - Tính Elo rating
+> - Tạo feature snapshot (recent form, H2H, win rate...)
+> - Đánh giá kết quả prediction (evaluatePending)
+>
+> Chỉ bỏ phần **hiển thị công khai** matches/standings trên frontend.
+
+---
+
+## User Review Required
+
+> [!WARNING]
+> **Breaking changes cho người dùng:**
+> - Trang `/matches` và `/standings` sẽ bị xóa khỏi navigation
+> - Trang `/statistics` sẽ bị **xóa hoàn toàn** (đã xác nhận)
+> - Trang chi tiết trận đấu `/matches/[id]` sẽ được **chuyển thành trang chi tiết dự đoán** `/predictions/[matchId]` — giữ lại các phần hữu ích (H2H, stats) làm context cho prediction
+> - Trang `/news` được **giữ nguyên**
+> - **NBA vẫn giữ** — hệ thống prediction hỗ trợ cả football và basketball
+> - Navbar sẽ được thiết kế lại với các mục mới tập trung vào Prediction
+
+---
+
+## Open Questions — ✅ Đã giải đáp
+
+> [!NOTE]
+> Tất cả câu hỏi đã được xác nhận:
+> - **Seed dữ liệu lịch sử** — Chưa cần bổ sung thêm. Giữ nguyên 2 mùa (2024-25, 2025-26) cho 5 giải quốc nội + UCL.
+> - **Logistic Regression** — Tạo **module riêng** trong cùng `prediction-service` (`app/models/logistic_model.py`), không viết trực tiếp vào `main.py` và không tách thành service khác.
+> - **NBA** — Giữ. Hệ thống prediction hỗ trợ cả Football và Basketball.
+> - `/statistics` — Bỏ hoàn toàn. `/news` — Giữ nguyên. Match detail → Prediction detail view.
+
+---
+
+## Proposed Changes
+
+Plan được chia thành **6 phase** theo đúng thứ tự ưu tiên của bạn, với điều chỉnh cho phù hợp thực tế codebase.
+
+---
+
+### Phase 1: Nền tảng dữ liệu lịch sử
+
+> Mọi thứ sau phụ thuộc vào đây. Quota tiết kiệm từ việc bỏ live scores/standings được dồn vào sync historical data.
+
+#### [MODIFY] [seed-sports.ts](file:///d:/iknowball%20project/backend/src/seed-sports.ts)
+- **Giữ nguyên** — đã cover 2 mùa giải (2024-25, 2025-26) cho 5 giải quốc nội + UCL ✅
+- `externalId` dùng prefix `archive:` để tách biệt khỏi live sync ✅
+- Chưa cần bổ sung thêm seed data lịch sử
+
+#### [MODIFY] [sports-sync.service.ts](file:///d:/iknowball%20project/backend/src/module/sports-sync/sports-sync.service.ts)
+- **Giữ nguyên** pipeline sync matches — prediction cần dữ liệu này
+- Giảm tần suất sync standings (hoặc bỏ hẳn sync standings nếu không cần cho prediction)
+- Tăng priority cho sync match results (trận FINISHED cần để evaluate predictions)
+
+#### Schema Validation
+- Kiểm tra model `Match` và `TeamStats` đã có đủ field cho **sliding-window diff stats** theo plan:
+  - ✅ Hiện có: `homeScore`, `awayScore`, `status`, `matchDate`, `season`, `eloRating` (trong TeamStats)
+  - ❌ Chưa có: `shotsDiff`, `possessionDiff`, `passAccuracyDiff`, `cornersDiff`, `foulsDiff`
+  - Tuy nhiên những field diff này **không cần lưu trong schema** — chúng sẽ được tính on-the-fly trong feature engineering pipeline (Phase 2). Raw stats có thể lưu trong `rawData` JSON field của Match.
+
+---
+
+### Phase 2: Feature Engineering Pipeline (FastAPI)
+
+> Nâng cấp prediction-service từ Elo-only → multi-feature model.
+
+#### [MODIFY] [feature_extractor.py](file:///d:/iknowball%20project/prediction-service/app/features/feature_extractor.py)
+- Thêm **sliding-window diff calculator**: tính Goal Diff, Shot Diff, Possession Diff... từ N trận gần nhất
+- `window_size` là **hyperparameter** (không hardcode), default = 5, hỗ trợ thử nghiệm [3, 5, 7, 10]
+- Thêm `extract_features_from_db()` — hàm kết nối DB PostgreSQL trực tiếp (thay vì chỉ nhận dict từ NestJS)
+
+#### [NEW] `prediction-service/app/features/sliding_window.py`
+- Module tính sliding-window stats:
+  - `goal_diff_window(team_id, n_matches, before_date)` → float
+  - `form_window(team_id, n_matches, before_date)` → float
+  - `elo_at_time(team_id, before_date)` → float
+- Kết nối trực tiếp PostgreSQL qua `psycopg2` hoặc `asyncpg`
+
+#### [NEW] `prediction-service/app/features/elo_tracker.py`
+- Tách logic Elo thành module riêng cho Python service
+- `TeamStats.eloRating` đã có trong Prisma schema ✅
+- Hàm `rebuild_elo_chain(league_id, season)` để tính lại Elo chronologically
+
+---
+
+### Phase 3: Model Training + Backtesting (Phase cốt lõi)
+
+> Từ Elo-v1 (rule-based) → Logistic Regression baseline (data-driven).
+> Logistic Regression được tạo **module riêng** trong cùng prediction-service, không viết vào `main.py`.
+
+#### [NEW] `prediction-service/app/models/logistic_model.py`
+- Module riêng, cùng cấp với `elo_model.py` trong thư mục `app/models/`
+- **Football**: 3-outcome Logistic Regression (HOME_WIN, DRAW, AWAY_WIN)
+- **Basketball**: 2-outcome Logistic Regression (HOME_WIN, AWAY_WIN) — model tách riêng, không dùng chung
+- Feature vector: `[elo_diff, home_advantage, form_diff, goal_diff_n, h2h_win_rate, ...]`
+- Sử dụng `scikit-learn` `LogisticRegression` với `multi_class='multinomial'`
+- Expose hàm `predict()` và `train()` tương tự interface của `elo_model.py`
+- Lưu model weights bằng `joblib` (serialized file trong `prediction-service/models/`)
+
+#### [NEW] `prediction-service/app/models/model_registry.py`
+- Registry pattern: map `model_version` → model module
+- `get_model(version)` → trả về module predict tương ứng (elo hoặc logistic)
+- Giúp `main.py` gọi đúng model mà không cần import trực tiếp
+
+#### [MODIFY] [backtest.py](file:///d:/iknowball%20project/prediction-service/app/evaluation/backtest.py)
+- Thêm **walk-forward backtesting** cho Logistic Regression model (hiện chỉ có cho Elo-v1)
+- **Không dùng random k-fold** (đúng như plan, tránh data leakage)
+- Thêm evaluation metrics riêng theo từng class (đặc biệt DRAW)
+- Output: **một con số performance đáng tin cậy** (Log Loss + Brier Score + per-class metrics)
+
+#### [MODIFY] [metrics.py](file:///d:/iknowball%20project/prediction-service/app/evaluation/metrics.py)
+- Thêm **per-class breakdown**: precision/recall/f1 cho từng outcome
+- Thêm **calibration metrics**: reliability diagram data
+- Thêm **comparison table**: Elo-v1 vs Logistic Regression vs Random vs Higher-Elo
+
+#### [NEW] `prediction-service/notebooks/` — Jupyter notebooks
+- `01_eda.ipynb`: Khám phá dữ liệu lịch sử, phân bố outcome
+- `02_feature_engineering.ipynb`: Thử nghiệm sliding-window sizes
+- `03_model_comparison.ipynb`: So sánh Elo-v1 vs LogReg, hyperparameter tuning
+
+---
+
+### Phase 4: Schema + Batch Prediction Pipeline
+
+> Hoàn thiện pipeline tự động hóa sinh prediction và evaluate.
+
+#### Backend Schema (Prisma)
+- `Prediction`, `PredictionResult`, `ModelPerformance` — **đã có** ✅
+- Kiểm tra và bổ sung nếu cần:
+  - `Prediction.featuresSnapshot` (JSON) — đã có ✅
+  - `ModelPerformance` composite key — đã có ✅
+
+#### [MODIFY] [prediction.processor.ts](file:///d:/iknowball%20project/backend/src/module/prediction/prediction.processor.ts)
+- BullMQ jobs đã có: `GENERATE` (batch 48h) và `EVALUATE` (mỗi 3h) ✅
+- Cập nhật: đồng bộ với model version mới (khi chuyển từ `elo-v1` sang `logistic-v1`)
+
+#### [MODIFY] [prediction.controller.ts](file:///d:/iknowball%20project/backend/src/module/prediction/prediction.controller.ts)
+- Đã có `POST generate/:matchId` (admin force-regenerate) ✅
+- Thêm endpoint `POST predictions/retrain` (admin) — trigger retrain model trên Python service
+
+#### [MODIFY] [main.py](file:///d:/iknowball%20project/prediction-service/app/main.py)
+- Thêm endpoint `POST /retrain` — trigger model training pipeline
+- Thêm endpoint `POST /predict-batch` — batch prediction (thay vì gọi `/predict` từng trận)
+- Thêm endpoint `GET /model-info` — thông tin model version, training date, performance
+
+---
+
+### Phase 5: Frontend — Tái cấu trúc giao diện
+
+> Bỏ matches/standings, xây dựng giao diện prediction-first.
+
+#### [MODIFY] [Navbar.tsx](file:///d:/iknowball%20project/frontend/my-app/app/components/Navbar.tsx)
+- Thay đổi `navLinks` từ:
+  ```
+  Trang chủ | Lịch thi đấu | Bảng xếp hạng | Dữ liệu thống kê | Tin tức
+  ```
+  Thành:
+  ```
+  Trang chủ | Dự đoán hôm nay | Hiệu năng mô hình | Tin tức
+  ```
+- `/matches` → Bỏ khỏi nav
+- `/standings` → Bỏ khỏi nav
+- `/statistics` → **Bỏ hoàn toàn** (xóa page + bỏ nav link)
+- Thêm `/predictions` → Trang danh sách dự đoán (prediction list)
+- `/predictions/performance` → Giữ nguyên
+- `/news` → **Giữ nguyên**
+
+#### [NEW] `frontend/my-app/app/(public)/predictions/page.tsx`
+- Trang **danh sách dự đoán** — tính năng trung tâm mới
+- Hiển thị **MatchCard rút gọn**: 2 đội + giờ đá + ProbBar (thanh xác suất)
+- Filter theo ngày, giải đấu, **sport switcher** (Football/Basketball)
+- RBAC gating: Free user thấy xác suất cơ bản, Premium thấy explanation chi tiết
+- Responsive grid layout
+
+#### [NEW] `frontend/my-app/app/(public)/predictions/[matchId]/page.tsx`
+- Trang **chi tiết dự đoán** — chuyển từ match detail cũ (`/matches/[id]`)
+- **Giữ lại** các thành phần hữu ích từ match detail làm context:
+  - H2HCard — lịch sử đối đầu (hỗ trợ giải thích prediction)
+  - Thông tin 2 đội (tên, logo, giải đấu)
+  - Giờ đá / kết quả (nếu trận đã kết thúc)
+- **Thêm mới** phần prediction:
+  - ProbBar lớn + explanation factors + historical accuracy
+  - Premium gate: giải thích chi tiết (Elo diff, form, H2H) chỉ cho Premium
+  - Free user: thấy prediction kết quả + 3 lượt/ngày xem chi tiết (logic đã có ✅)
+- Hỗ trợ cả **Football** và **Basketball** (NBA)
+
+#### [MODIFY] [LandingPage.tsx](file:///d:/iknowball%20project/frontend/my-app/app/components/LandingPage.tsx)
+- Cập nhật hero section: focus vào "AI Prediction Platform" thay vì "Sports Data"
+- Bỏ/thay các section giới thiệu matches/standings
+- Thêm section: "Model Performance Dashboard" — showcase minh bạch
+
+#### [MODIFY] [Footer.tsx](file:///d:/iknowball%20project/frontend/my-app/app/components/Footer.tsx)
+- Cập nhật links: bỏ matches/standings, thêm predictions/performance
+
+#### Cleanup — Xóa/archive các page không dùng
+- ~~[DELETE] `(public)/matches/page.tsx`~~ → Chuyển sang archive (không xóa vội, phòng rollback)
+- ~~[DELETE] `(public)/standings/page.tsx`~~ → Archive
+- ~~[DELETE] `(public)/matches/[id]/page.tsx`~~ → Archive (logic đã chuyển sang `/predictions/[matchId]`)
+- **[DELETE] `(public)/statistics/page.tsx`** → Xóa hoàn toàn
+- Components cũ vẫn **giữ nguyên file** nhưng bỏ import trong navigation:
+  - `StandingsTable.tsx`, `MatchDateFilter.tsx`, `MatchTimeline.tsx`, `MatchStatsBar.tsx`
+- Components tái sử dụng cho prediction detail (giữ nguyên):
+  - `H2HCard.tsx`, `ProbBar.tsx`, `PredictionDisclaimer.tsx`, `SportSwitcher.tsx`
+
+---
+
+### Phase 6: Vòng lặp cải tiến Model
+
+> Sau khi có baseline + backtest infra hoạt động ổn định.
+
+#### [MODIFY] [prediction.service.ts](file:///d:/iknowball%20project/backend/src/module/prediction/prediction.service.ts)
+- Support multi-model versioning: khi deploy `logistic-v1`, giữ `elo-v1` để A/B compare
+- `MODEL_VERSION` configurable qua env var
+
+#### [MODIFY] [performance/page.tsx](file:///d:/iknowball%20project/frontend/my-app/app/%28public%29/predictions/performance/page.tsx)
+- Thêm **Model Comparison view**: so sánh nhiều model versions side-by-side
+- Thêm **Per-class breakdown chart**: accuracy riêng cho HOME_WIN / DRAW / AWAY_WIN
+- Đây là **tính năng trung tâm** (thay thế standings) — bằng chứng minh bạch cho người dùng
+
+---
+
+## Verification Plan
+
+### Automated Tests
+```bash
+# Backend unit tests
+cd backend && npm run test
+
+# Prediction service tests  
+cd prediction-service && python -m pytest app/tests/
+
+# Backtest CLI validation
+cd prediction-service && python -m app.evaluation.backtest --demo
+```
+
+### Manual Verification
+- Kiểm tra navigation mới hoạt động đúng (không còn link đến matches/standings)
+- Trang `/predictions` hiển thị danh sách prediction với ProbBar
+- Trang `/predictions/performance` hiển thị metrics + backtest comparison
+- RBAC gating: Free user bị giới hạn 3 lượt/ngày, Premium xem không giới hạn
+- Responsive trên mobile
+
+---
+
+## Tóm tắt thứ tự triển khai
+
+| Phase | Nội dung | Ưu tiên | Phụ thuộc |
+|-------|----------|---------|-----------|
+| 1 | Nền tảng dữ liệu lịch sử | 🔴 Cao nhất | — |
+| 2 | Feature engineering pipeline | 🔴 Cao | Phase 1 |
+| 3 | Model training + backtesting | 🔴 Cao | Phase 2 |
+| 4 | Schema + batch prediction pipeline | 🟡 Trung bình | Phase 3 |
+| 5 | Frontend tái cấu trúc | 🟡 Trung bình | Phase 1 (có thể làm song song) |
+| 6 | Vòng lặp cải tiến model | 🟢 Thấp | Phase 3, 4 |
+
+> [!TIP]
+> **Phase 5 (Frontend) có thể triển khai song song với Phase 2-3** vì chỉ cần dữ liệu prediction đã có sẵn trong DB. Không cần đợi model mới.

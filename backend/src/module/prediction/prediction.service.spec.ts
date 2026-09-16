@@ -114,7 +114,7 @@ describe('PredictionService', () => {
 
   describe('generateForMatch (immutability & atomicity)', () => {
     it('bỏ qua và trả về bản ghi cũ nếu đã có prediction cùng modelVersion', async () => {
-      const existingPrediction = { id: 'P1', matchId: 'M1', modelVersion: 'elo-v1' };
+      const existingPrediction = { id: 'P1', matchId: 'M1', modelVersion: 'logistic-regression-v1' };
       mockPrisma.prediction.findUnique.mockResolvedValue(existingPrediction);
       const service = createService();
 

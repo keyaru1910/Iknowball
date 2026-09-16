@@ -11,6 +11,17 @@ interface MatchDateFilterProps {
   leagues?: League[];
   selectedSeason?: string;
   onSelectSeason?: (season: string) => void;
+  sport?: "football" | "basketball";
+}
+
+/**
+ * Định dạng đối tượng Date thành chuỗi YYYY-MM-DD theo giờ địa phương của người dùng (tránh lệch UTC)
+ */
+function dinhDangNgayDiaPhuong(d: Date): string {
+  const nam = d.getFullYear();
+  const thang = String(d.getMonth() + 1).padStart(2, "0");
+  const ngay = String(d.getDate()).padStart(2, "0");
+  return `${nam}-${thang}-${ngay}`;
 }
 
 export default function MatchDateFilter({
@@ -21,8 +32,9 @@ export default function MatchDateFilter({
   leagues = [],
   selectedSeason,
   onSelectSeason,
+  sport = "football",
 }: MatchDateFilterProps) {
-  // Tạo danh sách 7 ngày quanh mốc hôm nay (3 ngày trước, hôm nay, 3 ngày sau)
+  // Tạo danh sách 7 ngày quanh mốc hôm nay (3 ngày trước, hôm nay, 3 ngày sau) theo giờ địa phương
   const dateOptions = useMemo(() => {
     const dates: { label: string; dateStr: string; isToday: boolean }[] = [];
     const today = new Date();
@@ -30,7 +42,7 @@ export default function MatchDateFilter({
     for (let offset = -3; offset <= 3; offset++) {
       const d = new Date();
       d.setDate(today.getDate() + offset);
-      const dateStr = d.toISOString().slice(0, 10); // yyyy-MM-dd
+      const dateStr = dinhDangNgayDiaPhuong(d); // yyyy-MM-dd theo Local Timezone
 
       let label = "";
       if (offset === 0) {
@@ -133,6 +145,7 @@ export default function MatchDateFilter({
           <SeasonSelector
             selectedSeason={selectedSeason}
             onSelectSeason={onSelectSeason}
+            sport={sport}
             variant="pill"
           />
         )}

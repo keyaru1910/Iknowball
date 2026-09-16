@@ -77,7 +77,11 @@ interface ThanhXacSuatProps {
 
 // Component hiển thị thanh phần trăm xác suất Thắng (Sân nhà) - Hòa - Thắng (Sân khách)
 function ThanhXacSuat({ home, draw, away, hienThiChuGiai = true }: ThanhXacSuatProps) {
-  const customTooltipText = `Dự đoán: Đội nhà thắng ${home}% | Hòa ${draw}% | Đội khách thắng ${away}%`;
+  const homeFormat = Number(home).toFixed(1);
+  const drawFormat = Number(draw).toFixed(1);
+  const awayFormat = Number(away).toFixed(1);
+
+  const customTooltipText = `Dự đoán: Đội nhà thắng ${homeFormat}% | Hòa ${drawFormat}% | Đội khách thắng ${awayFormat}%`;
 
   return (
     <div className="w-full">
@@ -106,17 +110,17 @@ function ThanhXacSuat({ home, draw, away, hienThiChuGiai = true }: ThanhXacSuatP
           className="mt-1.5 flex items-center justify-between font-mono text-[11px]"
           style={{ color: bangMau.textMuted }}
         >
-          <span className="flex items-center gap-1.5" title={`Chủ nhà thắng: ${home}%`}>
+          <span className="flex items-center gap-1.5" title={`Chủ nhà thắng: ${homeFormat}%`}>
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: bangMau.accent }} />
-            <span>Nhà <strong style={{ color: bangMau.text }}>{home}%</strong></span>
+            <span>Nhà <strong style={{ color: bangMau.text }}>{homeFormat}%</strong></span>
           </span>
-          <span className="flex items-center gap-1.5" title={`Hai đội hòa: ${draw}%`}>
+          <span className="flex items-center gap-1.5" title={`Hai đội hòa: ${drawFormat}%`}>
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: bangMau.probDraw }} />
-            <span>Hòa <strong style={{ color: bangMau.text }}>{draw}%</strong></span>
+            <span>Hòa <strong style={{ color: bangMau.text }}>{drawFormat}%</strong></span>
           </span>
-          <span className="flex items-center gap-1.5" title={`Đội khách thắng: ${away}%`}>
+          <span className="flex items-center gap-1.5" title={`Đội khách thắng: ${awayFormat}%`}>
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: bangMau.probAway }} />
-            <span>Khách <strong style={{ color: bangMau.text }}>{away}%</strong></span>
+            <span>Khách <strong style={{ color: bangMau.text }}>{awayFormat}%</strong></span>
           </span>
         </div>
       )}
@@ -172,11 +176,11 @@ export default function LandingPage() {
 
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-5 justify-center sm:justify-start">
               <Link
-                href="/matches"
+                href="/predictions"
                 className="relative z-20 rounded-lg px-7 py-3.5 sm:px-8 sm:py-4 text-base font-bold transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] shadow-lg text-center shadow-[#2FD98C]/20"
                 style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
               >
-                Xem trận hôm nay
+                Xem dự đoán hôm nay
               </Link>
               <a
                 href="#accuracy"
@@ -461,7 +465,7 @@ export default function LandingPage() {
               Tỷ lệ dự đoán xác suất Thắng - Hòa - Thua trực quan theo thời gian thực <span className="sm:hidden text-emerald-400 font-mono text-[11px]">(Vuốt ngang để xem)</span>
             </p>
           </div>
-          <Link href="/matches" className="text-sm font-medium hover:underline shrink-0" style={{ color: bangMau.accent }}>
+          <Link href="/predictions" className="text-sm font-medium hover:underline shrink-0" style={{ color: bangMau.accent }}>
             Xem tất cả →
           </Link>
         </div>
@@ -577,18 +581,18 @@ export default function LandingPage() {
           <div className="animate-marquee-ltr flex gap-4 sm:gap-6 px-4">
             {[
               {
-                ten: "Trần Hoàng Nam",
-                vaiTro: "Data Analyst & Fan Ngoại Hạng Anh",
-                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                ten: "Trần Gia Bảo",
+                vaiTro: "Fan laliga",
+                avatar: "https://i.pinimg.com/736x/c2/2d/b1/c22db1d4af82f826fe66ebfa4218c4e7.jpg",
                 noiDung:
                   "Điểm mình ưng ý nhất ở IKNOWBALL là tính minh bạch. Họ công khai Brier Score và Log Loss chứ không 'nổ' tỷ lệ thắng 100% như các hội nhóm. Mô hình Elo tính sân nhà/khách cực kỳ sát thực tế.",
                 tag: "Premier League",
                 xepHang: 5,
               },
               {
-                ten: "Nguyễn Minh Đức",
+                ten: "Trương Tuấn Tú",
                 vaiTro: "Chuyên đọc sách thể thao",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                avatar: "https://i.pinimg.com/736x/10/85/4e/10854e9efd086ecc63d68154a3496afd.jpg",
                 noiDung:
                   "Thanh xác suất 3 màu phân tách Nhà - Hòa - Khách rất trực quan. Mình thường dùng chỉ số xác suất này để so sánh với Odds nhà cái, tìm ra các kèo Value Bet có kỳ vọng dương.",
                 tag: "La Liga & UCL",
@@ -597,16 +601,16 @@ export default function LandingPage() {
               {
                 ten: "Lê Quang Huy",
                 vaiTro: "Người theo dõi NBA & Thể thao Mỹ",
-                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                avatar: "https://i.pinimg.com/736x/22/fd/30/22fd30953a14a9f2dfb428f9dca61c39.jpg",
                 noiDung:
                   "Chuyển đổi giữa Bóng đá và Bóng rổ rất mượt. Dữ liệu các trận đấu NBA cập nhật chuẩn xác, giúp việc phân tích phong độ các đội trước giờ bóng lăn nhàn hơn rất nhiều.",
                 tag: "NBA Basketball",
                 xepHang: 5,
               },
               {
-                ten: "Phạm Hải Đăng",
-                vaiTro: "Kỹ sư phần mềm & Fan Serie A",
-                avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                ten: "Lê Ngọc Mai",
+                vaiTro: "Fan Ngoại Hạng Anh",
+                avatar: "https://i.pinimg.com/1200x/fa/80/09/fa8009ce4fd4acc8e5fbb02f8c4aaece.jpg",
                 noiDung:
                   "Giao diện Dark Mode đẹp và tốc độ tải trang cực nhanh. Không có quảng cáo rác hay banner cá cược phiền toái, thuần túy là dữ liệu và thống kê sạch sẽ.",
                 tag: "Serie A & Calcio",
@@ -614,8 +618,8 @@ export default function LandingPage() {
               },
               {
                 ten: "Vũ Bảo Ngọc",
-                vaiTro: "Chuyên viên thống kê tài chính",
-                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+                vaiTro: "Chuyên viên thống kê thể thao",
+                avatar: "https://i.pinimg.com/736x/8f/44/f1/8f44f107893d8b3b14a047602f6d1105.jpg",
                 noiDung:
                   "Rất ấn tượng với cách giải thích Brier Score của website. Đây là tiêu chuẩn vàng trong xác suất dự báo thời tiết và tài chính, giờ được áp dụng cho thể thao rất chuẩn.",
                 tag: "Data Science",
@@ -624,7 +628,7 @@ export default function LandingPage() {
               {
                 ten: "Đỗ Quốc Cường",
                 vaiTro: "Quản trị viên cộng đồng Bóng rổ",
-                avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                avatar: "https://i.pinimg.com/736x/4f/0f/70/4f0f70440d2be02a7b726b294cc63f27.jpg",
                 noiDung:
                   "Theo dõi tỷ lệ dự đoán chuỗi trận Play-offs NBA từ mùa trước đến nay thấy mô hình dự đoán rất ổn định, đặc biệt là những trận derby căng thẳng.",
                 tag: "Basketball Pro",
@@ -632,54 +636,54 @@ export default function LandingPage() {
               },
               // Nhân đôi danh sách:
               {
-                ten: "Trần Hoàng Nam",
-                vaiTro: "Data Analyst & Fan Ngoại Hạng Anh",
-                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+                ten: "Lê Thành Nam",
+                vaiTro: "Data Analyst ",
+                avatar: "https://i.pinimg.com/736x/a7/64/5f/a7645f9cc84777fbfe0d56e0ca15adbe.jpg",
                 noiDung:
                   "Điểm mình ưng ý nhất ở IKNOWBALL là tính minh bạch. Họ công khai Brier Score và Log Loss chứ không 'nổ' tỷ lệ thắng 100% như các hội nhóm. Mô hình Elo tính sân nhà/khách cực kỳ sát thực tế.",
                 tag: "Premier League",
                 xepHang: 5,
               },
               {
-                ten: "Nguyễn Minh Đức",
-                vaiTro: "Bettor thể thao bán chuyên",
-                avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
+                ten: "Đặng Tuấn Minh",
+                vaiTro: "Fan sách thể thao",
+                avatar: "https://i.pinimg.com/736x/41/91/3c/41913cc88884317f682aa4f3b78a3b41.jpg",
                 noiDung:
                   "Thanh xác suất 3 màu phân tách Nhà - Hòa - Khách rất trực quan. Mình thường dùng chỉ số xác suất này để so sánh với Odds nhà cái, tìm ra các kèo Value Bet có kỳ vọng dương.",
                 tag: "La Liga & UCL",
                 xepHang: 5,
               },
               {
-                ten: "Lê Quang Huy",
+                ten: "Trần Minh Khánh",
                 vaiTro: "Người theo dõi NBA & Thể thao Mỹ",
-                avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
+                avatar: "https://i.pinimg.com/736x/f0/3c/27/f03c27ee6774124784c6a8bac7ba48a3.jpg",
                 noiDung:
                   "Chuyển đổi giữa Bóng đá và Bóng rổ rất mượt. Dữ liệu các trận đấu NBA cập nhật chuẩn xác, giúp việc phân tích phong độ các đội trước giờ bóng lăn nhàn hơn rất nhiều.",
                 tag: "NBA Basketball",
                 xepHang: 5,
               },
               {
-                ten: "Phạm Hải Đăng",
-                vaiTro: "Kỹ sư phần mềm & Fan Serie A",
-                avatar: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=120&auto=format&fit=crop&q=80",
+                ten: "Hoàng Hải Long",
+                vaiTro: "Fan Serie A",
+                avatar: "https://i.pinimg.com/736x/27/0b/ed/270bedabfa19e4c2679ecc0570f12600.jpg",
                 noiDung:
                   "Giao diện Dark Mode đẹp và tốc độ tải trang cực nhanh. Không có quảng cáo rác hay banner cá cược phiền toái, thuần túy là dữ liệu và thống kê sạch sẽ.",
                 tag: "Serie A & Calcio",
                 xepHang: 5,
               },
               {
-                ten: "Vũ Bảo Ngọc",
-                vaiTro: "Chuyên viên thống kê tài chính",
-                avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&auto=format&fit=crop&q=80",
+                ten: "Vũ Thị Quỳnh Anh",
+                vaiTro: "Fan bóng đá",
+                avatar: "https://i.pinimg.com/736x/16/c2/05/16c2055939af0eb4f400050d8469064c.jpg",
                 noiDung:
                   "Rất ấn tượng với cách giải thích Brier Score của website. Đây là tiêu chuẩn vàng trong xác suất dự báo thời tiết và tài chính, giờ được áp dụng cho thể thao rất chuẩn.",
                 tag: "Data Science",
                 xepHang: 5,
               },
               {
-                ten: "Đỗ Quốc Cường",
-                vaiTro: "Quản trị viên cộng đồng Bóng rổ",
-                avatar: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&auto=format&fit=crop&q=80",
+                ten: "Đỗ Quốc Bảo",
+                vaiTro: "Data Scientist",
+                avatar: "https://i.pinimg.com/736x/61/e4/77/61e47710c6148d25b8f114a3d2fb9afd.jpg",
                 noiDung:
                   "Theo dõi tỷ lệ dự đoán chuỗi trận Play-offs NBA từ mùa trước đến nay thấy mô hình dự đoán rất ổn định, đặc biệt là những trận derby căng thẳng.",
                 tag: "Basketball Pro",
@@ -787,11 +791,11 @@ export default function LandingPage() {
               Tạo tài khoản miễn phí
             </Link>
             <Link
-              href="/matches"
+              href="/predictions"
               className="w-full sm:w-auto rounded-md border px-7 py-3 text-sm font-medium transition-all duration-200 hover:bg-white/5 hover:border-white/40 text-center"
               style={{ borderColor: bangMau.border, color: bangMau.text }}
             >
-              Xem lịch thi đấu
+              Xem dự đoán hôm nay
             </Link>
           </div>
         </div>

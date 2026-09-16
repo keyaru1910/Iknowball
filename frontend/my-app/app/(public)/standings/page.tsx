@@ -1,112 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useStandings } from "../../hooks/useStandings";
-import { useLeagues } from "../../hooks/useLeagues";
-import { useSport } from "../../context/SportContext";
-import StandingsTable, { type StandingRow } from "../../components/StandingsTable";
-import SeasonSelector from "../../components/SeasonSelector";
-import { DEFAULT_SEASON } from "../../lib/constants/seasons";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { colors } from "../../lib/design-tokens";
 
-export default function StandingsPage() {
-  const { sport, isBasketball } = useSport();
-  const [selectedLeagueId, setSelectedLeagueId] = useState("");
-  const [selectedSeason, setSelectedSeason] = useState<string>(DEFAULT_SEASON);
-  const { data: leagues = [], isLoading: isLoadingLeagues, isError: isLeaguesError } = useLeagues(sport);
+export default function StandingsRedirectPage() {
+  const router = useRouter();
 
   useEffect(() => {
-    setSelectedLeagueId("");
-  }, [sport]);
-
-  useEffect(() => {
-    if (leagues.length > 0 && !leagues.some((league) => league.id === selectedLeagueId)) {
-      setSelectedLeagueId(leagues[0].id);
-    }
-  }, [leagues, selectedLeagueId]);
-
-  const { data: apiRows, isLoading: isLoadingStandings, isError: isStandingsError } = useStandings(selectedLeagueId, selectedSeason);
-  const rows: StandingRow[] = (apiRows ?? []).map((row) => ({
-    position: row.position,
-    team: { id: row.team.id, name: row.team.name, logoUrl: row.team.logoUrl },
-    played: row.played,
-    won: row.won,
-    drawn: row.drawn,
-    lost: row.lost,
-    goalsFor: row.goalsFor,
-    goalsAgainst: row.goalsAgainst,
-    goalDifference: row.goalDifference,
-    points: row.points,
-    form: row.form,
-  }));
-
-  const isLoading = isLoadingLeagues || (Boolean(selectedLeagueId) && isLoadingStandings);
-  const hasError = isLeaguesError || isStandingsError;
+    // Tự động chuyển hướng sau 2 giây sang trang Dự đoán trận đấu
+    const timer = setTimeout(() => {
+      router.replace("/predictions");
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [router]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-      {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-            Bảng xếp hạng {isBasketball ? "Bóng rổ (NBA)" : "Bóng đá"}
-          </h1>
-          <p className="mt-1 text-sm" style={{ color: colors.textMuted }}>
-            {isBasketball
-              ? "Bảng xếp hạng giải Bóng rổ Nhà nghề Mỹ NBA theo từng mùa giải."
-              : "Bảng xếp hạng bóng đá các giải đấu hàng đầu theo từng mùa giải."}
-          </p>
+    <div className="mx-auto max-w-3xl px-4 py-20 text-center sm:px-6">
+      <div
+        className="rounded-xl border p-8 shadow-xl backdrop-blur-md"
+        style={{ borderColor: colors.border, backgroundColor: colors.panel }}
+      >
+        <div
+          className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full"
+          style={{ backgroundColor: "rgba(47, 217, 140, 0.15)", color: colors.accent }}
+        >
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+            <polyline points="17 6 23 6 23 12" />
+          </svg>
         </div>
 
-        {/* Season Selector */}
-        <SeasonSelector
-          selectedSeason={selectedSeason}
-          onSelectSeason={setSelectedSeason}
-          variant="pill"
-        />
-      </div>
+        <h1 className="text-2xl font-bold text-white sm:text-3xl">
+          Nền tảng tập trung Dự đoán & Phân tích AI
+        </h1>
+        <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed" style={{ color: colors.textMuted }}>
+          Để tối ưu hiệu suất và độ chính xác của <strong>Mô hình Logistic Regression</strong>, iKnowBall tập trung toàn bộ dữ liệu vào trang <strong>Dự đoán trận đấu</strong> và <strong>Chi tiết phân tích (Detail View)</strong>.
+        </p>
 
-      {/* Leagues Tabs */}
-      <div className="mb-6 flex items-center gap-2 overflow-x-auto border-b pb-3 scrollbar-none" style={{ borderColor: colors.borderSoft }}>
-        {leagues.map((league) => (
-          <button
-            key={league.id}
-            type="button"
-            onClick={() => setSelectedLeagueId(league.id)}
-            className="flex items-center gap-2 whitespace-nowrap rounded-sm px-4 py-2 text-xs font-semibold transition-all hover:text-white"
-            style={{
-              backgroundColor: selectedLeagueId === league.id ? colors.panelAlt : "transparent",
-              border: `1px solid ${selectedLeagueId === league.id ? colors.accent : colors.border}`,
-              color: selectedLeagueId === league.id ? colors.accent : colors.textMuted,
-            }}
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href="/predictions"
+            className="w-full sm:w-auto rounded-lg px-6 py-2.5 text-sm font-semibold transition-all hover:opacity-90"
+            style={{ backgroundColor: colors.accent, color: colors.bg }}
           >
-            {league.logoUrl ? (
-              <img
-                src={league.logoUrl}
-                alt={league.name}
-                className="h-4 w-4 object-contain"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
-            ) : null}
-            <span>{league.name}{league.country ? ` (${league.country})` : ""}</span>
-          </button>
-        ))}
-      </div>
+            Đến danh sách dự đoán trận đấu →
+          </Link>
+          <Link
+            href="/predictions/performance"
+            className="w-full sm:w-auto rounded-lg border px-6 py-2.5 text-sm font-semibold transition-all hover:bg-white/5"
+            style={{ borderColor: colors.border, color: colors.text }}
+          >
+            Xem hiệu năng mô hình AI
+          </Link>
+        </div>
 
-      <div className="rounded-md border p-4 sm:p-6" style={{ borderColor: colors.border, backgroundColor: colors.panel }}>
-        {isLoading ? (
-          <div className="flex flex-col gap-3 py-6">{[1, 2, 3, 4, 5, 6].map((item) => <div key={item} className="h-10 animate-pulse rounded-sm" style={{ backgroundColor: colors.panelAlt }} />)}</div>
-        ) : hasError ? (
-          <p className="py-8 text-center text-sm text-rose-400">Không thể tải bảng xếp hạng lúc này.</p>
-        ) : rows.length === 0 ? (
-          <p className="py-8 text-center text-sm" style={{ color: colors.textMuted }}>
-            Chưa có dữ liệu bảng xếp hạng cho mùa giải này.
-          </p>
-        ) : (
-          <StandingsTable rows={rows} sport={sport} />
-        )}
+        <p className="mt-6 text-xs" style={{ color: colors.textFaint }}>
+          Đang tự động chuyển hướng sau vài giây...
+        </p>
       </div>
     </div>
   );

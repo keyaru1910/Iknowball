@@ -16,25 +16,60 @@ export interface GetMatchesQueryDto {
 }
 
 /**
- * Chuẩn hóa các biến thể mùa giải để tìm kiếm linh hoạt (24/25, 2024-2025, 2024, ...)
+ * Tính toán mùa giải hiện tại theo mốc thời gian:
+ * - Bóng đá: Từ tháng 8 năm Y là mùa "Y-(Y+1)" (Ví dụ: 08/2026 -> 2026-2027)
+ * - Bóng rổ: Từ 20/10 năm Y là mùa "Y-(Y+1)" (Ví dụ: trước 20/10/2026 vẫn là 2025-2026)
+ */
+export function layMuaGiaiHienTai(
+  sport: string = 'football',
+  mocThoiGian: Date = new Date(),
+): string {
+  const namHienTai = mocThoiGian.getFullYear();
+  const thangHienTai = mocThoiGian.getMonth() + 1;
+  const ngayHienTai = mocThoiGian.getDate();
+
+  let namBatDauMua: number;
+
+  if (sport.toLowerCase() === 'basketball') {
+    const daVaoMuaMoi = thangHienTai > 10 || (thangHienTai === 10 && ngayHienTai >= 20);
+    namBatDauMua = daVaoMuaMoi ? namHienTai : namHienTai - 1;
+  } else {
+    const daVaoMuaMoi = thangHienTai >= 8;
+    namBatDauMua = daVaoMuaMoi ? namHienTai : namHienTai - 1;
+  }
+
+  const namKetThucMua = namBatDauMua + 1;
+  return `${namBatDauMua}-${namKetThucMua}`;
+}
+
+/**
+ * Chuẩn hóa các biến thể mùa giải linh hoạt cho mọi năm (ví dụ: 26/27, 2026-2027, 2026,...)
  */
 function getSeasonVariants(season?: string): string[] {
   if (!season) return [];
   const clean = season.trim();
   const variants = new Set<string>([clean]);
-  if (clean === '24/25' || clean === '2024-2025' || clean === '2024') {
-    variants.add('24/25');
-    variants.add('2024-2025');
-    variants.add('2024');
-  } else if (clean === '25/26' || clean === '2025-2026' || clean === '2025') {
-    variants.add('25/26');
-    variants.add('2025-2026');
-    variants.add('2025');
-  } else if (clean === '26/27' || clean === '2026-2027' || clean === '2026') {
-    variants.add('26/27');
-    variants.add('2026-2027');
-    variants.add('2026');
+
+  // Xử lý dạng "26/27" -> thêm "2026-2027", "2026"
+  if (/^\d{2}\/\d{2}$/.test(clean)) {
+    const [y1, y2] = clean.split('/');
+    variants.add(`20${y1}-20${y2}`);
+    variants.add(`20${y1}`);
   }
+  // Xử lý dạng "2026-2027" -> thêm "26/27", "2026"
+  else if (/^\d{4}-\d{4}$/.test(clean)) {
+    const [y1, y2] = clean.split('-');
+    variants.add(`${y1.slice(2)}/${y2.slice(2)}`);
+    variants.add(y1);
+  }
+  // Xử lý dạng "2026" -> thêm "26/27", "2026-2027"
+  else if (/^\d{4}$/.test(clean)) {
+    const y1 = parseInt(clean, 10);
+    const y2 = y1 + 1;
+    variants.add(`${y1}-${y2}`);
+    variants.add(`${String(y1).slice(2)}/${String(y2).slice(2)}`);
+  }
+
   return Array.from(variants);
 }
 
@@ -133,6 +168,23 @@ export class MatchService {
         }
       }
 
+      // Nếu không truyền date và không chọn mùa cụ thể (ví dụ trang chủ lấy các trận gần nhất),
+      // ưu tiên lấy các trận từ hôm nay trở đi (tránh bốc trận lịch sử từ năm 2024)
+      if (!date && !season && prismaStatus !== MatchStatus.FINISHED) {
+        const homQua = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        where.matchDate = {
+          gte: homQua,
+        };
+      }
+
+      // Sắp xếp linh hoạt:
+      // - Nếu xem trận đã kết thúc (finished) -> Trận gần nhất lên đầu (desc)
+      // - Nếu xem lịch thi đấu / sắp tới / theo ngày -> Trận đá sớm lên trước (asc)
+      const sapXepTheoThoiGian =
+        prismaStatus === MatchStatus.FINISHED
+          ? { matchDate: 'desc' as const }
+          : { matchDate: 'asc' as const };
+
       const [total, matches] = await Promise.all([
         this.prisma.match.count({ where }),
         this.prisma.match.findMany({
@@ -143,9 +195,7 @@ export class MatchService {
             league: true,
             predictions: { where: { modelVersion: MODEL_VERSION }, take: 1, orderBy: { createdAt: 'desc' } },
           },
-          orderBy: {
-            matchDate: 'asc',
-          },
+          orderBy: sapXepTheoThoiGian,
           skip,
           take: limit,
         }),

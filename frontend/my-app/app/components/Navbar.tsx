@@ -14,9 +14,8 @@ interface NavLinkItem {
 
 const navLinks: NavLinkItem[] = [
   { href: "/", label: "Trang chủ" },
-  { href: "/matches", label: "Lịch thi đấu" },
-  { href: "/standings", label: "Bảng xếp hạng" },
-  { href: "/statistics", label: "Dữ liệu thống kê" },
+  { href: "/predictions", label: "Dự đoán hôm nay" },
+  { href: "/predictions/performance", label: "Hiệu năng mô hình" },
   { href: "/news", label: "Tin tức" },
 ];
 

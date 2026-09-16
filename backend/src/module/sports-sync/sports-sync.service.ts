@@ -46,10 +46,13 @@ export class SportsSyncService {
   private readonly logger = new Logger(SportsSyncService.name);
 
   constructor(
+    @Inject(PrismaService)
     private readonly prisma: PrismaService,
     @Inject('SPORTS_DATA_PROVIDER')
     private readonly defaultSportsApi: SportsDataProvider,
+    @Inject(EloService)
     private readonly eloService: EloService,
+    @Inject(CacheService)
     private readonly cacheService: CacheService,
     @Optional()
     @Inject(SPORTS_DATA_PROVIDERS)

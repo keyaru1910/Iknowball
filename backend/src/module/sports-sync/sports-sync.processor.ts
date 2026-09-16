@@ -1,7 +1,7 @@
 // src/module/sports-sync/sports-sync.processor.ts
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
+import { Logger, Inject } from '@nestjs/common';
 import { SyncJobStatus } from '@prisma/client';
 import { SPORTS_SYNC_QUEUE, SportsSyncJob } from './constants/job-names';
 import { SportsSyncService, SyncResult } from './sports-sync.service';
@@ -10,7 +10,10 @@ import { SportsSyncService, SyncResult } from './sports-sync.service';
 export class SportsSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(SportsSyncProcessor.name);
 
-  constructor(private readonly sportsSyncService: SportsSyncService) {
+  constructor(
+    @Inject(SportsSyncService)
+    private readonly sportsSyncService: SportsSyncService,
+  ) {
     super();
   }
 

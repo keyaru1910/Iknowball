@@ -37,8 +37,19 @@ export class PredictionController {
   /** Tổng hợp hiệu năng mô hình theo tuần (public) */
   @Get('performance')
   @Public()
-  async performance(@Query('league') league?: string) {
-    const data = await this.service.performance(league);
+  async performance(
+    @Query('league') league?: string,
+    @Query('model') modelVersion?: string,
+  ) {
+    const data = await this.service.performance(league, false, modelVersion);
+    return { data, meta: null, error: null };
+  }
+
+  /** So sánh đa mô hình (Model Comparison) & Per-class breakdown (public) */
+  @Get('comparison')
+  @Public()
+  async compareModels(@Query('league') league?: string) {
+    const data = await this.service.compareModels(league);
     return { data, meta: null, error: null };
   }
 

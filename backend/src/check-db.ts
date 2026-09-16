@@ -1,42 +1,23 @@
-import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
+import 'dotenv/config';
 
-const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
-} as any);
+const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }) } as any);
 
 async function check() {
-  console.log('--- KIEM TRA DATABASE ---');
-  const leagues = await prisma.league.findMany({
-    include: { sport: true }
+  const count = await prisma.match.count();
+  const footballCount = await prisma.match.count({ where: { league: { sport: { name: 'football' } } } });
+  const sample = await prisma.match.findMany({
+    take: 10,
+    orderBy: { matchDate: 'desc' },
+    include: { league: true, homeTeam: true, awayTeam: true },
   });
-  console.log('Leagues:', leagues.map(l => ({ id: l.id, name: l.name, externalId: l.externalId, season: l.season, sport: l.sport.name })));
-
-  const teamStats = await prisma.teamStats.groupBy({
-    by: ['season', 'leagueId'],
-    _count: { id: true }
-  });
-  console.log('TeamStats theo league & season:', teamStats);
-
-  const standings = await prisma.standing.groupBy({
-    by: ['season', 'leagueId'],
-    _count: { id: true }
-  });
-  console.log('Standings theo league & season:', standings);
-
-  const playerStats = await prisma.playerStatistics.groupBy({
-    by: ['season', 'sport', 'leagueId'],
-    _count: { id: true }
-  });
-  console.log('PlayerStatistics theo league, sport & season:', playerStats);
-
-  const teamSeasonStats = await prisma.teamSeasonStatistics.groupBy({
-    by: ['season', 'sport', 'leagueId'],
-    _count: { id: true }
-  });
-  console.log('TeamSeasonStatistics theo league, sport & season:', teamSeasonStats);
-  
+  console.log('Total matches in DB:', count);
+  console.log('Football matches in DB:', footballCount);
+  console.log('\nTop 10 most recent matches:');
+  for (const m of sample) {
+    console.log(`${m.matchDate.toISOString()} | ${m.league.name} | ${m.homeTeam.name} vs ${m.awayTeam.name} | Status: ${m.status} | Score: ${m.homeScore}-${m.awayScore}`);
+  }
   await prisma.$disconnect();
 }
 

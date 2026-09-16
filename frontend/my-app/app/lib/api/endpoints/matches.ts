@@ -17,6 +17,8 @@ export interface GetMatchesParams {
   status?: MatchStatusType;
   sport?: "football" | "basketball";
   season?: string;
+  page?: number;
+  limit?: number;
 }
 
 /**
@@ -29,6 +31,8 @@ export async function getMatches(params: GetMatchesParams = {}): Promise<Match[]
   if (params.status) query.set("status", params.status);
   if (params.sport) query.set("sport", params.sport);
   if (params.season) query.set("season", params.season);
+  if (params.page) query.set("page", String(params.page));
+  if (params.limit) query.set("limit", String(params.limit));
 
   const { data } = await apiFetch<unknown>(`/matches?${query.toString()}`);
   return matchListSchema.parse(data);

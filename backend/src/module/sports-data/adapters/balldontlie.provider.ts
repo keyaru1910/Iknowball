@@ -78,8 +78,18 @@ export class BalldontlieProvider implements SportsDataProvider {
   /**
    * Chuẩn hóa mùa giải sang định dạng năm 4 chữ số (ví dụ: '24/25' | '2024-2025' -> '2024')
    */
+  /**
+   * Chuẩn hóa season cho Balldontlie (trả về năm bắt đầu 4 chữ số, ví dụ 2026)
+   */
   private normalizeSeason(season?: string): string {
-    if (!season) return String(new Date().getUTCFullYear());
+    if (!season) {
+      const now = new Date();
+      const nam = now.getUTCFullYear();
+      const thang = now.getUTCMonth() + 1;
+      const ngay = now.getUTCDate();
+      const daVaoMuaMoi = thang > 10 || (thang === 10 && ngay >= 20);
+      return String(daVaoMuaMoi ? nam : nam - 1);
+    }
     const clean = season.trim();
     if (clean.includes('-')) return clean.split('-')[0];
     if (clean.includes('/')) {
@@ -90,16 +100,16 @@ export class BalldontlieProvider implements SportsDataProvider {
   }
 
   /**
-   * Lấy danh sách giải đấu NBA
+   * Lấy danh sách giải đấu NBA với mùa giải tự động tính theo mốc 20/10
    */
   async fetchLeagues(): Promise<NormalizedLeague[]> {
-    const currentYear = new Date().getUTCFullYear();
+    const seasonNba = this.normalizeSeason();
     return [
       {
         externalId: 'nba',
         name: 'NBA',
         country: 'USA',
-        season: String(currentYear),
+        season: seasonNba,
       },
     ];
   }

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Logger,
   NotFoundException,
+  Inject,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -55,7 +56,9 @@ export class SportsSyncController {
   private readonly logger = new Logger(SportsSyncController.name);
 
   constructor(
+    @Inject(SportsSyncService)
     private readonly sportsSyncService: SportsSyncService,
+    @Inject(PrismaService)
     private readonly prisma: PrismaService,
     @InjectQueue(SPORTS_SYNC_QUEUE)
     private readonly syncQueue: Queue,

@@ -53,9 +53,9 @@ export default function ProbBar({
           className={`mt-1 flex justify-between font-mono ${labelSize}`}
           style={{ color: colors.textMuted }}
         >
-          <span>{Math.round(home)}%</span>
-          {hasDraw ? <span>{Math.round(drawVal)}%</span> : null}
-          <span>{Math.round(away)}%</span>
+          <span>{Number(home).toFixed(1)}%</span>
+          {hasDraw ? <span>{Number(drawVal).toFixed(1)}%</span> : null}
+          <span>{Number(away).toFixed(1)}%</span>
         </div>
       )}
     </div>

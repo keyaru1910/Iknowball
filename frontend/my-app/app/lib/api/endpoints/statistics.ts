@@ -307,9 +307,10 @@ export async function getPlayerStatistics(params: {
   } catch (error) {
     // Trả về mock data chất lượng cao khi API backend đang load/offline
     let list = params.sport === "basketball" ? mockBasketballPlayers : mockFootballPlayers;
+    const seasonFilter = params.season;
     
-    if (params.season) {
-      const filtered = list.filter((p) => p.season === params.season || params.season.includes(p.season.slice(0, 4)));
+    if (seasonFilter) {
+      const filtered = list.filter((p) => p.season === seasonFilter || seasonFilter.includes(p.season.slice(0, 4)));
       if (filtered.length > 0) {
         list = filtered;
       }
@@ -317,9 +318,10 @@ export async function getPlayerStatistics(params: {
     
     // Sort logic cho mock
     if (params.sortBy) {
+      const sortByMetric = params.sortBy;
       return [...list].sort((a, b) => {
-        const valA = (a as Record<string, unknown>)[params.sortBy!] as number ?? 0;
-        const valB = (b as Record<string, unknown>)[params.sortBy!] as number ?? 0;
+        const valA = (a as Record<string, unknown>)[sortByMetric] as number ?? 0;
+        const valB = (b as Record<string, unknown>)[sortByMetric] as number ?? 0;
         return valB - valA;
       });
     }
@@ -344,8 +346,9 @@ export async function getTeamSeasonStatistics(params: {
   } catch (error) {
     // Trả về mock data khi API backend chưa có sẵn
     const list = params.sport === "basketball" ? mockBasketballTeams : mockFootballTeams;
-    if (params.season) {
-      const filtered = list.filter((t) => t.season === params.season || params.season.includes(t.season.slice(0, 4)));
+    const seasonFilter = params.season;
+    if (seasonFilter) {
+      const filtered = list.filter((t) => t.season === seasonFilter || seasonFilter.includes(t.season.slice(0, 4)));
       if (filtered.length > 0) {
         return filtered;
       }

@@ -69,38 +69,20 @@ export default function Footer() {
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
                 <Link
-                  href="/matches"
-                  className="transition-colors hover:text-white"
-                  style={{ color: colors.textMuted }}
-                >
-                  Lịch thi đấu
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/predictions"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
-                  Dự đoán AI hôm nay
+                  Dự đoán hôm nay
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/standings"
+                  href="/predictions/performance"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
-                  Bảng xếp hạng
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/statistics"
-                  className="transition-colors hover:text-white"
-                  style={{ color: colors.textMuted }}
-                >
-                  Dữ liệu thống kê
+                  Hiệu năng mô hình AI
                 </Link>
               </li>
               <li>
@@ -114,11 +96,11 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/predictions"
+                  href="/pricing"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
-                  Mô hình xếp hạng Elo
+                  Gói dịch vụ Premium
                 </Link>
               </li>
             </ul>

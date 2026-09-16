@@ -12,6 +12,8 @@ import { SportsSyncService } from './sports-sync.service';
 import { SportsSyncController } from './sports-sync.controller';
 import { SportsDataModule } from '../sports-data/sports-data.module';
 import { EloModule } from '../elo/elo.module';
+import { PrismaModule } from '../prisma/prisma.module';
+import { SharedModule } from '../shared/shared.module';
 
 @Module({
     imports: [
@@ -26,6 +28,8 @@ import { EloModule } from '../elo/elo.module';
         }),
         BullModule.registerQueue({ name: SPORTS_SYNC_SCHEDULER_QUEUE }),
         BullModule.registerFlowProducer({ name: SPORTS_SYNC_FLOW_PRODUCER }),
+        PrismaModule,
+        SharedModule,
         SportsDataModule,
         EloModule,
     ],

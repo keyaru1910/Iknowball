@@ -51,11 +51,14 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
       const cronTz = process.env.CRON_TZ || 'Asia/Ho_Chi_Minh';
 
       // ────────────────────────────────────────────────────────────────
-      // Chiến lược Free plan — ~30 req/ngày (tổng giới hạn 100 req/ngày)
+      // Chiến lược Free plan — Prediction-first
+      // Đã bỏ: sync standings, sync live scores (không hiển thị trên frontend)
+      // Giữ: sync matches/finished (cần cho Elo + Prediction evaluate)
       // ────────────────────────────────────────────────────────────────
 
-      // 1. Full sync (Leagues + Teams) mỗi ngày lúc 03:00 sáng VN
+      // 1. Full sync (Leagues + Teams + Matches) mỗi ngày lúc 03:00 sáng VN
       //    → Dữ liệu tĩnh ít thay đổi, chỉ cần sync 1 lần/ngày
+      //    → Không sync standings (frontend đã bỏ trang BXH, tiết kiệm quota)
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FULL_SYNC,
         {},
@@ -67,6 +70,7 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
 
       // 2. Sync kết quả trận vừa kết thúc — 01:00 sáng VN
       //    → Bắt các trận tối hôm trước (Premier League, Serie A đá ~22:00-23:00 VN)
+      //    → QUAN TRỌNG cho prediction: cần kết quả để cập nhật Elo + evaluate predictions
       await this.schedulerQueue.add(
         SportsSyncJob.TRIGGER_FINISHED_SYNC,
         {},
@@ -87,16 +91,9 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
         },
       );
 
-      // 4. Sync Bảng xếp hạng — 02:00 sáng VN
-      //    → Sau khi hết trận buổi tối, cập nhật BXH mỗi ngày
-      await this.schedulerQueue.add(
-        SportsSyncJob.TRIGGER_STANDINGS_SYNC,
-        {},
-        {
-          repeat: { pattern: '0 2 * * *', tz: cronTz },
-          jobId: 'standings-sync-2am',
-        },
-      );
+      // [ĐÃ BỎ] Sync Bảng xếp hạng — không còn cần vì frontend đã bỏ trang standings
+      // Standings data vẫn tồn tại trong DB từ seed, chỉ không sync mới nữa
+      // Tiết kiệm ~5-10 API requests/ngày cho prediction pipeline
 
       // 5. Sync lịch thi đấu giới hạn (≤10 trận, ưu tiên giải lớn) — 07:00 sáng VN
       //    → Cập nhật fixtures 7 ngày tới mỗi sáng, tiết kiệm API
@@ -123,8 +120,8 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
       );
 
       this.logger.log(
-        `Đã đăng ký lịch đồng bộ Free-plan (${cronTz}): ` +
-        'Full(03:00) | Finished-Football(01:00+04:00) | Standings(02:00) | Fixtures(07:00) | NBA(14:00)',
+        `Đã đăng ký lịch đồng bộ Prediction-first (${cronTz}): ` +
+        'Full(03:00) | Finished-Football(01:00+04:00) | Fixtures(07:00) | NBA(14:00) — Standings: TẮT',
       );
     } catch (err: any) {
       this.logger.warn(`Không thể khởi tạo cron scheduler: ${err.message}`);
@@ -137,35 +134,29 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
    */
   async process(job: Job): Promise<void> {
     switch (job.name) {
-      // Full sync: Leagues → Teams → Matches → Standings (03:00 sáng)
+      // Full sync: Leagues → Teams → Matches (03:00 sáng)
+      // Ghi chú: Standings đã bỏ khỏi flow (frontend không hiển thị BXH)
       case SportsSyncJob.TRIGGER_FULL_SYNC:
         await this.flowProducer.add({
-          name: SportsSyncJob.SYNC_STANDINGS,
+          name: SportsSyncJob.SYNC_MATCHES,
           queueName: SPORTS_SYNC_QUEUE,
           data: { triggeredAt: new Date().toISOString() },
           children: [
             {
-              name: SportsSyncJob.SYNC_MATCHES,
+              name: SportsSyncJob.SYNC_TEAMS,
               queueName: SPORTS_SYNC_QUEUE,
-              data: { triggeredAt: new Date().toISOString() },
+              data: {},
               children: [
                 {
-                  name: SportsSyncJob.SYNC_TEAMS,
+                  name: SportsSyncJob.SYNC_LEAGUES,
                   queueName: SPORTS_SYNC_QUEUE,
                   data: {},
-                  children: [
-                    {
-                      name: SportsSyncJob.SYNC_LEAGUES,
-                      queueName: SPORTS_SYNC_QUEUE,
-                      data: {},
-                    },
-                  ],
                 },
               ],
             },
           ],
         });
-        this.logger.log('Đã xếp hàng Full Sync Flow (Leagues → Teams → Matches → Standings)');
+        this.logger.log('Đã xếp hàng Full Sync Flow (Leagues → Teams → Matches)');
         break;
 
       // Sync kết quả trận đấu vừa kết thúc (01:00 và 04:00 sáng)
@@ -173,10 +164,10 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
         await this.syncQueue.add(SportsSyncJob.SYNC_FINISHED, {});
         break;
 
-      // Sync bảng xếp hạng độc lập (02:00 sáng)
-      case SportsSyncJob.TRIGGER_STANDINGS_SYNC:
-        await this.syncQueue.add(SportsSyncJob.SYNC_STANDINGS, {});
-        break;
+      // [ĐÃ BỎ] Sync bảng xếp hạng — không cần vì frontend đã bỏ trang standings
+      // case SportsSyncJob.TRIGGER_STANDINGS_SYNC:
+      //   await this.syncQueue.add(SportsSyncJob.SYNC_STANDINGS, {});
+      //   break;
 
       // Sync lịch thi đấu giới hạn — tối đa 10 trận bóng đá, 10 trận bóng rổ (07:00 sáng)
       case SportsSyncJob.TRIGGER_FIXTURES_LIMITED_SYNC:
