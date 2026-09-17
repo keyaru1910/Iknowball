@@ -5,6 +5,7 @@ import Link from "next/link";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SportSwitcher from "./SportSwitcher";
+import PricingSection from "./PricingSection";
 import { useMatches } from "../hooks/useMatches";
 import { useSport } from "../context/SportContext";
 
@@ -748,6 +749,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Mục Bảng giá & Đăng ký gói dịch vụ trực tiếp trên Landing Page */}
+      <PricingSection id="pricing" showFaq={true} />
 
       {/* Banner Call-to-Action (CTA) phủ full toàn bộ chiều ngang trang web */}
       <section

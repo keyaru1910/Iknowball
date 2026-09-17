@@ -84,16 +84,17 @@ export class AuthService {
         // 7. Trả về, loại bỏ passwordHash
         return UserResponseDto.fromEntity(user);
     }
-    async verifyEmail(token: string): Promise<UserResponseDto> {
-    let payload: { sub: string; purpose: string };
 
-    try {
-        payload = this.jwtService.verify(token, {
-            secret: getEmailVerifySecret(),
-        });
-    } catch (error) {
-        throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
-    }
+    async verifyEmail(token: string): Promise<UserResponseDto> {
+        let payload: { sub: string; purpose: string };
+
+        try {
+            payload = this.jwtService.verify(token, {
+                secret: getEmailVerifySecret(),
+            });
+        } catch (error) {
+            throw new BadRequestException('Token không hợp lệ hoặc đã hết hạn');
+        }
 
     if (payload.purpose !== 'verify-email') {
         throw new BadRequestException('Token không hợp lệ');
@@ -102,14 +103,31 @@ export class AuthService {
     const user = await this.prisma.user.update({
         where: { id: payload.sub },
         data: { emailVerifiedAt: new Date() },
-        include: { role: true },
+        include: {
+            role: true,
+            subscriptions: {
+                where: { status: { in: ['ACTIVE', 'TRIALING'] } },
+                orderBy: { createdAt: 'desc' },
+                take: 1,
+            },
+        },
     });
 
     return UserResponseDto.fromEntity(user);
     }
 
     async validateUser(email: string, pass: string): Promise<any> {
-        const user = await this.prisma.user.findUnique({ where: { email }, include: { role: true } });
+        const user = await this.prisma.user.findUnique({
+            where: { email },
+            include: {
+                role: true,
+                subscriptions: {
+                    where: { status: { in: ['ACTIVE', 'TRIALING'] } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                },
+            },
+        });
         if (!user || !user.passwordHash) return null;
         if (user.status !== 'active') throw new UnauthorizedException('Tài khoản đã bị khóa');
         if (!(await bcrypt.compare(pass, user.passwordHash))) return null;
@@ -146,7 +164,17 @@ export class AuthService {
         }
         if (!active) throw new UnauthorizedException('Refresh token không tìm thấy trong hệ thống');
         await this.prisma.refreshToken.update({ where: { id: active.id }, data: { revokedAt: new Date() } });
-        const user = await this.prisma.user.findUnique({ where: { id: payload.sub }, include: { role: true } });
+        const user = await this.prisma.user.findUnique({
+            where: { id: payload.sub },
+            include: {
+                role: true,
+                subscriptions: {
+                    where: { status: { in: ['ACTIVE', 'TRIALING'] } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 1,
+                },
+            },
+        });
         if (!user || user.status !== 'active') throw new UnauthorizedException('Người dùng không tồn tại hoặc đã bị khóa');
         return this.login(user);
     }

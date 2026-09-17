@@ -9,7 +9,13 @@ export interface AuthUser {
   fullName: string | null;
   avatarUrl: string | null;
   emailVerifiedAt: string | null;
-  role: string; // "user" | "admin"
+  role: string; // "user" | "premium" | "admin"
+  tier?: "free" | "pro" | "vip" | "admin";
+  subscription?: {
+    plan: string;
+    status: string;
+    currentPeriodEnd: string;
+  } | null;
   createdAt: string;
 }
 

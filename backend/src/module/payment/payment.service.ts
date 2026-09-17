@@ -17,26 +17,32 @@ import {
 
 const PLAN_PRICES = {
     [SubscriptionPlan.PRO_MONTHLY]: {
-        amount: 999, // 9.99 USD in cents
-        currency: 'usd',
+        amount: 249000, // 249.000 VND (Stripe VND là zero-decimal)
+        currency: 'vnd',
         name: 'iKnowBall Pro (Hàng Tháng)',
         interval: 'month' as const,
     },
     [SubscriptionPlan.PRO_YEARLY]: {
-        amount: 8999, // 89.99 USD in cents
-        currency: 'usd',
+        amount: 1790000, // 1.790.000 VND (Stripe VND là zero-decimal)
+        currency: 'vnd',
         name: 'iKnowBall Pro (Hàng Năm)',
         interval: 'year' as const,
     },
     [SubscriptionPlan.VIP_MONTHLY]: {
-        amount: 1999, // 19.99 USD in cents
-        currency: 'usd',
-        name: 'iKnowBall VIP Insights',
+        amount: 499000, // 499.000 VND (Stripe VND là zero-decimal)
+        currency: 'vnd',
+        name: 'iKnowBall VIP Insights (Hàng Tháng)',
         interval: 'month' as const,
+    },
+    [SubscriptionPlan.VIP_YEARLY]: {
+        amount: 3590000, // 3.590.000 VND (Stripe VND là zero-decimal - tiết kiệm ~40%)
+        currency: 'vnd',
+        name: 'iKnowBall VIP Insights (Hàng Năm)',
+        interval: 'year' as const,
     },
     [SubscriptionPlan.FREE]: {
         amount: 0,
-        currency: 'usd',
+        currency: 'vnd',
         name: 'iKnowBall Free',
         interval: 'month' as const,
     },
@@ -324,6 +330,12 @@ export class PaymentService {
                         },
                     });
 
+                    // Đơn vị tiền VND/JPY là zero-decimal (không chia cho 100 như USD)
+                    const isZeroDecimal = (c?: string | null) => ['vnd', 'jpy', 'krw'].includes(c?.toLowerCase() || '');
+                    const paymentAmount = isZeroDecimal(session.currency)
+                        ? (session.amount_total || 0)
+                        : (session.amount_total || 0) / 100;
+
                     // Ghi nhận Payment
                     await tx.payment.create({
                         data: {
@@ -331,8 +343,8 @@ export class PaymentService {
                             subscriptionId: dbSubscription.id,
                             stripeSessionId: session.id,
                             stripePaymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
-                            amount: (session.amount_total || 0) / 100,
-                            currency: session.currency || 'usd',
+                            amount: paymentAmount,
+                            currency: session.currency || 'vnd',
                             status: PaymentStatus.SUCCEEDED,
                             paymentMethod: session.payment_method_types?.[0] || 'card',
                         },
@@ -345,7 +357,7 @@ export class PaymentService {
                             action: 'SUBSCRIPTION_PURCHASED',
                             details: {
                                 plan: planStr,
-                                amount: (session.amount_total || 0) / 100,
+                                amount: paymentAmount,
                                 sessionId: session.id,
                                 subscriptionId,
                             },
@@ -443,7 +455,7 @@ export class PaymentService {
                 name: 'Miễn Phí (Free)',
                 description: 'Trải nghiệm cơ bản dữ liệu trận đấu và tối đa 3 lượt xem dự đoán mỗi ngày',
                 price: 0,
-                currency: 'USD',
+                currency: 'VND',
                 interval: 'month',
                 popular: false,
                 features: [
@@ -457,8 +469,8 @@ export class PaymentService {
                 id: SubscriptionPlan.PRO_MONTHLY,
                 name: 'Pro Hàng Tháng',
                 description: 'Dành cho người chơi chuyên nghiệp cần dự đoán AI chi tiết và không giới hạn',
-                price: 9.99,
-                currency: 'USD',
+                price: 249000,
+                currency: 'VND',
                 interval: 'month',
                 popular: true,
                 features: [
@@ -473,8 +485,8 @@ export class PaymentService {
                 id: SubscriptionPlan.PRO_YEARLY,
                 name: 'Pro Hàng Năm',
                 description: 'Tiết kiệm 25% chi phí với toàn bộ quyền lợi của gói Pro',
-                price: 89.99,
-                currency: 'USD',
+                price: 1790000,
+                currency: 'VND',
                 interval: 'year',
                 popular: false,
                 features: [
@@ -486,10 +498,10 @@ export class PaymentService {
             },
             {
                 id: SubscriptionPlan.VIP_MONTHLY,
-                name: 'VIP Insights',
+                name: 'VIP Insights Hàng Tháng',
                 description: 'Gói cao cấp nhất với báo cáo phân tích độc quyền và tín hiệu chuyên sâu',
-                price: 19.99,
-                currency: 'USD',
+                price: 499000,
+                currency: 'VND',
                 interval: 'month',
                 popular: false,
                 features: [
@@ -497,6 +509,22 @@ export class PaymentService {
                     'Báo cáo phân tích chuyên sâu trước trận đấu',
                     'Cảnh báo biến động odds và tỷ lệ thắng tức thì',
                     'Kênh trao đổi & hỗ trợ trực tiếp từ chuyên gia dữ liệu',
+                ],
+            },
+            {
+                id: SubscriptionPlan.VIP_YEARLY,
+                name: 'VIP Insights Hàng Năm',
+                description: 'Toàn bộ quyền lợi của gói VIP với chi phí tiết kiệm hơn 40%',
+                price: 3590000,
+                currency: 'VND',
+                interval: 'year',
+                popular: false,
+                features: [
+                    'Toàn bộ tính năng của gói VIP Hàng Tháng',
+                    'Tiết kiệm hơn 40% so với thanh toán theo tháng',
+                    'Báo cáo phân tích chuyên sâu trước trận đấu',
+                    'Cảnh báo biến động odds và tỷ lệ thắng tức thì',
+                    'Kênh trao đổi & hỗ trợ trực tiếp 1-1 từ chuyên gia dữ liệu',
                 ],
             },
         ];

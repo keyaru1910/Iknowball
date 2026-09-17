@@ -1,9 +1,21 @@
 import { apiFetch } from "../client";
-import { modelPerformanceSchema, predictionDetailSchema, type ModelPerformance, type PredictionDetail } from "../schemas/prediction.schema";
+import {
+  modelPerformanceSchema,
+  predictionDetailSchema,
+  vipReportSchema,
+  type ModelPerformance,
+  type PredictionDetail,
+  type VipReport,
+} from "../schemas/prediction.schema";
 
 export async function getPrediction(matchId: string): Promise<PredictionDetail> {
   const { data } = await apiFetch<unknown>(`/predictions/${matchId}`);
   return predictionDetailSchema.parse(data);
+}
+
+export async function getVipReport(matchId: string): Promise<VipReport> {
+  const { data } = await apiFetch<unknown>(`/predictions/${matchId}/vip-report`);
+  return vipReportSchema.parse(data);
 }
 
 export async function getModelPerformance(history = false, league?: string): Promise<ModelPerformance[]> {
@@ -12,3 +24,4 @@ export async function getModelPerformance(history = false, league?: string): Pro
   const { data } = await apiFetch<unknown>(path);
   return modelPerformanceSchema.array().parse(data);
 }
+

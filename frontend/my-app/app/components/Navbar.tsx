@@ -6,6 +6,8 @@ import { useState, useRef, useEffect } from "react";
 import { colors } from "../lib/design-tokens";
 import SportSwitcher from "./SportSwitcher";
 import { useAuth } from "../hooks/useAuth";
+import { type AuthUser } from "../lib/api/endpoints/auth";
+import UserBadge from "./UserBadge";
 
 interface NavLinkItem {
   href: string;
@@ -15,8 +17,10 @@ interface NavLinkItem {
 const navLinks: NavLinkItem[] = [
   { href: "/", label: "Trang chủ" },
   { href: "/predictions", label: "Dự đoán hôm nay" },
+  { href: "/alerts", label: "Cảnh báo biến động" },
   { href: "/predictions/performance", label: "Hiệu năng mô hình" },
   { href: "/news", label: "Tin tức" },
+  { href: "/#pricing", label: "Đăng ký gói" },
 ];
 
 /**
@@ -27,17 +31,17 @@ function UserDropdown({
   isAdmin,
   onLogout,
 }: {
-  user: { email: string; fullName: string | null };
+  user: AuthUser;
   isAdmin: boolean;
   onLogout: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
       }
     }
@@ -46,23 +50,23 @@ function UserDropdown({
   }, []);
 
   const initial = (user.fullName?.[0] ?? user.email[0]).toUpperCase();
+  const isPremiumUser = user.tier === "pro" || user.tier === "vip" || user.role === "premium";
 
   return (
-    <div ref={menuRef} className="relative">
-      {/* Avatar button */}
+    <div ref={ref} className="relative">
+      {/* Trigger button */}
       <button
-        id="btn-user-menu"
+        id="btn-user-dropdown"
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-all hover:bg-white/5"
-        aria-label="Menu tài khoản"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/5"
       >
         <div
           className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
           style={{
-            background: "rgba(47,217,140,0.15)",
-            border: "1px solid rgba(47,217,140,0.3)",
-            color: colors.accent,
+            background: isPremiumUser ? "rgba(245,158,11,0.15)" : "rgba(47,217,140,0.15)",
+            border: isPremiumUser ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(47,217,140,0.3)",
+            color: isPremiumUser ? "#FBBF24" : colors.accent,
           }}
         >
           {initial}
@@ -70,6 +74,7 @@ function UserDropdown({
         <span className="text-sm font-medium" style={{ color: colors.text }}>
           {user.fullName ?? user.email.split("@")[0]}
         </span>
+        <UserBadge tier={user.tier} role={user.role} size="xs" />
         <svg
           width="12"
           height="12"
@@ -89,32 +94,78 @@ function UserDropdown({
       {/* Dropdown panel */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-2 w-48 rounded-xl border py-1.5 shadow-xl"
+          className="absolute right-0 top-full mt-2 w-56 rounded-xl border py-1.5 shadow-xl backdrop-blur-xl"
           style={{
             background: colors.panel,
             borderColor: colors.border,
             zIndex: 50,
           }}
         >
-          {/* Email info */}
+          {/* Email & Tier info */}
           <div
             className="px-4 py-2 mb-1 border-b"
             style={{ borderColor: colors.borderSoft }}
           >
-            <p className="text-[11px] font-medium" style={{ color: colors.textFaint }}>
-              Đăng nhập với
-            </p>
-            <p className="text-xs truncate" style={{ color: colors.text }}>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[11px] font-medium" style={{ color: colors.textFaint }}>
+                Tài khoản
+              </p>
+              <UserBadge tier={user.tier} role={user.role} size="xs" />
+            </div>
+            <p className="text-xs truncate font-medium" style={{ color: colors.text }}>
               {user.email}
             </p>
           </div>
+
+          {/* Pricing CTA */}
+          <Link
+            href="/pricing"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between px-4 py-2 text-xs font-semibold transition-colors hover:bg-white/5"
+            style={{ color: isPremiumUser ? "#FBBF24" : colors.accent }}
+          >
+            <span>{isPremiumUser ? "👑 Gói đăng ký của tôi" : "⚡ Nâng cấp PRO / VIP"}</span>
+            <span className="text-[11px] font-normal text-neutral-400">→</span>
+          </Link>
+
+          {/* VIP Telegram Hub */}
+          <Link
+            href="/vip"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between px-4 py-2 text-xs transition-colors hover:bg-white/5"
+            style={{ color: colors.text }}
+          >
+            <span className="flex items-center gap-1.5">
+              <span>✈️</span>
+              <span>Kênh VIP Telegram</span>
+            </span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-400/20 text-cyan-300 font-bold">
+              VIP
+            </span>
+          </Link>
+
+          {/* Developer API Link */}
+          <Link
+            href="/developer"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between px-4 py-2 text-xs transition-colors hover:bg-white/5"
+            style={{ color: colors.text }}
+          >
+            <span className="flex items-center gap-1.5">
+              <span>🔑</span>
+              <span>Developer API</span>
+            </span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold">
+              VIP
+            </span>
+          </Link>
 
           {/* Admin link */}
           {isAdmin && (
             <Link
               href="/admin"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5"
+              className="flex items-center gap-2 px-4 py-2 text-xs transition-colors hover:bg-white/5"
               style={{ color: "#F87171" }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -131,8 +182,8 @@ function UserDropdown({
             id="btn-navbar-logout"
             type="button"
             onClick={() => { setOpen(false); onLogout(); }}
-            className="flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors hover:bg-white/5"
-            style={{ color: colors.textMuted }}
+            className="flex w-full items-center gap-2 px-4 py-2 text-xs transition-colors hover:bg-white/5 border-t mt-1"
+            style={{ borderColor: colors.borderSoft, color: colors.textMuted }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -201,9 +252,8 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`transition-colors ${
-                  isActive ? "text-white font-semibold" : "hover:text-white"
-                }`}
+                className={`transition-colors ${isActive ? "text-white font-semibold" : "hover:text-white"
+                  }`}
                 style={{ color: isActive ? colors.text : colors.textMuted }}
               >
                 {item.label}
@@ -272,9 +322,8 @@ export default function Navbar() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`text-sm py-1.5 transition-colors ${
-                  isActive ? "text-white font-semibold" : ""
-                }`}
+                className={`text-sm py-1.5 transition-colors ${isActive ? "text-white font-semibold" : ""
+                  }`}
                 style={{ color: isActive ? colors.accent : colors.textMuted }}
               >
                 {item.label}
@@ -288,21 +337,35 @@ export default function Navbar() {
           >
             {isAuthenticated && user ? (
               <>
-                <div className="flex items-center gap-2.5 px-1 py-1.5">
-                  <div
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0"
-                    style={{
-                      background: "rgba(47,217,140,0.15)",
-                      border: "1px solid rgba(47,217,140,0.3)",
-                      color: colors.accent,
-                    }}
-                  >
-                    {(user.fullName?.[0] ?? user.email[0]).toUpperCase()}
+                <div className="flex items-center justify-between px-1 py-1.5">
+                  <div className="flex items-center gap-2.5">
+                    <div
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0"
+                      style={{
+                        background: user.tier === "pro" || user.tier === "vip" ? "rgba(245,158,11,0.15)" : "rgba(47,217,140,0.15)",
+                        border: user.tier === "pro" || user.tier === "vip" ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(47,217,140,0.3)",
+                        color: user.tier === "pro" || user.tier === "vip" ? "#FBBF24" : colors.accent,
+                      }}
+                    >
+                      {(user.fullName?.[0] ?? user.email[0]).toUpperCase()}
+                    </div>
+                    <span className="text-sm truncate" style={{ color: colors.text }}>
+                      {user.fullName ?? user.email}
+                    </span>
                   </div>
-                  <span className="text-sm truncate" style={{ color: colors.text }}>
-                    {user.fullName ?? user.email}
-                  </span>
+                  <UserBadge tier={user.tier} role={user.role} size="xs" />
                 </div>
+                <Link
+                  href="/pricing"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="w-full rounded-sm border py-2 text-sm font-semibold text-center transition-colors hover:bg-white/5 block"
+                  style={{
+                    borderColor: user.tier === "pro" || user.tier === "vip" ? "rgba(245,158,11,0.3)" : colors.borderSoft,
+                    color: user.tier === "pro" || user.tier === "vip" ? "#FBBF24" : colors.accent,
+                  }}
+                >
+                  {user.tier === "pro" || user.tier === "vip" ? "👑 Quản lý gói cước" : "⚡ Nâng cấp PRO / VIP"}
+                </Link>
                 {isAdmin && (
                   <Link
                     href="/admin"

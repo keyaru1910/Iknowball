@@ -6,6 +6,7 @@ import { useModelComparison } from "../../../hooks/useModelComparison";
 import { useLeagues } from "../../../hooks/useLeagues";
 import { useSport } from "../../../context/SportContext";
 import PredictionDisclaimer from "../../../components/PredictionDisclaimer";
+import CsvExportButton from "../../../components/CsvExportButton";
 import { colors } from "../../../lib/design-tokens";
 
 /**
@@ -107,8 +108,14 @@ export default function PredictionPerformancePage() {
           </p>
         </div>
 
-        {/* League Selector */}
-        <div className="flex items-center gap-2 shrink-0">
+        {/* League Selector & Export Action */}
+        <div className="flex items-center gap-3 shrink-0 flex-wrap">
+          <CsvExportButton
+            type="performance"
+            leagueId={selectedLeagueId || undefined}
+            label="Xuất CSV Benchmark"
+          />
+
           <select
             value={selectedLeagueId}
             onChange={(e) => setSelectedLeagueId(e.target.value)}
@@ -128,6 +135,7 @@ export default function PredictionPerformancePage() {
           </select>
         </div>
       </div>
+
 
       {/* Top Level Metric Cards */}
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">

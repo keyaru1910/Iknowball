@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useMatchDetail } from "../../../hooks/useMatchDetail";
 import { useMatchH2H } from "../../../hooks/useMatchH2H";
 import { usePrediction } from "../../../hooks/usePrediction";
+import { useAuth } from "../../../hooks/useAuth";
 import MatchHeader from "../../../components/MatchHeader";
 import MatchTimeline from "../../../components/MatchTimeline";
 import MatchStatsBar from "../../../components/MatchStatsBar";
@@ -13,9 +14,14 @@ import H2HCard from "../../../components/H2HCard";
 import ProbBar from "../../../components/ProbBar";
 import TeamFormBadge from "../../../components/TeamFormBadge";
 import PredictionDisclaimer from "../../../components/PredictionDisclaimer";
+import UserBadge from "../../../components/UserBadge";
+import EloChart from "../../../components/EloChart";
+import VisualFeatureSnapshot from "../../../components/VisualFeatureSnapshot";
+import VipMatchReport from "../../../components/VipMatchReport";
+import CsvExportButton from "../../../components/CsvExportButton";
 import { colors } from "../../../lib/design-tokens";
 
-type PredictionDetailTab = "overview" | "explainability" | "h2h" | "stats" | "events";
+type PredictionDetailTab = "overview" | "vipReport" | "explainability" | "h2h" | "stats" | "events";
 
 /**
  * Trang chi tiết phân tích và dự đoán AI chuyên sâu (/predictions/[matchId])
@@ -26,12 +32,17 @@ export default function PredictionDetailPage() {
   const router = useRouter();
   const matchId = String(params?.matchId || params?.id || "");
   const [activeTab, setActiveTab] = useState<PredictionDetailTab>("overview");
+  const { user, isAuthenticated } = useAuth();
 
-  const { data: matchData, isLoading, isError, isStale } = useMatchDetail(matchId);
+  const { data: matchData, isLoading: isMatchLoading, isError: isMatchError, isStale } = useMatchDetail(matchId);
   const { data: h2hData } = useMatchH2H(matchId);
-  const { data: predictionDetail } = usePrediction(matchId);
+  const { data: predictionDetail, error: predictionError } = usePrediction(matchId);
 
-  if (isLoading) {
+  const isPaywallExceeded =
+    Boolean(predictionError && (predictionError as any)?.message?.includes("lượt xem")) ||
+    (predictionDetail?.tier === "free" && predictionDetail?.remainingDailyQuota === 0 && !predictionDetail?.isPremium);
+
+  if (isMatchLoading) {
     return (
       <div className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
         <div className="h-64 animate-pulse rounded-xl border" style={{ borderColor: colors.borderSoft, backgroundColor: colors.panel }} />
@@ -39,7 +50,7 @@ export default function PredictionDetailPage() {
     );
   }
 
-  if (isError || !matchData) {
+  if (isMatchError || !matchData) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <div className="rounded-xl border p-8 text-center" style={{ borderColor: colors.loss, backgroundColor: `${colors.loss}10` }}>
@@ -71,8 +82,12 @@ export default function PredictionDetailPage() {
     featuresSnapshot: undefined,
     explanation: undefined,
     isPremium: false,
+    tier: undefined,
+    remainingDailyQuota: undefined,
   } : undefined);
 
+  const isPremiumUser = predictionDetail?.isPremium || user?.tier === "pro" || user?.tier === "vip" || user?.role === "admin";
+  const isVipUser = user?.tier === "vip" || user?.role === "admin";
   const explanation = (currentPrediction as any)?.explanation || (currentPrediction?.featuresSnapshot as any)?.explanation;
   const featuresSnapshot = currentPrediction?.featuresSnapshot as any;
 
@@ -89,21 +104,61 @@ export default function PredictionDetailPage() {
         </div>
       )}
 
-      {/* Breadcrumb Navigation */}
-      <div className="mb-6 flex items-center gap-2 text-xs" style={{ color: colors.textMuted }}>
-        <button
-          type="button"
-          onClick={() => router.push("/predictions")}
-          className="hover:text-white transition-colors"
-        >
-          ← Danh sách dự đoán
-        </button>
-        <span>/</span>
-        <span>{match.league}</span>
-        <span>/</span>
-        <span className="text-white font-medium">
-          {match.homeTeam.name} vs {match.awayTeam.name}
-        </span>
+      {/* Breadcrumb Navigation & Tier Quota Tracker */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs" style={{ color: colors.textMuted }}>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => router.push("/predictions")}
+            className="hover:text-white transition-colors"
+          >
+            ← Danh sách dự đoán
+          </button>
+          <span>/</span>
+          <span>{match.league}</span>
+          <span>/</span>
+          <span className="text-white font-medium">
+            {match.homeTeam.name} vs {match.awayTeam.name}
+          </span>
+        </div>
+
+        {/* Quota Tracker & Export Action */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <CsvExportButton
+            type="predictions"
+            leagueId={(match as any).leagueId || undefined}
+            season={(match as any).season || undefined}
+            sport={isBasketball ? "basketball" : "football"}
+            label="Xuất CSV Trận Đấu"
+          />
+
+          {isPremiumUser ? (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-300 text-[11px] font-semibold">
+              <span>✨</span>
+              <span>Không giới hạn</span>
+              <UserBadge tier={user?.tier || "pro"} size="xs" />
+            </div>
+          ) : isAuthenticated ? (
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-neutral-300 text-[11px]">
+              <span>
+                🎯 Lượt xem hôm nay:{" "}
+                <strong className={predictionDetail?.remainingDailyQuota === 0 ? "text-rose-400" : "text-emerald-400"}>
+                  {predictionDetail?.remainingDailyQuota ?? 3}/3
+                </strong>
+              </span>
+              <Link href="/pricing" className="text-emerald-400 font-semibold hover:underline">
+                Nâng cấp Pro →
+              </Link>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 text-neutral-300 text-[11px]">
+              <span>⚡ Bản xem trước</span>
+              <Link href="/login" className="text-emerald-400 font-semibold hover:underline">
+                Đăng nhập
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Scoreboard & Match Header */}
@@ -129,8 +184,27 @@ export default function PredictionDetailPage() {
 
         <button
           type="button"
+          onClick={() => setActiveTab("vipReport")}
+          className={`rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            activeTab === "vipReport"
+              ? "text-amber-300 shadow-sm border border-amber-500/40 bg-amber-500/20"
+              : "hover:text-amber-300"
+          }`}
+          style={{
+            backgroundColor: activeTab === "vipReport" ? "rgba(245, 158, 11, 0.15)" : "transparent",
+            color: activeTab === "vipReport" ? "#FBBF24" : colors.textMuted,
+          }}
+        >
+          <span>👑 Báo cáo AI VIP</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold border border-amber-400/30">
+            VIP
+          </span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setActiveTab("explainability")}
-          className={`rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all ${
+          className={`rounded-lg px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
             activeTab === "explainability" ? "text-white shadow-sm" : "hover:text-white"
           }`}
           style={{
@@ -138,7 +212,12 @@ export default function PredictionDetailPage() {
             color: activeTab === "explainability" ? colors.accent : colors.textMuted,
           }}
         >
-          🧠 Giải thích mô hình (Explainability)
+          <span>🧠 Trọng số AI</span>
+          {!isPremiumUser && (
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold">
+              PRO
+            </span>
+          )}
         </button>
 
         <button
@@ -184,9 +263,47 @@ export default function PredictionDetailPage() {
         </button>
       </div>
 
+
       {/* Tab 1: Overview & AI Prediction */}
       {activeTab === "overview" && (
         <div className="flex flex-col gap-6">
+          {/* Paywall Banner if Quota Limit Reached */}
+          {isPaywallExceeded && (
+            <div
+              className="rounded-xl border p-6 text-center shadow-lg relative overflow-hidden"
+              style={{
+                borderColor: "rgba(245, 158, 11, 0.4)",
+                background: "linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(15, 23, 42, 0.8) 100%)",
+              }}
+            >
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 border border-amber-500/30 text-2xl mb-3">
+                🔒
+              </div>
+              <h3 className="text-base font-bold text-white mb-1">
+                Bạn đã sử dụng hết 3 lượt xem chi tiết dự đoán hôm nay
+              </h3>
+              <p className="text-xs text-neutral-300 max-w-md mx-auto mb-4 leading-relaxed">
+                Nâng cấp lên gói <strong>PRO Analyst</strong> hoặc <strong>VIP Insights</strong> để mở khóa không giới hạn lượt xem trận đấu, biểu đồ Elo lịch sử và toàn bộ trọng số mô hình AI.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Link
+                  href="/pricing"
+                  className="rounded-xl px-5 py-2.5 text-xs font-bold transition-all shadow-md hover:scale-105"
+                  style={{ backgroundColor: colors.accent, color: colors.bg }}
+                >
+                  ⚡ Nâng cấp PRO chỉ từ 249k/tháng
+                </Link>
+                <Link
+                  href="/predictions"
+                  className="rounded-xl border px-4 py-2.5 text-xs font-semibold text-neutral-300 hover:text-white transition-colors"
+                  style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
+                >
+                  Xem danh sách trận khác
+                </Link>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Prediction Card */}
             {currentPrediction ? (
@@ -201,9 +318,9 @@ export default function PredictionDetailPage() {
                     </h3>
                     <span
                       className="rounded-md px-2 py-0.5 font-mono text-[10px]"
-                      style={{ backgroundColor: `${colors.accent}15`, color: colors.accent }}
+                      style={{ backgroundColor: isPremiumUser ? "rgba(245, 158, 11, 0.2)" : `${colors.accent}15`, color: isPremiumUser ? "#FBBF24" : colors.accent }}
                     >
-                      {currentPrediction.isPremium ? "Premium AI" : "Free Summary"}
+                      {isPremiumUser ? "👑 Premium AI" : "Free Summary"}
                     </span>
                   </div>
 
@@ -223,7 +340,7 @@ export default function PredictionDetailPage() {
                   </div>
 
                   {/* Highlight factor */}
-                  {explanation && (
+                  {explanation ? (
                     <div
                       className="mt-4 rounded-lg border p-3 text-xs mb-4"
                       style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
@@ -236,7 +353,19 @@ export default function PredictionDetailPage() {
                         {explanation.dominantFactor === "elo_difference" && "⚡ Chênh lệch đẳng cấp Elo rating"}
                         {explanation.dominantFactor === "recent_form" && "🔥 Phong độ chuỗi 5 trận gần nhất"}
                         {explanation.dominantFactor === "home_advantage" && "🏟️ Lợi thế sân nhà"}
+                        {!["elo_difference", "recent_form", "home_advantage"].includes(explanation.dominantFactor) &&
+                          (explanation.dominantFactor || "⚡ Phân tích đa yếu tố AI")}
                       </p>
+                    </div>
+                  ) : (
+                    <div
+                      className="mt-4 rounded-lg border p-3 text-xs mb-4 flex items-center justify-between"
+                      style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}
+                    >
+                      <span className="text-[11px] text-neutral-400">🔒 Giải thích chi tiết yếu tố chi phối</span>
+                      <Link href="/pricing" className="text-[11px] text-emerald-400 font-semibold hover:underline">
+                        Mở khóa Pro →
+                      </Link>
                     </div>
                   )}
                 </div>
@@ -311,6 +440,23 @@ export default function PredictionDetailPage() {
             </div>
           </div>
 
+          {/* VIP Match Report Highlight Card in Overview */}
+          <VipMatchReport
+            matchId={match.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isVipUser={isVipUser}
+          />
+
+          {/* Visual AI Breakdown Card */}
+          <VisualFeatureSnapshot
+            featuresSnapshot={featuresSnapshot}
+            explanation={explanation}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
+
           <PredictionDisclaimer variant="banner" />
 
           <div>
@@ -323,80 +469,76 @@ export default function PredictionDetailPage() {
         </div>
       )}
 
-      {/* Tab 2: Explainability */}
-      {activeTab === "explainability" && (
+      {/* Tab: VIP Match Intelligence Report (Dedicated View) */}
+      {activeTab === "vipReport" && (
         <div className="flex flex-col gap-6">
-          <div
-            className="rounded-xl border p-6"
-            style={{ borderColor: colors.border, backgroundColor: colors.panel }}
-          >
-            <h3 className="text-lg font-bold text-white mb-2">
-              🧠 Giải thích định lượng các yếu tố đóng góp (Explainable AI)
-            </h3>
-            <p className="text-xs leading-relaxed mb-6" style={{ color: colors.textMuted }}>
-              Mô hình Logistic Regression đo lường các đặc trưng số học để đưa ra quyết định mà không phải là hộp đen (Black box).
-            </p>
+          <VipMatchReport
+            matchId={match.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isVipUser={isVipUser}
+          />
 
-            {explanation || featuresSnapshot ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-lg border p-4" style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}>
-                  <div className="text-xs text-emerald-400 font-semibold mb-1">Chênh lệch Elo (Elo Diff)</div>
-                  <div className="font-mono text-2xl font-bold text-white">
-                    {explanation?.eloDiff ?? ((featuresSnapshot?.homeElo ?? 1500) - (featuresSnapshot?.awayElo ?? 1500))}
-                  </div>
-                  <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                    Khoảng cách thực lực giữa {match.homeTeam.name} và {match.awayTeam.name}.
-                  </p>
-                </div>
+          <VisualFeatureSnapshot
+            featuresSnapshot={featuresSnapshot}
+            explanation={explanation}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
 
-                <div className="rounded-lg border p-4" style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}>
-                  <div className="text-xs text-emerald-400 font-semibold mb-1">Lợi thế sân nhà (Home Advantage)</div>
-                  <div className="font-mono text-2xl font-bold text-white">
-                    +{explanation?.homeAdvantage ?? 65.0} Elo
-                  </div>
-                  <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                    Ưu thế thi đấu trên sân nhà của {match.homeTeam.name}.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4" style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}>
-                  <div className="text-xs text-emerald-400 font-semibold mb-1">Điều chỉnh phong độ (Form Adjustment)</div>
-                  <div className="font-mono text-2xl font-bold text-white">
-                    {explanation?.formAdjustment ? (explanation.formAdjustment > 0 ? `+${explanation.formAdjustment}` : explanation.formAdjustment) : "0.0"} Elo
-                  </div>
-                  <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                    Tính toán từ chuỗi 5 trận gần nhất trước thời điểm trận đấu diễn ra.
-                  </p>
-                </div>
-
-                <div className="rounded-lg border p-4" style={{ borderColor: colors.borderSoft, backgroundColor: colors.panelAlt }}>
-                  <div className="text-xs text-emerald-400 font-semibold mb-1">Số trận đối đầu xem xét (H2H)</div>
-                  <div className="font-mono text-2xl font-bold text-white">
-                    {explanation?.h2hMatchesConsidered ?? (featuresSnapshot?.h2hMatches ?? (h2h?.totalMatches ?? 0))} trận
-                  </div>
-                  <p className="mt-1 text-[11px]" style={{ color: colors.textMuted }}>
-                    Dữ liệu lịch sử chạm trán giữa hai câu lạc bộ.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-dashed p-6 text-center text-xs" style={{ borderColor: colors.borderSoft, color: colors.textMuted }}>
-                🔒 Dữ liệu snapshot chi tiết dành cho người dùng xem phân tích nâng cao. Nâng cấp tài khoản để mở khóa đầy đủ trọng số mô hình.
-              </div>
-            )}
-          </div>
+          <EloChart
+            homeTeamId={match.homeTeam.id}
+            awayTeamId={match.awayTeam.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
 
           <PredictionDisclaimer variant="banner" />
         </div>
       )}
 
-      {/* Tab 3: H2H */}
+      {/* Tab 2: Explainability with Visual Feature Snapshot & Elo Chart */}
+      {activeTab === "explainability" && (
+        <div className="flex flex-col gap-6">
+          <VisualFeatureSnapshot
+            featuresSnapshot={featuresSnapshot}
+            explanation={explanation}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
+
+          <EloChart
+            homeTeamId={match.homeTeam.id}
+            awayTeamId={match.awayTeam.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
+
+          <PredictionDisclaimer variant="banner" />
+        </div>
+      )}
+
+      {/* Tab 3: H2H with Elo Rating Trend */}
       {activeTab === "h2h" && (
-        <H2HCard
-          h2h={h2h}
-          homeTeamName={match.homeTeam.name}
-          awayTeamName={match.awayTeam.name}
-        />
+        <div className="flex flex-col gap-6">
+          <H2HCard
+            h2h={h2h}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+          />
+
+          <EloChart
+            homeTeamId={match.homeTeam.id}
+            awayTeamId={match.awayTeam.id}
+            homeTeamName={match.homeTeam.name}
+            awayTeamName={match.awayTeam.name}
+            isLocked={!isPremiumUser}
+          />
+        </div>
       )}
 
       {/* Tab 4: Stats */}
@@ -419,3 +561,4 @@ export default function PredictionDetailPage() {
     </div>
   );
 }
+

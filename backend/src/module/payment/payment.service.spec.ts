@@ -95,7 +95,7 @@ describe('PaymentService', () => {
     it('should return subscription plans list', () => {
         const plans = service.getSubscriptionPlans();
         expect(plans).toBeDefined();
-        expect(plans.length).toBe(4);
+        expect(plans.length).toBe(5);
         expect(plans[0].id).toBe(SubscriptionPlan.FREE);
     });
 

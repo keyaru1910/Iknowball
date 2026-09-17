@@ -92,4 +92,130 @@ export class EloService {
     for (const match of matches) await this.applyFinishedMatch(match.id);
     return matches.length;
   }
+
+  /**
+   * Lấy chuỗi lịch sử biến động điểm Elo của một đội bóng qua các trận đấu trong mùa giải.
+   */
+  async getEloHistory(teamId: string, season?: string, leagueId?: string) {
+    const team = await this.prisma.team.findUnique({
+      where: { id: teamId },
+      select: { id: true, name: true, logoUrl: true },
+    });
+
+    if (!team) {
+      return {
+        team: { id: teamId, name: 'Đội bóng', logoUrl: null },
+        currentElo: DEFAULT_ELO,
+        peakElo: DEFAULT_ELO,
+        lowestElo: DEFAULT_ELO,
+        history: [],
+      };
+    }
+
+    const latestStats = await this.prisma.teamStats.findFirst({
+      where: {
+        teamId,
+        ...(season ? { season } : {}),
+        ...(leagueId ? { leagueId } : {}),
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    const matches = await this.prisma.match.findMany({
+      where: {
+        status: MatchStatus.FINISHED,
+        OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
+        ...(season ? { season } : {}),
+        ...(leagueId ? { leagueId } : {}),
+        homeScore: { not: null },
+        awayScore: { not: null },
+      },
+      include: {
+        homeTeam: { select: { id: true, name: true, logoUrl: true } },
+        awayTeam: { select: { id: true, name: true, logoUrl: true } },
+      },
+      orderBy: [{ matchDate: 'asc' }, { id: 'asc' }],
+    });
+
+    let runningElo = DEFAULT_ELO;
+    let peakElo = DEFAULT_ELO;
+    let lowestElo = DEFAULT_ELO;
+    const history: Array<{
+      matchId: string;
+      matchDate: Date;
+      opponent: { id: string; name: string; logoUrl: string | null };
+      isHome: boolean;
+      score: string;
+      result: 'W' | 'D' | 'L';
+      eloBefore: number;
+      eloAfter: number;
+      eloChange: number;
+    }> = [];
+
+    for (let i = 0; i < matches.length; i++) {
+      const m = matches[i];
+      const isHome = m.homeTeamId === teamId;
+      const opponent = isHome ? m.awayTeam : m.homeTeam;
+      const homeScore = m.homeScore ?? 0;
+      const awayScore = m.awayScore ?? 0;
+      const teamScore = isHome ? homeScore : awayScore;
+      const oppScore = isHome ? awayScore : homeScore;
+
+      const result: 'W' | 'D' | 'L' = teamScore > oppScore ? 'W' : teamScore < oppScore ? 'L' : 'D';
+      const actualEloResult: EloResult = homeScore > awayScore ? 1 : homeScore < awayScore ? 0 : 0.5;
+
+      const eloBefore = runningElo;
+      const update = calculateEloUpdate(
+        isHome ? eloBefore : DEFAULT_ELO,
+        isHome ? DEFAULT_ELO : eloBefore,
+        actualEloResult,
+        kFactor(i + 1),
+      );
+
+      const eloAfter = Math.round((isHome ? update.homeElo : update.awayElo) * 10) / 10;
+      const eloChange = Math.round((eloAfter - eloBefore) * 10) / 10;
+      runningElo = eloAfter;
+
+      if (runningElo > peakElo) peakElo = runningElo;
+      if (runningElo < lowestElo) lowestElo = runningElo;
+
+      history.push({
+        matchId: m.id,
+        matchDate: m.matchDate,
+        opponent,
+        isHome,
+        score: `${homeScore} - ${awayScore}`,
+        result,
+        eloBefore,
+        eloAfter,
+        eloChange,
+      });
+    }
+
+    const currentElo = latestStats?.eloRating ? Number(latestStats.eloRating) : runningElo;
+
+    return {
+      team,
+      currentElo,
+      peakElo: Math.max(peakElo, currentElo),
+      lowestElo: Math.min(lowestElo, currentElo),
+      history,
+    };
+  }
+
+  /**
+   * So sánh lịch sử Elo của 2 đội bóng để vẽ biểu đồ song song
+   */
+  async compareTeamsElo(homeTeamId: string, awayTeamId: string, season?: string) {
+    const [homeElo, awayElo] = await Promise.all([
+      this.getEloHistory(homeTeamId, season),
+      this.getEloHistory(awayTeamId, season),
+    ]);
+
+    return {
+      homeTeam: homeElo,
+      awayTeam: awayElo,
+      eloDifference: Math.round((homeElo.currentElo - awayElo.currentElo) * 10) / 10,
+    };
+  }
 }

@@ -173,7 +173,10 @@ export default function AdminSubscriptionsPage() {
                         <div className="text-xs text-neutral-400">{p.user?.email}</div>
                       </td>
                       <td className="py-3.5 px-4 font-bold text-white">
-                        ${p.amount.toFixed(2)} <span className="text-xs font-normal uppercase text-neutral-400">{p.currency}</span>
+                        {p.currency?.toLowerCase() === "vnd"
+                          ? `${Number(p.amount).toLocaleString("vi-VN")} đ`
+                          : `$${Number(p.amount).toFixed(2)}`}
+                        <span className="ml-1 text-xs font-normal uppercase text-neutral-400">{p.currency}</span>
                       </td>
                       <td className="py-3.5 px-4">
                         <span

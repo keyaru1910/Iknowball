@@ -3,6 +3,7 @@ import { EloModule } from '../elo/elo.module';
 import { AuthModule } from '../auth/AuthModule';
 import { PredictionController } from './prediction.controller';
 import { PredictionService } from './prediction.service';
+import { VipReportService } from './vip-report.service';
 
 @Module({
   imports: [
@@ -10,7 +11,8 @@ import { PredictionService } from './prediction.service';
     EloModule,
   ],
   controllers: [PredictionController],
-  providers: [PredictionService],
-  exports: [PredictionService],
+  providers: [PredictionService, VipReportService],
+  exports: [PredictionService, VipReportService],
 })
 export class PredictionModule {}
+

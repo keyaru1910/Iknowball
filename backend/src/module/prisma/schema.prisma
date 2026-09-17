@@ -30,12 +30,19 @@ model User {
   commentReports  CommentReport[] @relation("CommentReporter")
   targetAuditLogs AuditLog[]           @relation("TargetUser")
   actorAuditLogs  AuditLog[]           @relation("ActorUser")
+  apiKeys         ApiKey[]
+  telegramChatId       String?         @unique
+  telegramUsername     String?
+  telegramConnectedAt  DateTime?
+  telegramConnectToken String?         @unique
+  alertPreference      AlertPreference?
   createdAt       DateTime             @default(now())
   updatedAt       DateTime             @updatedAt
 
   @@index([roleId])
   @@index([status])
   @@index([createdAt])
+  @@index([telegramChatId])
 }
 
 model Role {
@@ -262,6 +269,8 @@ model Match {
   events      MatchEvent[]
   playerStats PlayerStats[]
   predictions Prediction[]
+  vipReport   VipMatchReport?
+  fluctuationAlerts FluctuationAlert[]
   eloProcessedAt DateTime?
 
   createdAt DateTime @default(now())
@@ -441,6 +450,7 @@ enum SubscriptionPlan {
   PRO_MONTHLY
   PRO_YEARLY
   VIP_MONTHLY
+  VIP_YEARLY
 }
 
 enum SubscriptionStatus {
@@ -630,5 +640,85 @@ model TeamSeasonStatistics {
 
   @@unique([teamId, leagueId, season])
   @@index([leagueId, season, sport])
+}
+
+// ===== VIP Analytics & Developer API (Phase 3) =====
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  keyPrefix  String    // Ví dụ: "ikb_live_a1b2..."
+  keyHash    String    // SHA-256 hash của raw key
+  name       String    @default("Default VIP API Key")
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([keyHash])
+}
+
+model VipMatchReport {
+  id               String   @id @default(uuid())
+  matchId          String   @unique
+  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  headline         String
+  summary          String   @db.Text
+  tacticalAnalysis String   @db.Text
+  keyBattles       Json?    // Danh sách điểm nóng chiến thuật / cặp đấu chủ chốt
+  predictedScore   String?
+  confidence       String   @default("HIGH") // HIGH | MEDIUM | MODERATE
+  recommendation   String?  @db.Text
+  generatedBy      String   @default("GEMINI_FLASH") // GEMINI_FLASH | HEURISTIC_AI
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([matchId])
+}
+
+// ===== VIP Alerts & Telegram Automation (Phase 4) =====
+
+model FluctuationAlert {
+  id                  String   @id @default(uuid())
+  matchId             String
+  match               Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  homeTeamName        String
+  awayTeamName        String
+  sport               String   @default("football")
+  type                String   // "ODDS_SHIFT" | "PROBABILITY_SPIKE" | "VALUE_BET" | "LINEUP_CHANGE"
+  headline            String
+  description         String   @db.Text
+  previousHomeWinProb Decimal  @db.Decimal(6, 5)
+  currentHomeWinProb  Decimal  @db.Decimal(6, 5)
+  previousAwayWinProb Decimal  @db.Decimal(6, 5)
+  currentAwayWinProb  Decimal  @db.Decimal(6, 5)
+  previousDrawProb    Decimal? @db.Decimal(6, 5)
+  currentDrawProb     Decimal? @db.Decimal(6, 5)
+  changePercent       Decimal  @db.Decimal(5, 2)
+  severity            String   @default("SIGNIFICANT") // "INFO" | "SIGNIFICANT" | "CRITICAL"
+  recommendedBet      String?
+  createdAt           DateTime @default(now())
+
+  @@index([matchId])
+  @@index([type, severity])
+  @@index([createdAt])
+}
+
+model AlertPreference {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  oddsAlertEnabled       Boolean  @default(true)
+  predictionShiftEnabled Boolean  @default(true)
+  minThresholdPercent    Int      @default(5)
+  notifyInApp            Boolean  @default(true)
+  notifyTelegram         Boolean  @default(true)
+  notifyEmail            Boolean  @default(false)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([userId])
 }
 

@@ -1,4 +1,5 @@
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
+import type { Response } from 'express';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
 import { Roles } from '../decorators/roles.decorator';
@@ -7,13 +8,51 @@ import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { PredictionService } from './prediction.service';
 import { EloService } from '../elo/elo.service';
+import { VipReportService } from './vip-report.service';
 
 @Controller('api/v1/predictions')
 export class PredictionController {
   constructor(
     private readonly service: PredictionService,
     private readonly eloService: EloService,
+    private readonly vipReportService: VipReportService,
   ) {}
+
+  /** Xuất danh sách dự đoán ra định dạng file CSV (VIP / Pro / Admin) */
+  @Get('export')
+  @UseGuards(OptionalJwtAuthGuard)
+  async exportPredictions(
+    @Query('leagueId') leagueId?: string,
+    @Query('season') season?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('sport') sport?: string,
+    @Res() res?: Response,
+  ) {
+    const csvContent = await this.service.exportPredictionsCsv({ leagueId, season, from, to, sport });
+    if (res) {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="iknowball-predictions.csv"');
+      return res.send(csvContent);
+    }
+    return csvContent;
+  }
+
+  /** Xuất dữ liệu benchmark hiệu năng mô hình ra file CSV */
+  @Get('performance/export')
+  @UseGuards(OptionalJwtAuthGuard)
+  async exportPerformance(
+    @Query('leagueId') leagueId?: string,
+    @Res() res?: Response,
+  ) {
+    const csvContent = await this.service.exportPerformanceCsv(leagueId);
+    if (res) {
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', 'attachment; filename="iknowball-model-performance.csv"');
+      return res.send(csvContent);
+    }
+    return csvContent;
+  }
 
   /** Danh sách dự đoán (public, phân trang) */
   @Get()
@@ -136,6 +175,19 @@ export class PredictionController {
     return { data: result, meta: null, error: null };
   }
 
+  /**
+   * Báo cáo nhận định chiến thuật AI chuyên sâu (VIP Insights & Admin)
+   */
+  @Get(':matchId/vip-report')
+  @UseGuards(OptionalJwtAuthGuard)
+  async getVipReport(
+    @Param('matchId') matchId: string,
+    @CurrentUser() user?: { id: string; role: string; tier?: string },
+  ) {
+    const data = await this.vipReportService.getOrGenerateVipReport(matchId, user);
+    return { data, meta: null, error: null };
+  }
+
   /** Chi tiết dự đoán cho một trận đấu (optional auth – premium thấy explanation) */
   @Get(':matchId')
   @UseGuards(OptionalJwtAuthGuard)
@@ -147,3 +199,4 @@ export class PredictionController {
     return { data, meta: null, error: null };
   }
 }
+

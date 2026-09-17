@@ -8,6 +8,7 @@ import { useSport } from "../../context/SportContext";
 import MatchCard from "../../components/MatchCard";
 import MatchDateFilter from "../../components/MatchDateFilter";
 import PredictionDisclaimer from "../../components/PredictionDisclaimer";
+import CsvExportButton from "../../components/CsvExportButton";
 import { layMuaGiaiHienTai } from "../../lib/constants/seasons";
 import { colors, type MatchStatus } from "../../lib/design-tokens";
 
@@ -53,7 +54,7 @@ export default function PredictionsPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
       {/* Header & Title Section */}
-      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span
@@ -79,20 +80,66 @@ export default function PredictionsPage() {
           </p>
         </div>
 
-        {/* Live indicator badge */}
-        {liveCount > 0 && (
-          <div
-            className="flex items-center gap-2 self-start rounded-full border px-3 py-1 font-mono text-xs font-semibold"
-            style={{
-              borderColor: `${colors.live}40`,
-              backgroundColor: `${colors.live}15`,
-              color: colors.live,
-            }}
-          >
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: colors.live }} />
-            {liveCount} trận đang diễn ra
+        {/* Header Actions: Live indicator & CSV Export */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <CsvExportButton
+            type="predictions"
+            leagueId={selectedLeagueId}
+            season={selectedSeason}
+            sport={sport}
+            label="Xuất CSV Dự Đoán"
+          />
+
+          {liveCount > 0 && (
+            <div
+              className="flex items-center gap-2 rounded-full border px-3 py-1 font-mono text-xs font-semibold"
+              style={{
+                borderColor: `${colors.live}40`,
+                backgroundColor: `${colors.live}15`,
+                color: colors.live,
+              }}
+            >
+              <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: colors.live }} />
+              {liveCount} trận trực tiếp
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Real-time VIP Fluctuation Alert Banner */}
+      <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-cyan-500/10 border border-amber-500/25 p-4 backdrop-blur-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400/20 text-amber-300 shrink-0">
+            🔥
+          </span>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-xs sm:text-sm font-bold text-white">Tín Hiệu Biến Động Odds & Value Bet Hôm Nay</p>
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+                VIP Signals
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
+              Hệ thống vừa ghi nhận biến động xác suất tại các cặp đấu tâm điểm. Theo dõi trực tiếp trên Kênh VIP.
+            </p>
           </div>
-        )}
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+          <a
+            href="/alerts"
+            className="px-3 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 text-neutral-200 text-xs font-semibold border border-neutral-700 transition-all"
+          >
+            Xem Biến Động
+          </a>
+          <a
+            href="/vip"
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-1"
+          >
+            <span>Kênh VIP Telegram</span>
+            <span>→</span>
+          </a>
+        </div>
       </div>
 
       {/* Date, League & Season Filters */}

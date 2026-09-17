@@ -17,6 +17,8 @@ import { AdminModule } from './module/admin/admin.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { NewsModule } from './module/news/news.module';
 import { CommentsModule } from './module/comments/comments.module';
+import { TelegramModule } from './module/telegram/telegram.module';
+import { AlertModule } from './module/alert/alert.module';
 
 const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQueueModule, SportsSyncModule] : [];
 
@@ -40,6 +42,8 @@ const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQu
     AdminModule,
     NewsModule,
     CommentsModule,
+    TelegramModule,
+    AlertModule,
     ...optionalModules,
   ],
   controllers: [AppController],

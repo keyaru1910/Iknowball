@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import axios, { AxiosError, AxiosInstance } from 'axios';
-import { MatchStatus, PredictionOutcome, Prisma } from '@prisma/client';
+import { MatchStatus, PredictionOutcome, Prisma, SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { DEFAULT_ELO } from '../elo/elo.calculator';
 import { FREE_DAILY_DETAIL_LIMIT, MODEL_VERSION } from './prediction.constants';
@@ -803,7 +803,35 @@ export class PredictionService {
       throw new NotFoundException('Chưa có dữ liệu dự đoán cho trận này');
     }
 
-    const isPremium = user?.role === 'premium' || user?.role === 'admin';
+    let userTier: 'guest' | 'free' | 'pro' | 'vip' | 'admin' = 'guest';
+    let isPremium = false;
+
+    if (user?.id) {
+      if (user.role === 'admin') {
+        isPremium = true;
+        userTier = 'admin';
+      } else {
+        const activeSub = await this.prisma.subscription.findFirst({
+          where: {
+            userId: user.id,
+            status: { in: [SubscriptionStatus.ACTIVE, SubscriptionStatus.TRIALING] },
+            currentPeriodEnd: { gte: new Date() },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        if (activeSub) {
+          isPremium = true;
+          userTier = [SubscriptionPlan.VIP_MONTHLY, SubscriptionPlan.VIP_YEARLY].includes(activeSub.plan as any) ? 'vip' : 'pro';
+        } else if (user.role === 'premium') {
+          isPremium = true;
+          userTier = 'pro';
+        } else {
+          userTier = 'free';
+        }
+      }
+    }
+
     let remainingDailyQuota: number | null = isPremium ? null : FREE_DAILY_DETAIL_LIMIT;
 
     // Người dùng đăng nhập tài khoản miễn phí (free) thì kiểm tra hạn mức 3 lượt xem chi tiết/ngày
@@ -824,7 +852,7 @@ export class PredictionService {
       if (!seen) {
         if (count >= FREE_DAILY_DETAIL_LIMIT) {
           throw new ForbiddenException(
-            `Bạn đã dùng hết ${FREE_DAILY_DETAIL_LIMIT} lượt xem chi tiết dự đoán hôm nay. Vui lòng nâng cấp gói Premium để xem không giới hạn.`,
+            `Bạn đã dùng hết ${FREE_DAILY_DETAIL_LIMIT} lượt xem chi tiết dự đoán hôm nay. Vui lòng nâng cấp gói Pro hoặc VIP để xem không giới hạn.`,
           );
         }
 
@@ -841,12 +869,153 @@ export class PredictionService {
     const snapshot = prediction.featuresSnapshot as Record<string, unknown> | null;
     return {
       ...this.serializePrediction(prediction),
-      // Premium mới thấy được chi tiết feature snapshot và explanation
+      // Pro/VIP/Admin mới thấy được chi tiết feature snapshot và explanation
       featuresSnapshot: isPremium ? snapshot : undefined,
       explanation: isPremium ? (snapshot?.explanation ?? null) : undefined,
       isPremium,
-      tier: isPremium ? 'premium' : (user?.id ? 'free' : 'guest'),
+      tier: userTier,
       remainingDailyQuota,
     };
   }
+
+  /**
+   * Xuất danh sách dự đoán trận đấu ra định dạng CSV UTF-8 (kèm BOM để Excel hiển thị tiếng Việt hoàn hảo)
+   */
+  async exportPredictionsCsv(query: {
+    leagueId?: string;
+    season?: string;
+    from?: string;
+    to?: string;
+    sport?: string;
+  }): Promise<string> {
+    const where: Prisma.MatchWhereInput = {};
+
+    if (query.leagueId) {
+      where.leagueId = query.leagueId;
+    }
+    if (query.season) {
+      where.season = query.season;
+    }
+    if (query.sport) {
+      where.league = { sport: { name: query.sport } };
+    }
+    if (query.from || query.to) {
+      where.matchDate = {};
+      if (query.from) where.matchDate.gte = new Date(query.from);
+      if (query.to) where.matchDate.lte = new Date(query.to);
+    }
+
+    const matches = await this.prisma.match.findMany({
+      where,
+      include: {
+        league: { include: { sport: true } },
+        homeTeam: true,
+        awayTeam: true,
+        predictions: {
+          include: { result: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { matchDate: 'desc' },
+      take: 1000,
+    });
+
+    const headers = [
+      'Match ID',
+      'Match Date',
+      'Sport',
+      'League',
+      'Season',
+      'Home Team',
+      'Away Team',
+      'Status',
+      'Home Score',
+      'Away Score',
+      'Home Win Prob (%)',
+      'Draw Prob (%)',
+      'Away Win Prob (%)',
+      'Predicted Outcome',
+      'Actual Outcome',
+      'Is Correct',
+      'Log Loss',
+      'Brier Score',
+      'Model Version',
+    ];
+
+    const rows = matches.map((m) => {
+      const pred = m.predictions?.[0];
+      const res = pred?.result;
+      const homeProb = pred ? (Number(pred.homeWinProb) * 100).toFixed(1) : '';
+      const drawProb = pred?.drawProb ? (Number(pred.drawProb) * 100).toFixed(1) : '';
+      const awayProb = pred ? (Number(pred.awayWinProb) * 100).toFixed(1) : '';
+
+      return [
+        `"${m.id}"`,
+        `"${m.matchDate.toISOString()}"`,
+        `"${m.league?.sport?.name || 'football'}"`,
+        `"${(m.league?.name || '').replace(/"/g, '""')}"`,
+        `"${m.season}"`,
+        `"${m.homeTeam.name.replace(/"/g, '""')}"`,
+        `"${m.awayTeam.name.replace(/"/g, '""')}"`,
+        `"${m.status}"`,
+        m.homeScore ?? '',
+        m.awayScore ?? '',
+        homeProb,
+        drawProb,
+        awayProb,
+        pred?.predictedOutcome || '',
+        res?.actualOutcome || '',
+        res?.isCorrect !== undefined ? (res.isCorrect ? 'TRUE' : 'FALSE') : '',
+        res?.logLoss ? Number(res.logLoss).toFixed(4) : '',
+        res?.brierScore ? Number(res.brierScore).toFixed(4) : '',
+        pred?.modelVersion || '',
+      ].join(',');
+    });
+
+    return '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  }
+
+  /**
+   * Xuất dữ liệu benchmark hiệu năng mô hình ra CSV
+   */
+  async exportPerformanceCsv(leagueId?: string): Promise<string> {
+    const list = await this.prisma.modelPerformance.findMany({
+      where: leagueId ? { leagueId } : undefined,
+      include: { league: true },
+      orderBy: { periodStart: 'desc' },
+      take: 500,
+    });
+
+    const headers = [
+      'Period Start',
+      'Period End',
+      'League',
+      'Model Version',
+      'Accuracy (%)',
+      'Precision (%)',
+      'Recall (%)',
+      'Macro F1 (%)',
+      'Avg Log Loss',
+      'Avg Brier Score',
+      'Sample Size',
+    ];
+
+    const rows = list.map((p) => [
+      `"${p.periodStart.toISOString()}"`,
+      `"${p.periodEnd.toISOString()}"`,
+      `"${(p.league?.name || 'All Leagues').replace(/"/g, '""')}"`,
+      `"${p.modelVersion}"`,
+      (Number(p.accuracy) * 100).toFixed(2),
+      (Number(p.precision) * 100).toFixed(2),
+      (Number(p.recall) * 100).toFixed(2),
+      (Number(p.f1) * 100).toFixed(2),
+      Number(p.avgLogLoss).toFixed(4),
+      Number(p.avgBrierScore).toFixed(4),
+      p.sampleSize,
+    ].join(','));
+
+    return '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+  }
 }
+
