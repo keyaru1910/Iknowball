@@ -113,35 +113,35 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <a
-                  href="#api-data"
+                <Link
+                  href="/api-data"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   API Data
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#brier-score"
+                <Link
+                  href="/brier-score"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   Brier Score là gì?
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#log-loss"
+                <Link
+                  href="/log-loss"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   Thuật toán Log Loss
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
-                  href="/news"
+                  href="/blog"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
@@ -158,31 +158,31 @@ export default function Footer() {
             </h3>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
-                <a
-                  href="#terms"
+                <Link
+                  href="/terms"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   Điều khoản dịch vụ
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#privacy"
+                <Link
+                  href="/privacy"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   Chính sách bảo mật
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="#disclaimer"
+                <Link
+                  href="/disclaimer"
                   className="transition-colors hover:text-white"
                   style={{ color: colors.textMuted }}
                 >
                   Miễn trừ trách nhiệm
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

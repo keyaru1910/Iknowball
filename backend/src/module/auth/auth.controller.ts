@@ -32,28 +32,58 @@ export class AuthController {
     @Post('login')
     @HttpCode(200)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
-    async login(@Req() req: any, @Body() dto: LoginDto) {
+    async login(@Req() req: any, @Res({ passthrough: true }) res: any, @Body() dto: LoginDto) {
         const user = req.user || (await this.authService.validateUser(dto.email, dto.password));
         if (!user) {
             throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
         }
         const deviceInfo = req.headers?.['user-agent'];
         const result = deviceInfo ? await this.authService.login(user, deviceInfo) : await this.authService.login(user);
+        
+        if (res && typeof res.cookie === 'function') {
+            res.cookie('refreshToken', result.tokens.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: '/',
+            });
+        }
+
         return { data: result, meta: null, error: null };
     }
 
     @Post('refresh')
     @HttpCode(200)
-    async refreshToken(@Body() dto: RefreshTokenDto) {
-        const result = await this.authService.refreshToken(dto.refreshToken);
+    async refreshToken(@Req() req: any, @Res({ passthrough: true }) res: any, @Body() dto?: RefreshTokenDto) {
+        const token = dto?.refreshToken || req?.cookies?.refreshToken;
+        if (!token) {
+            throw new UnauthorizedException('Refresh token không được để trống');
+        }
+        const result = await this.authService.refreshToken(token);
+        
+        if (res && typeof res.cookie === 'function') {
+            res.cookie('refreshToken', result.tokens.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: '/',
+            });
+        }
+
         return { data: result, meta: null, error: null };
     }
 
     @Post('logout')
     @HttpCode(200)
     @UseGuards(JwtAuthGuard)
-    async logout(@CurrentUser('id') userId: string, @Body() dto?: RefreshTokenDto) {
-        const result = await this.authService.logout(userId, dto?.refreshToken);
+    async logout(@CurrentUser('id') userId: string, @Req() req: any, @Res({ passthrough: true }) res: any, @Body() dto?: RefreshTokenDto) {
+        const token = dto?.refreshToken || req?.cookies?.refreshToken;
+        const result = await this.authService.logout(userId, token);
+        if (res && typeof res.clearCookie === 'function') {
+            res.clearCookie('refreshToken', { path: '/' });
+        }
         return { data: result, meta: null, error: null };
     }
 
@@ -90,6 +120,16 @@ export class AuthController {
         const user = req.user;
         const deviceInfo = req.headers?.['user-agent'];
         const { tokens } = await this.authService.login(user, deviceInfo);
+
+        if (res && typeof res.cookie === 'function') {
+            res.cookie('refreshToken', tokens.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                path: '/',
+            });
+        }
 
         // Chuyển hướng về Frontend kèm token (route của Next.js app router là /callback)
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';

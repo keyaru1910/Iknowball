@@ -61,25 +61,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /**
    * Khôi phục session khi app khởi động:
-   * Gọi /auth/refresh — nếu còn refreshToken trong HttpOnly cookie,
-   * backend sẽ trả về access token mới + thông tin user.
+   * 1. Ưu tiên kiểm tra accessToken còn hạn trong localStorage để load ngay lập tức
+   * 2. Nếu accessToken hết hạn, tự động gọi /auth/refresh bằng refreshToken
    */
   useEffect(() => {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // Nếu đang ở trang callback (chờ nhận accessToken từ OAuth), để trang callback xử lý
+    if (
+      typeof window !== "undefined" &&
+      (window.location.pathname.includes("/callback") ||
+        window.location.search.includes("accessToken="))
+    ) {
+      setIsLoading(false);
+      return;
+    }
+
     (async () => {
       try {
-        const res = await refreshAccessToken();
-        const token = res.data.tokens.accessToken;
-        setAccessToken(token);
-        setApiAccessToken(token);
-        setUser(res.data.user);
-      } catch {
-        // Chưa đăng nhập hoặc refresh token hết hạn — bình thường
+        const storedAccessToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("accessToken")
+            : null;
+        const storedRefreshToken =
+          typeof window !== "undefined"
+            ? localStorage.getItem("refreshToken")
+            : null;
+
+        // Nếu có accessToken, thử lấy user trực tiếp trước (rất nhanh, không xoay vòng refresh token)
+        if (storedAccessToken) {
+          setApiAccessToken(storedAccessToken);
+          const currentUser = await getCurrentUser(storedAccessToken);
+          if (currentUser) {
+            setAccessToken(storedAccessToken);
+            setUser(currentUser);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Nếu không có accessToken hoặc accessToken đã hết hạn, dùng refreshToken
+        if (storedRefreshToken) {
+          const res = await refreshAccessToken(storedRefreshToken);
+          const token = res.data.tokens.accessToken;
+          setAccessToken(token);
+          setApiAccessToken(token);
+          setUser(res.data.user);
+
+          if (typeof window !== "undefined") {
+            localStorage.setItem("accessToken", token);
+            if (res.data.tokens?.refreshToken) {
+              localStorage.setItem("refreshToken", res.data.tokens.refreshToken);
+            }
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // Không có token nào
         setUser(null);
         setAccessToken(null);
         setApiAccessToken(null);
+      } catch {
+        // Token không hợp lệ hoặc hết hạn
+        setUser(null);
+        setAccessToken(null);
+        setApiAccessToken(null);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -93,18 +145,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(token);
     setApiAccessToken(token);
     setUser(res.data.user);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", token);
+      if (res.data.tokens?.refreshToken) {
+        localStorage.setItem("refreshToken", res.data.tokens.refreshToken);
+      }
+    }
   }, []);
 
   /** Đăng nhập với Token có sẵn từ OAuth (Google) */
   const loginWithToken = useCallback(async (token: string, refreshToken?: string) => {
+    setIsLoading(true);
     setAccessToken(token);
     setApiAccessToken(token);
-    if (refreshToken && typeof window !== "undefined") {
-      localStorage.setItem("refreshToken", refreshToken);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("accessToken", token);
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
     }
-    const currentUser = await getCurrentUser(token);
-    if (currentUser) {
-      setUser(currentUser);
+    try {
+      const currentUser = await getCurrentUser(token);
+      if (currentUser) {
+        setUser(currentUser);
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -116,12 +182,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   /** Đăng xuất */
   const logout = useCallback(async () => {
+    const storedRefreshToken =
+      typeof window !== "undefined"
+        ? localStorage.getItem("refreshToken")
+        : undefined;
+
     if (accessToken) {
       try {
-        await logoutUser(accessToken);
+        await logoutUser(accessToken, storedRefreshToken || undefined);
       } catch {
         // Dù lỗi vẫn clear state phía client
       }
+    }
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
     }
     setUser(null);
     setAccessToken(null);

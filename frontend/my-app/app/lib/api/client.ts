@@ -17,12 +17,14 @@ export function getApiAccessToken(): string | null {
 export class ApiError extends Error {
   code: string;
   status: number;
+  details?: unknown;
 
   constructor(body: ApiErrorBody, status: number) {
     super(body.message);
     this.name = "ApiError";
     this.code = body.code;
     this.status = status;
+    this.details = body.details;
   }
 }
 
@@ -36,20 +38,30 @@ async function tryRefreshToken(): Promise<string | null> {
 
   refreshPromise = (async () => {
     try {
+      const storedRefreshToken = typeof window !== "undefined" ? localStorage.getItem("refreshToken") : null;
       const res = await fetch(`${BASE_URL}${API_PREFIX}/auth/refresh`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({}),
+        body: JSON.stringify(storedRefreshToken ? { refreshToken: storedRefreshToken } : {}),
       });
 
       if (!res.ok) {
         setApiAccessToken(null);
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+        }
         return null;
       }
 
       const body = await res.json();
       const newToken = body?.data?.tokens?.accessToken ?? null;
+      const newRefreshToken = body?.data?.tokens?.refreshToken;
+      if (typeof window !== "undefined") {
+        if (newToken) localStorage.setItem("accessToken", newToken);
+        if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
+      }
       setApiAccessToken(newToken);
       return newToken;
     } catch {
@@ -126,13 +138,37 @@ export async function apiFetch<T>(
   }
 
   if (!res.ok || body.error) {
+    let errCode = "UNKNOWN_ERROR";
+    let errMsg = "Có lỗi xảy ra, vui lòng thử lại";
+
+    if (body.error && typeof body.error === "object") {
+      errCode = body.error.code || `HTTP_${res.status}`;
+      errMsg = body.error.message || errMsg;
+    } else if (typeof body.error === "string") {
+      errCode = body.error;
+      errMsg = (body as any).message || body.error;
+    } else if ((body as any).message) {
+      const msg = (body as any).message;
+      errMsg = Array.isArray(msg) ? msg.join(", ") : String(msg);
+      errCode = (body as any).error || `HTTP_${res.status}`;
+    } else if (res.status === 401) {
+      errCode = "UNAUTHORIZED";
+      errMsg = "Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập. Vui lòng đăng nhập lại!";
+    } else if (res.status === 403) {
+      errCode = "FORBIDDEN";
+      errMsg = "Bạn không có quyền thực hiện thao tác này.";
+    } else if (res.status === 404) {
+      errCode = "NOT_FOUND";
+      errMsg = "Không tìm thấy tài nguyên yêu cầu.";
+    }
+
     throw new ApiError(
-      body.error ?? { code: "UNKNOWN_ERROR", message: "Có lỗi xảy ra" },
+      { code: errCode, message: errMsg, details: (body as any).details },
       res.status
     );
   }
 
-  if (body.data === null) {
+  if (body.data === null || body.data === undefined) {
     throw new ApiError(
       { code: "EMPTY_RESPONSE", message: "Server trả về dữ liệu rỗng" },
       res.status

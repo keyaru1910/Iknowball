@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { AppModule } from './app.module';
 import { validateEnvironment } from './config/env.validation';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   // 1. Kiểm tra và thẩm định biến môi trường trước khi khởi động
@@ -66,6 +67,9 @@ async function bootstrap() {
       transformOptions: { enableImplicitConversion: true },
     }),
   );
+
+  // 6. Global Exception Filter chuẩn hóa ApiEnvelope
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   const port = process.env.PORT ?? 4000;
   await app.listen(port);

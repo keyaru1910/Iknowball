@@ -59,10 +59,10 @@ function UserDropdown({
         id="btn-user-dropdown"
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/5"
+        className="flex items-center gap-2 rounded-xl px-2.5 py-1.5 transition-colors hover:bg-white/5 whitespace-nowrap shrink-0"
       >
         <div
-          className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold shrink-0"
           style={{
             background: isPremiumUser ? "rgba(245,158,11,0.15)" : "rgba(47,217,140,0.15)",
             border: isPremiumUser ? "1px solid rgba(245,158,11,0.4)" : "1px solid rgba(47,217,140,0.3)",
@@ -71,7 +71,7 @@ function UserDropdown({
         >
           {initial}
         </div>
-        <span className="text-sm font-medium" style={{ color: colors.text }}>
+        <span className="text-sm font-medium whitespace-nowrap truncate max-w-[140px]" style={{ color: colors.text }}>
           {user.fullName ?? user.email.split("@")[0]}
         </span>
         <UserBadge tier={user.tier} role={user.role} size="xs" />
@@ -84,7 +84,7 @@ function UserDropdown({
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
+          className={`transition-transform shrink-0 ${open ? "rotate-180" : ""}`}
           style={{ color: colors.textMuted }}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -220,28 +220,28 @@ export default function Navbar() {
         backgroundColor: `${colors.bg}E6`,
       }}
     >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-3.5 sm:px-6 py-3">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-3.5 sm:px-6 py-3 gap-3">
         {/* Logo & Brand & Sport Switcher */}
-        <div className="flex items-center gap-2 sm:gap-5">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 transition-opacity hover:opacity-90">
             <img
               src="/img/fasvicon.png"
               alt="iKnowBall Logo"
-              className="h-7 w-7 rounded-md object-contain"
+              className="h-7 w-7 rounded-md object-contain shrink-0"
             />
-            <span className="text-sm sm:text-base font-bold tracking-tight text-white">
+            <span className="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap shrink-0">
               iKnowBall
             </span>
           </Link>
 
           {/* Sport Switcher Toggle - Hiển thị cạnh logo trên cả điện thoại & desktop */}
-          <div className="flex items-center">
+          <div className="flex items-center shrink-0">
             <SportSwitcher size="sm" />
           </div>
         </div>
 
-        {/* Navigation Links (Desktop) */}
-        <nav className="hidden md:flex items-center gap-7 text-sm font-medium">
+        {/* Navigation Links (Desktop) - Luôn hiển thị 1 dòng, không bị ngắt chữ */}
+        <nav className="hidden lg:flex items-center gap-3.5 xl:gap-6 text-sm font-medium whitespace-nowrap shrink-0">
           {navLinks.map((item) => {
             const isActive =
               item.href === "/"
@@ -252,7 +252,7 @@ export default function Navbar() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`transition-colors ${isActive ? "text-white font-semibold" : "hover:text-white"
+                className={`whitespace-nowrap shrink-0 transition-colors ${isActive ? "text-white font-semibold" : "hover:text-white"
                   }`}
                 style={{ color: isActive ? colors.text : colors.textMuted }}
               >
@@ -263,10 +263,10 @@ export default function Navbar() {
         </nav>
 
         {/* Actions (Desktop) */}
-        <div className="hidden md:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2.5 xl:gap-3 shrink-0">
           {isLoading ? (
             // Skeleton loading khi đang kiểm tra session
-            <div className="h-7 w-24 rounded-xl animate-pulse" style={{ background: colors.border }} />
+            <div className="h-7 w-24 rounded-xl animate-pulse shrink-0" style={{ background: colors.border }} />
           ) : isAuthenticated && user ? (
             // Đã đăng nhập → hiển thị user menu
             <UserDropdown user={user} isAdmin={isAdmin} onLogout={handleLogout} />
@@ -276,7 +276,7 @@ export default function Navbar() {
               <Link
                 id="btn-navbar-login"
                 href="/login"
-                className="px-3.5 py-1.5 text-sm font-medium transition-colors hover:text-white"
+                className="px-3 py-1.5 text-sm font-medium whitespace-nowrap shrink-0 transition-colors hover:text-white"
                 style={{ color: colors.textMuted }}
               >
                 Đăng nhập
@@ -284,7 +284,7 @@ export default function Navbar() {
               <Link
                 id="btn-navbar-register"
                 href="/register"
-                className="rounded-sm px-4 py-1.5 text-sm font-semibold transition-all hover:opacity-90"
+                className="rounded-sm px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap shrink-0 transition-all hover:opacity-90"
                 style={{ backgroundColor: colors.accent, color: colors.bg }}
               >
                 Bắt đầu miễn phí
@@ -297,7 +297,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-sm border text-base md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-sm border text-base lg:hidden shrink-0"
           style={{ borderColor: colors.border, color: colors.textMuted }}
           aria-label="Mở menu"
         >
@@ -308,7 +308,7 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {isMobileMenuOpen && (
         <div
-          className="flex flex-col gap-3 border-t px-5 py-4 md:hidden"
+          className="flex flex-col gap-3 border-t px-5 py-4 lg:hidden"
           style={{ borderColor: colors.borderSoft, backgroundColor: colors.panel }}
         >
           {navLinks.map((item) => {

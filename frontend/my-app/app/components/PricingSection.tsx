@@ -35,7 +35,10 @@ export default function PricingSection({
     }
 
     if (!isAuthenticated) {
-      router.push(`/login?redirect=/pricing`);
+      setErrorMsg("Vui lòng đăng nhập trước khi tiến hành nâng cấp gói dịch vụ.");
+      setTimeout(() => {
+        router.push(`/login?redirect=/pricing`);
+      }, 1000);
       return;
     }
 
@@ -43,11 +46,19 @@ export default function PricingSection({
       setLoadingPlan(plan);
       setErrorMsg(null);
       const res = await createCheckoutSession(plan);
-      if (res.data.url) {
+      if (res?.data?.url) {
         window.location.href = res.data.url;
+      } else {
+        setErrorMsg("Không nhận được liên kết thanh toán từ máy chủ. Vui lòng thử lại!");
       }
     } catch (err: any) {
-      setErrorMsg(err.message || "Không thể khởi tạo phiên thanh toán. Vui lòng thử lại!");
+      const msg = err.message || "Không thể khởi tạo phiên thanh toán. Vui lòng thử lại!";
+      setErrorMsg(msg);
+      if (err.status === 401 || err.code === "UNAUTHORIZED") {
+        setTimeout(() => {
+          router.push(`/login?redirect=/pricing`);
+        }, 1500);
+      }
     } finally {
       setLoadingPlan(null);
     }

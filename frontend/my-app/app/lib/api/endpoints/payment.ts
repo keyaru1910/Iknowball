@@ -42,3 +42,15 @@ export async function getUserSubscription() {
     method: "GET",
   });
 }
+
+export async function confirmCheckoutSession(sessionId: string, plan?: string) {
+  return apiFetch<{
+    success: boolean;
+    message: string;
+    subscription?: any;
+    plan?: string;
+  }>("/payments/confirm-session", {
+    method: "POST",
+    body: JSON.stringify({ sessionId, plan }),
+  });
+}

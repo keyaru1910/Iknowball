@@ -52,10 +52,30 @@ describe('AuthController', () => {
         expect(service.verifyEmail).toHaveBeenCalledWith('token123');
     });
 
-    it('should login user', async () => {
+    it('should login user and set cookie if res available', async () => {
         const req = { user: mockUser };
-        const res = await controller.login(req, { email: 'test@example.com', password: 'password123' });
-        expect(res.data).toBeDefined();
+        const res = { cookie: vi.fn() };
+        const response = await controller.login(req, res, { email: 'test@example.com', password: 'password123' });
+        expect(response.data).toBeDefined();
         expect(service.login).toHaveBeenCalledWith(mockUser);
+        expect(res.cookie).toHaveBeenCalledWith('refreshToken', 'r', expect.any(Object));
+    });
+
+    it('should refresh token from body or cookie', async () => {
+        const req = { cookies: { refreshToken: 'cookie_refresh' } };
+        const res = { cookie: vi.fn() };
+        const response = await controller.refreshToken(req, res, {});
+        expect(response.data).toBeDefined();
+        expect(service.refreshToken).toHaveBeenCalledWith('cookie_refresh');
+        expect(res.cookie).toHaveBeenCalledWith('refreshToken', 'r2', expect.any(Object));
+    });
+
+    it('should logout user and clear cookie', async () => {
+        const req = { cookies: { refreshToken: 'cookie_refresh' } };
+        const res = { clearCookie: vi.fn() };
+        const response = await controller.logout('user-1', req, res, {});
+        expect(response.data).toEqual({ message: 'Đăng xuất thành công' });
+        expect(service.logout).toHaveBeenCalledWith('user-1', 'cookie_refresh');
+        expect(res.clearCookie).toHaveBeenCalledWith('refreshToken', { path: '/' });
     });
 });

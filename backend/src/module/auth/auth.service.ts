@@ -151,10 +151,23 @@ export class AuthService {
         const stored = await this.prisma.refreshToken.findMany({ where: { userId: payload.sub } });
         let active: any = null;
         let revoked: any = null;
+        let isGracePeriod = false;
+
         for (const token of stored) {
             if (await bcrypt.compare(refreshToken, token.tokenHash)) {
-                if (token.revokedAt !== null || token.expiresAt <= new Date()) revoked = token;
-                else active = token;
+                if (token.expiresAt <= new Date()) {
+                    revoked = token;
+                } else if (token.revokedAt !== null) {
+                    // Grace period 30s cho phép các request đồng thời hoặc reload nhanh không bị hủy toàn bộ phiên
+                    const revokedDuration = Date.now() - new Date(token.revokedAt).getTime();
+                    if (revokedDuration < 30000) {
+                        isGracePeriod = true;
+                    } else {
+                        revoked = token;
+                    }
+                } else {
+                    active = token;
+                }
                 break;
             }
         }
@@ -162,8 +175,10 @@ export class AuthService {
             await this.prisma.refreshToken.updateMany({ where: { userId: payload.sub, revokedAt: null }, data: { revokedAt: new Date() } });
             throw new UnauthorizedException('Phát hiện token không hợp lệ hoặc đã bị thu hồi. Toàn bộ phiên đăng nhập đã bị vô hiệu hóa.');
         }
-        if (!active) throw new UnauthorizedException('Refresh token không tìm thấy trong hệ thống');
-        await this.prisma.refreshToken.update({ where: { id: active.id }, data: { revokedAt: new Date() } });
+        if (!active && !isGracePeriod) throw new UnauthorizedException('Refresh token không tìm thấy trong hệ thống');
+        if (active) {
+            await this.prisma.refreshToken.update({ where: { id: active.id }, data: { revokedAt: new Date() } });
+        }
         const user = await this.prisma.user.findUnique({
             where: { id: payload.sub },
             include: {
@@ -195,12 +210,12 @@ export class AuthService {
     }
 
     async validateGoogleUser(profile: GoogleUserProfile) {
-        const account = await this.prisma.oAuthAccount.findUnique({ where: { provider_providerUserId: { provider: 'google', providerUserId: profile.googleId } }, include: { user: { include: { role: true } } } });
+        const account = await this.prisma.oAuthAccount.findUnique({ where: { provider_providerUserId: { provider: 'google', providerUserId: profile.googleId } }, include: { user: { include: { role: true, subscriptions: true } } } });
         if (account) return account.user;
-        let user = await this.prisma.user.findUnique({ where: { email: profile.email }, include: { role: true } });
+        let user = await this.prisma.user.findUnique({ where: { email: profile.email }, include: { role: true, subscriptions: true } });
         let role = await this.prisma.role.findUnique({ where: { name: 'user' } });
         if (!role) role = await this.prisma.role.create({ data: { name: 'user' } });
-        if (!user) user = await this.prisma.user.create({ data: { email: profile.email, fullName: profile.fullName ?? null, avatarUrl: profile.avatarUrl ?? null, emailVerifiedAt: new Date(), roleId: role.id, status: 'active' }, include: { role: true } });
+        if (!user) user = await this.prisma.user.create({ data: { email: profile.email, fullName: profile.fullName ?? null, avatarUrl: profile.avatarUrl ?? null, emailVerifiedAt: new Date(), roleId: role.id, status: 'active' }, include: { role: true, subscriptions: true } });
         await this.prisma.oAuthAccount.create({ data: { userId: user.id, provider: 'google', providerUserId: profile.googleId } });
         return user;
     }

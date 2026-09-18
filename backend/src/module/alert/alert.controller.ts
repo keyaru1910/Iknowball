@@ -2,10 +2,10 @@ import { Body, Controller, Get, Post, Put, Query, Req, UseGuards } from '@nestjs
 import { AlertService } from './alert.service';
 import { UpdateAlertPreferenceDto } from './dto/alert.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../guards/optional-jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
-import { Public } from '../decorators/public.decorator';
 
-@Controller('alerts')
+@Controller('api/v1/alerts')
 export class AlertController {
     constructor(private readonly alertService: AlertService) {}
 
@@ -13,7 +13,7 @@ export class AlertController {
      * Lấy danh sách các cảnh báo biến động odds & xác suất AI mới nhất
      * Tự động lọc phân quyền theo tier của người dùng (Free, Pro, VIP)
      */
-    @Public()
+    @UseGuards(OptionalJwtAuthGuard)
     @Get('fluctuations')
     async getFluctuations(
         @Req() req: any,
@@ -21,7 +21,8 @@ export class AlertController {
     ) {
         const userTier = req.user?.tier || 'free';
         const parsedLimit = limit ? Math.min(parseInt(limit, 10) || 20, 50) : 20;
-        return this.alertService.getFluctuationAlerts(userTier, parsedLimit);
+        const data = await this.alertService.getFluctuationAlerts(userTier, parsedLimit);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -30,7 +31,8 @@ export class AlertController {
     @UseGuards(JwtAuthGuard)
     @Post('scan')
     async scanFluctuations() {
-        return this.alertService.scanAndDetectFluctuations();
+        const data = await this.alertService.scanAndDetectFluctuations();
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -39,7 +41,8 @@ export class AlertController {
     @UseGuards(JwtAuthGuard)
     @Get('preferences')
     async getPreferences(@CurrentUser('id') userId: string) {
-        return this.alertService.getUserPreferences(userId);
+        const data = await this.alertService.getUserPreferences(userId);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -51,6 +54,7 @@ export class AlertController {
         @CurrentUser('id') userId: string,
         @Body() dto: UpdateAlertPreferenceDto,
     ) {
-        return this.alertService.updateUserPreferences(userId, dto);
+        const data = await this.alertService.updateUserPreferences(userId, dto);
+        return { data, meta: null, error: null };
     }
 }

@@ -8,6 +8,7 @@ import {
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { ConfirmSessionDto } from './dto/confirm-session.dto';
 import {
     PaymentStatus,
     SubscriptionPlan,
@@ -119,7 +120,7 @@ export class PaymentService {
         if (!this.stripe) {
             this.logger.warn(`Mock checkout session created for user ${userId} plan ${dto.plan}`);
             return {
-                url: `${frontendUrl}/payment/success?session_id=mock_session_${Date.now()}&mock=true`,
+                url: `${frontendUrl}/payment/success?session_id=mock_session_${Date.now()}&plan=${dto.plan}&mock=true`,
                 sessionId: `mock_session_${Date.now()}`,
                 mode: 'test_mock',
             };
@@ -169,6 +170,145 @@ export class PaymentService {
             sessionId: session.id,
             mode: 'stripe_checkout',
         };
+    }
+
+    /**
+     * Xác nhận phiên thanh toán và kích hoạt gói Subscription
+     */
+    async confirmCheckoutSession(userId: string, dto: ConfirmSessionDto): Promise<any> {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            include: { role: true },
+        });
+
+        if (!user) {
+            throw new NotFoundException('Không tìm thấy người dùng');
+        }
+
+        const isMockSession = dto.sessionId.startsWith('mock_session_') || !this.stripe;
+        const targetPlan = dto.plan || SubscriptionPlan.PRO_MONTHLY;
+        const planConfig = PLAN_PRICES[targetPlan];
+
+        if (isMockSession) {
+            this.logger.log(`Kích hoạt subscription (Mock Mode) cho user ${userId} gói ${targetPlan}`);
+
+            const now = new Date();
+            const periodEnd = new Date(now);
+            if (targetPlan.includes('YEARLY')) {
+                periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+            } else {
+                periodEnd.setMonth(periodEnd.getMonth() + 1);
+            }
+
+            return await this.prisma.$transaction(async (tx) => {
+                const existingSub = await tx.subscription.findFirst({
+                    where: { userId },
+                    orderBy: { createdAt: 'desc' },
+                });
+
+                let subscription;
+                if (existingSub) {
+                    subscription = await tx.subscription.update({
+                        where: { id: existingSub.id },
+                        data: {
+                            plan: targetPlan,
+                            status: SubscriptionStatus.ACTIVE,
+                            currentPeriodStart: now,
+                            currentPeriodEnd: periodEnd,
+                            cancelAtPeriodEnd: false,
+                        },
+                    });
+                } else {
+                    subscription = await tx.subscription.create({
+                        data: {
+                            userId,
+                            stripeCustomerId: `mock_cust_${userId}`,
+                            stripeSubscriptionId: `mock_sub_${Date.now()}`,
+                            stripePriceId: `mock_price_${targetPlan}`,
+                            plan: targetPlan,
+                            status: SubscriptionStatus.ACTIVE,
+                            currentPeriodStart: now,
+                            currentPeriodEnd: periodEnd,
+                        },
+                    });
+                }
+
+                // Tạo bản ghi Payment hoàn tất
+                await tx.payment.create({
+                    data: {
+                        userId,
+                        subscriptionId: subscription.id,
+                        stripeSessionId: dto.sessionId,
+                        amount: planConfig.amount,
+                        currency: planConfig.currency,
+                        status: PaymentStatus.SUCCEEDED,
+                        paymentMethod: 'mock_card',
+                    },
+                });
+
+                // Cập nhật role người dùng sang premium nếu đang là user thường
+                const premiumRole = await tx.role.findUnique({ where: { name: 'premium' } });
+                if (premiumRole && user.role?.name === 'user') {
+                    await tx.user.update({
+                        where: { id: userId },
+                        data: { roleId: premiumRole.id },
+                    });
+                }
+
+                // Ghi nhận Audit Log
+                await tx.auditLog.create({
+                    data: {
+                        targetUserId: userId,
+                        action: 'SUBSCRIPTION_PURCHASED',
+                        details: {
+                            plan: targetPlan,
+                            amount: planConfig.amount,
+                            sessionId: dto.sessionId,
+                            subscriptionId: subscription.id,
+                            mode: 'mock',
+                        },
+                    },
+                });
+
+                return {
+                    success: true,
+                    message: `Kích hoạt thành công gói ${planConfig.name}!`,
+                    subscription,
+                    plan: targetPlan,
+                };
+            });
+        }
+
+        // Xử lý với Stripe thật
+        try {
+            const session = await this.stripe.checkout.sessions.retrieve(dto.sessionId);
+            if (session.payment_status === 'paid') {
+                const existingPayment = await this.prisma.payment.findUnique({
+                    where: { stripeSessionId: session.id },
+                });
+
+                const subscription = await this.prisma.subscription.findFirst({
+                    where: { userId },
+                    orderBy: { createdAt: 'desc' },
+                });
+
+                return {
+                    success: true,
+                    message: 'Thanh toán Stripe thành công!',
+                    subscription,
+                    plan: subscription?.plan || targetPlan,
+                };
+            } else {
+                return {
+                    success: false,
+                    message: 'Giao dịch thanh toán chưa hoàn tất hoặc đang được xử lý.',
+                    status: session.payment_status,
+                };
+            }
+        } catch (err: any) {
+            this.logger.error(`Lỗi xác thực Stripe session: ${err.message}`);
+            throw new BadRequestException(`Không thể xác thực phiên thanh toán: ${err.message}`);
+        }
     }
 
     /**

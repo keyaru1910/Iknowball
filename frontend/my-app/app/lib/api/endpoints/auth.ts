@@ -86,23 +86,24 @@ export async function getCurrentUser(accessToken: string): Promise<AuthUser | nu
 }
 
 /**
- * Làm mới access token bằng refreshToken trong cookie.
+ * Làm mới access token bằng refreshToken trong cookie hoặc body.
  */
-export async function refreshAccessToken() {
+export async function refreshAccessToken(refreshToken?: string) {
   return apiFetch<LoginResult>("/auth/refresh", {
     method: "POST",
-    body: JSON.stringify({}),
+    body: JSON.stringify(refreshToken ? { refreshToken } : {}),
   });
 }
 
 /**
  * Đăng xuất — xóa session trên server và xóa cookie refreshToken.
  */
-export async function logoutUser(accessToken: string) {
+export async function logoutUser(accessToken: string, refreshToken?: string) {
   return apiFetch<{ message: string }>("/auth/logout", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
+    body: JSON.stringify(refreshToken ? { refreshToken } : {}),
   });
 }

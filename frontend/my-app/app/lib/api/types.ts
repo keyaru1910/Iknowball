@@ -10,6 +10,7 @@ export interface ApiMeta {
 export interface ApiErrorBody {
   code: string;
   message: string;
+  details?: unknown;
 }
 
 /** Khớp với convention { data, meta, error } đã chốt ở Phase 2 (Auth module) */

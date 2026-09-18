@@ -13,6 +13,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { PaymentService } from './payment.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { ConfirmSessionDto } from './dto/confirm-session.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
@@ -58,6 +59,20 @@ export class PaymentController {
         @Body() dto: CreateCheckoutSessionDto,
     ) {
         const result = await this.paymentService.createCheckoutSession(userId, dto);
+        return { data: result, meta: null, error: null };
+    }
+
+    /**
+     * Xác nhận phiên thanh toán và kích hoạt gói Subscription
+     */
+    @Post('confirm-session')
+    @HttpCode(200)
+    @UseGuards(JwtAuthGuard)
+    async confirmSession(
+        @CurrentUser('id') userId: string,
+        @Body() dto: ConfirmSessionDto,
+    ): Promise<any> {
+        const result = await this.paymentService.confirmCheckoutSession(userId, dto);
         return { data: result, meta: null, error: null };
     }
 

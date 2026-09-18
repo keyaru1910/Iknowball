@@ -637,7 +637,7 @@ export default function LandingPage() {
               },
               // Nhân đôi danh sách:
               {
-                ten: "Lê Thành Nam",
+                ten: "Đỗ Quốc Bảo",
                 vaiTro: "Data Analyst ",
                 avatar: "https://i.pinimg.com/736x/a7/64/5f/a7645f9cc84777fbfe0d56e0ca15adbe.jpg",
                 noiDung:
@@ -682,7 +682,7 @@ export default function LandingPage() {
                 xepHang: 5,
               },
               {
-                ten: "Đỗ Quốc Bảo",
+                ten: "Lê Thành Nam",
                 vaiTro: "Data Scientist",
                 avatar: "https://i.pinimg.com/736x/61/e4/77/61e47710c6148d25b8f114a3d2fb9afd.jpg",
                 noiDung:

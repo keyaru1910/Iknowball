@@ -3,7 +3,7 @@ import { NotificationService } from './notification.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
-@Controller('notifications')
+@Controller('api/v1/notifications')
 @UseGuards(JwtAuthGuard)
 export class NotificationController {
     constructor(private readonly notificationService: NotificationService) {}
@@ -17,7 +17,8 @@ export class NotificationController {
         @Query('limit') limit?: string,
     ) {
         const parsedLimit = limit ? parseInt(limit, 10) || 20 : 20;
-        return this.notificationService.getUserNotifications(userId, parsedLimit);
+        const data = await this.notificationService.getUserNotifications(userId, parsedLimit);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -28,6 +29,7 @@ export class NotificationController {
         @CurrentUser('id') userId: string,
         @Param('id') notificationId: string,
     ) {
-        return this.notificationService.markAsRead(notificationId, userId);
+        const data = await this.notificationService.markAsRead(notificationId, userId);
+        return { data, meta: null, error: null };
     }
 }

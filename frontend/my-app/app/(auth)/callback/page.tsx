@@ -8,14 +8,23 @@ function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithToken } = useAuth();
+  const isHandled = React.useRef(false);
 
   useEffect(() => {
+    if (isHandled.current) return;
     const accessToken = searchParams.get("accessToken");
     const refreshToken = searchParams.get("refreshToken");
+
     if (accessToken) {
-      loginWithToken(accessToken, refreshToken || undefined).finally(() => {
-        router.replace("/");
-      });
+      isHandled.current = true;
+      loginWithToken(accessToken, refreshToken || undefined)
+        .then(() => {
+          window.location.href = "/";
+        })
+        .catch((err) => {
+          console.error("Lỗi hoàn tất đăng nhập Google:", err);
+          window.location.href = "/login?error=oauth_failed";
+        });
     } else {
       router.replace("/login");
     }

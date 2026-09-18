@@ -4,7 +4,7 @@ import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
 
-@Controller('telegram')
+@Controller('api/v1/telegram')
 export class TelegramController {
     constructor(private readonly telegramService: TelegramService) {}
 
@@ -14,7 +14,8 @@ export class TelegramController {
     @UseGuards(JwtAuthGuard)
     @Get('status')
     async getStatus(@CurrentUser('id') userId: string) {
-        return this.telegramService.getStatus(userId);
+        const data = await this.telegramService.getStatus(userId);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -23,7 +24,8 @@ export class TelegramController {
     @UseGuards(JwtAuthGuard)
     @Post('connect-token')
     async generateConnectToken(@CurrentUser('id') userId: string) {
-        return this.telegramService.generateConnectToken(userId);
+        const data = await this.telegramService.generateConnectToken(userId);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -32,7 +34,8 @@ export class TelegramController {
     @UseGuards(JwtAuthGuard)
     @Post('disconnect')
     async disconnect(@CurrentUser('id') userId: string) {
-        return this.telegramService.disconnect(userId);
+        const data = await this.telegramService.disconnect(userId);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -41,7 +44,8 @@ export class TelegramController {
     @UseGuards(JwtAuthGuard)
     @Post('test-notification')
     async sendTestNotification(@CurrentUser('id') userId: string) {
-        return this.telegramService.sendTestNotification(userId);
+        const data = await this.telegramService.sendTestNotification(userId);
+        return { data, meta: null, error: null };
     }
 
     /**
@@ -66,12 +70,13 @@ export class TelegramController {
         const username = body.telegramUsername || 'VIP_User_' + userId.slice(0, 4);
         const chatId = body.chatId || 'mock_chat_' + Math.floor(Math.random() * 100000000);
 
-        return this.telegramService.handleWebhook({
+        const data = await this.telegramService.handleWebhook({
             message: {
                 text: `/start ${(await this.telegramService.generateConnectToken(userId)).token}`,
                 chat: { id: chatId },
                 from: { username },
             },
         });
+        return { data, meta: null, error: null };
     }
 }
