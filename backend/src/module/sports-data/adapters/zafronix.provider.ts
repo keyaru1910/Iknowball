@@ -92,10 +92,14 @@ export class ZafronixProvider implements SportsDataProvider {
 
     try {
       const rawStandings = await this.adapter.getStandings(config.endpointPrefix, season);
-      if (Array.isArray(rawStandings)) {
-        return rawStandings.map((s: any) => this.mapper.toStanding(s, leagueExternalId, season));
-      }
-      return [];
+      const list = Array.isArray(rawStandings)
+        ? rawStandings
+        : Array.isArray(rawStandings?.standings)
+        ? rawStandings.standings
+        : Array.isArray(rawStandings?.data)
+        ? rawStandings.data
+        : [];
+      return list.map((s: any) => this.mapper.toStanding(s, leagueExternalId, season));
     } catch (err: any) {
       this.logger.warn(`Lỗi fetchStandings từ Zafronix cho ${config.name}: ${err.message}`);
       return [];

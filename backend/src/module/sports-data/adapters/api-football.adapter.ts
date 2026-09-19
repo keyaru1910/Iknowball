@@ -1,19 +1,18 @@
-// src/module/sports-data/adapters/api-football.adapter.ts
 import { Injectable, Logger, HttpException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
+import { KeyPoolManager } from './utils/key-pool.util';
 
 @Injectable()
 export class ApiFootballAdapter {
   private readonly logger = new Logger(ApiFootballAdapter.name);
   private readonly client: AxiosInstance;
+  private readonly keyPool: KeyPoolManager;
 
   constructor() {
+    this.keyPool = new KeyPoolManager('API-Football', process.env.API_FOOTBALL_KEY || process.env.RAPIDAPI_KEY || '');
     this.client = axios.create({
       baseURL: 'https://v3.football.api-sports.io',
       timeout: 8000,
-      headers: {
-        'x-apisports-key': process.env.API_FOOTBALL_KEY || process.env.RAPIDAPI_KEY || '',
-      },
     });
   }
 
@@ -70,16 +69,21 @@ export class ApiFootballAdapter {
     params: Record<string, any>,
     attempt = 1,
   ): Promise<any[]> {
+    const activeKey = this.keyPool.getActiveKey();
     try {
-      const res = await this.client.get(path, { params });
+      const res = await this.client.get(path, {
+        params,
+        headers: activeKey ? { 'x-apisports-key': activeKey } : {},
+      });
       return res.data?.response ?? [];
     } catch (err: any) {
       const status = err?.response?.status;
 
       if (status === 429 && attempt <= 3) {
+        this.keyPool.markKeyRateLimited(activeKey, 120);
         const backoffMs = 1000 * 2 ** attempt; // 2s, 4s, 8s
         this.logger.warn(
-          `[API-Football] Bị Rate Limit tại ${path}, thử lại sau ${backoffMs}ms (lần ${attempt})`,
+          `[API-Football] Bị Rate Limit tại ${path}, xoay key và thử lại sau ${backoffMs}ms (lần ${attempt})`,
         );
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
         return this.requestWithRetry(path, params, attempt + 1);

@@ -1,6 +1,6 @@
-// src/module/sports-data/adapters/zafronix.adapter.ts
 import { Injectable, Logger } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
+import { KeyPoolManager } from './utils/key-pool.util';
 
 export interface ZafronixLeagueConfig {
   endpointPrefix: string;
@@ -22,14 +22,13 @@ export const ZAFRONIX_TOP_LEAGUES: ZafronixLeagueConfig[] = [
 export class ZafronixAdapter {
   private readonly logger = new Logger(ZafronixAdapter.name);
   private readonly client: AxiosInstance;
+  private readonly keyPool: KeyPoolManager;
 
   constructor() {
+    this.keyPool = new KeyPoolManager('Zafronix', process.env.ZAFRONIX_API_KEY || 'zsx_free_d56799ca1b5e64a4f67eb1be');
     this.client = axios.create({
       baseURL: 'https://api.zafronix.com',
       timeout: 10000,
-      headers: {
-        'X-API-Key': process.env.ZAFRONIX_API_KEY || 'zsx_free_d56799ca1b5e64a4f67eb1be',
-      },
     });
   }
 
@@ -71,14 +70,19 @@ export class ZafronixAdapter {
     params: Record<string, any> = {},
     attempt = 1,
   ): Promise<T> {
+    const activeKey = this.keyPool.getActiveKey();
     try {
-      const response = await this.client.get(path, { params });
+      const response = await this.client.get(path, {
+        params,
+        headers: activeKey ? { 'X-API-Key': activeKey } : {},
+      });
       return response.data;
     } catch (err: any) {
       const status = err?.response?.status;
       if (status === 429 && attempt <= 3) {
+        this.keyPool.markKeyRateLimited(activeKey, 120);
         const backoffMs = 1000 * 2 ** attempt;
-        this.logger.warn(`[Zafronix] Rate Limit (429) tại ${path}, thử lại sau ${backoffMs}ms`);
+        this.logger.warn(`[Zafronix] Rate Limit (429) tại ${path}, xoay key và thử lại sau ${backoffMs}ms`);
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
         return this.requestWithRetry<T>(path, params, attempt + 1);
       }

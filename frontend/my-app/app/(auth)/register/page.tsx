@@ -183,34 +183,34 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center px-4 py-4 sm:py-6">
       <div
-        className="w-full max-w-md"
-        style={{ animation: "fadeInUp 0.4s ease both" }}
+        className="w-full max-w-lg"
+        style={{ animation: "fadeInUp 0.35s ease both" }}
       >
-        {/* Card */}
+        {/* Card đăng ký */}
         <div
-          className="rounded-2xl border p-8 shadow-2xl backdrop-blur-sm"
+          className="rounded-2xl border p-5 sm:p-6 shadow-2xl backdrop-blur-sm"
           style={{
             background: "rgba(18, 22, 29, 0.85)",
             borderColor: "rgba(35, 41, 53, 0.8)",
             boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(47,217,140,0.05)",
           }}
         >
-          {/* Logo & Title */}
-          <div className="mb-7 text-center">
-            <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
+          {/* Logo & Tiêu đề */}
+          <div className="mb-4 text-center">
+            <Link href="/" className="inline-flex items-center gap-2 mb-1.5 group">
               <img
                 src="/img/fasvicon.png"
                 alt="iKnowBall"
-                className="h-8 w-8 rounded-lg object-contain group-hover:opacity-90 transition-opacity"
+                className="h-7 w-7 rounded-lg object-contain group-hover:opacity-90 transition-opacity"
               />
-              <span className="text-xl font-black tracking-tight text-white">
+              <span className="text-lg font-black tracking-tight text-white">
                 iKnow<span style={{ color: "#2FD98C" }}>Ball</span>
               </span>
             </Link>
-            <h1 className="text-2xl font-bold text-white">Tạo tài khoản</h1>
-            <p className="mt-1.5 text-sm" style={{ color: "#8890A0" }}>
+            <h1 className="text-xl font-bold text-white">Tạo tài khoản</h1>
+            <p className="mt-0.5 text-xs text-[#8890A0]">
               Miễn phí — không cần thẻ tín dụng
             </p>
           </div>
@@ -218,7 +218,7 @@ export default function RegisterPage() {
           {/* Lỗi tổng */}
           {error && (
             <div
-              className="mb-5 rounded-xl border px-4 py-3 text-sm"
+              className="mb-3 rounded-xl border px-3 py-2 text-xs"
               style={{
                 background: "rgba(229,72,77,0.08)",
                 borderColor: "rgba(229,72,77,0.3)",
@@ -230,153 +230,155 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            {/* Họ tên */}
-            <div>
-              <label htmlFor={fullNameId} className="mb-1.5 block text-sm font-medium" style={{ color: "#EDEFF3" }}>
-                Họ và tên
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#565E6C" }}>
-                  <IconUser />
-                </span>
-                <input
-                  id={fullNameId}
-                  type="text"
-                  autoComplete="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Nguyễn Văn A"
-                  className="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
-                  style={inputStyle(!!fieldErrors.fullName)}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                />
-              </div>
-              {fieldErrors.fullName && (
-                <p className="mt-1 text-xs" style={{ color: "#E5484D" }}>{fieldErrors.fullName}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor={emailId} className="mb-1.5 block text-sm font-medium" style={{ color: "#EDEFF3" }}>
-                Email
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#565E6C" }}>
-                  <IconMail />
-                </span>
-                <input
-                  id={emailId}
-                  type="email"
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm outline-none transition-all"
-                  style={inputStyle(!!fieldErrors.email)}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                />
-              </div>
-              {fieldErrors.email && (
-                <p className="mt-1 text-xs" style={{ color: "#E5484D" }}>{fieldErrors.email}</p>
-              )}
-            </div>
-
-            {/* Mật khẩu */}
-            <div>
-              <label htmlFor={passwordId} className="mb-1.5 block text-sm font-medium" style={{ color: "#EDEFF3" }}>
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#565E6C" }}>
-                  <IconLock />
-                </span>
-                <input
-                  id={passwordId}
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Ít nhất 8 ký tự"
-                  className="w-full rounded-xl border py-2.5 pl-10 pr-11 text-sm outline-none transition-all"
-                  style={inputStyle(!!fieldErrors.password)}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                />
-                <button type="button" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShowPassword((v) => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 transition-colors hover:text-white" style={{ color: "#565E6C" }}>
-                  <IconEye open={showPassword} />
-                </button>
-              </div>
-              {/* Strength bar */}
-              {password && (
-                <div className="mt-2">
-                  <div className="flex gap-1 mb-1">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="h-1 flex-1 rounded-full transition-all duration-300"
-                        style={{
-                          background: i <= passwordStrength.level ? passwordStrength.color : "#232935",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-xs" style={{ color: passwordStrength.color }}>
-                    Mật khẩu {passwordStrength.label.toLowerCase()}
-                  </p>
-                </div>
-              )}
-              {fieldErrors.password && (
-                <p className="mt-1 text-xs" style={{ color: "#E5484D" }}>{fieldErrors.password}</p>
-              )}
-            </div>
-
-            {/* Xác nhận mật khẩu */}
-            <div>
-              <label htmlFor={confirmPasswordId} className="mb-1.5 block text-sm font-medium" style={{ color: "#EDEFF3" }}>
-                Xác nhận mật khẩu
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: "#565E6C" }}>
-                  <IconLock />
-                </span>
-                <input
-                  id={confirmPasswordId}
-                  type={showConfirmPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu"
-                  className="w-full rounded-xl border py-2.5 pl-10 pr-11 text-sm outline-none transition-all"
-                  style={inputStyle(!!fieldErrors.confirmPassword)}
-                  onFocus={handleFocus}
-                  onBlur={handleBlur}
-                />
-                {/* Icon check nếu khớp */}
-                {confirmPassword && password === confirmPassword && (
-                  <span className="absolute right-10 top-1/2 -translate-y-1/2" style={{ color: "#2FD98C" }}>
-                    <IconCheck />
+          {/* Form đăng ký với bố cục 2 cột trên máy tính */}
+          <form onSubmit={handleSubmit} noValidate className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Họ tên */}
+              <div>
+                <label htmlFor={fullNameId} className="mb-1 block text-xs font-medium text-[#EDEFF3]">
+                  Họ và tên
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#565E6C]">
+                    <IconUser />
                   </span>
+                  <input
+                    id={fullNameId}
+                    type="text"
+                    autoComplete="name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Your name"
+                    className="w-full rounded-xl border py-2 pl-9 pr-3 text-xs sm:text-sm outline-none transition-all"
+                    style={inputStyle(!!fieldErrors.fullName)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                {fieldErrors.fullName && (
+                  <p className="mt-0.5 text-[11px] text-[#E5484D]">{fieldErrors.fullName}</p>
                 )}
-                <button type="button" aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-3.5 top-1/2 -translate-y-1/2 p-0.5 transition-colors hover:text-white" style={{ color: "#565E6C" }}>
-                  <IconEye open={showConfirmPassword} />
-                </button>
               </div>
-              {fieldErrors.confirmPassword && (
-                <p className="mt-1 text-xs" style={{ color: "#E5484D" }}>{fieldErrors.confirmPassword}</p>
-              )}
+
+              {/* Email */}
+              <div>
+                <label htmlFor={emailId} className="mb-1 block text-xs font-medium text-[#EDEFF3]">
+                  Email
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#565E6C]">
+                    <IconMail />
+                  </span>
+                  <input
+                    id={emailId}
+                    type="email"
+                    autoComplete="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@gmail.com"
+                    className="w-full rounded-xl border py-2 pl-9 pr-3 text-xs sm:text-sm outline-none transition-all"
+                    style={inputStyle(!!fieldErrors.email)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                </div>
+                {fieldErrors.email && (
+                  <p className="mt-0.5 text-[11px] text-[#E5484D]">{fieldErrors.email}</p>
+                )}
+              </div>
+
+              {/* Mật khẩu */}
+              <div>
+                <label htmlFor={passwordId} className="mb-1 block text-xs font-medium text-[#EDEFF3]">
+                  Mật khẩu
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#565E6C]">
+                    <IconLock />
+                  </span>
+                  <input
+                    id={passwordId}
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Ít nhất 8 ký tự"
+                    className="w-full rounded-xl border py-2 pl-9 pr-9 text-xs sm:text-sm outline-none transition-all"
+                    style={inputStyle(!!fieldErrors.password)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                  <button type="button" aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShowPassword((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#565E6C] transition-colors hover:text-white">
+                    <IconEye open={showPassword} />
+                  </button>
+                </div>
+                {/* Thanh độ mạnh mật khẩu */}
+                {password && (
+                  <div className="mt-1">
+                    <div className="flex gap-1 mb-0.5">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="h-1 flex-1 rounded-full transition-all duration-300"
+                          style={{
+                            background: i <= passwordStrength.level ? passwordStrength.color : "#232935",
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[11px]" style={{ color: passwordStrength.color }}>
+                      Mật khẩu {passwordStrength.label.toLowerCase()}
+                    </p>
+                  </div>
+                )}
+                {fieldErrors.password && (
+                  <p className="mt-0.5 text-[11px] text-[#E5484D]">{fieldErrors.password}</p>
+                )}
+              </div>
+
+              {/* Xác nhận mật khẩu */}
+              <div>
+                <label htmlFor={confirmPasswordId} className="mb-1 block text-xs font-medium text-[#EDEFF3]">
+                  Xác nhận mật khẩu
+                </label>
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#565E6C]">
+                    <IconLock />
+                  </span>
+                  <input
+                    id={confirmPasswordId}
+                    type={showConfirmPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu"
+                    className="w-full rounded-xl border py-2 pl-9 pr-9 text-xs sm:text-sm outline-none transition-all"
+                    style={inputStyle(!!fieldErrors.confirmPassword)}
+                    onFocus={handleFocus}
+                    onBlur={handleBlur}
+                  />
+                  {/* Icon check nếu khớp */}
+                  {confirmPassword && password === confirmPassword && (
+                    <span className="absolute right-8 top-1/2 -translate-y-1/2 text-[#2FD98C]">
+                      <IconCheck />
+                    </span>
+                  )}
+                  <button type="button" aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"} onClick={() => setShowConfirmPassword((v) => !v)} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-[#565E6C] transition-colors hover:text-white">
+                    <IconEye open={showConfirmPassword} />
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <p className="mt-0.5 text-[11px] text-[#E5484D]">{fieldErrors.confirmPassword}</p>
+                )}
+              </div>
             </div>
 
             {/* Điều khoản */}
-            <p className="text-xs leading-relaxed" style={{ color: "#565E6C" }}>
+            <p className="text-[11px] leading-tight text-center text-[#565E6C] pt-0.5">
               Bằng cách đăng ký, bạn đồng ý với{" "}
-              <Link href="/terms" className="underline hover:text-white transition-colors">Điều khoản sử dụng</Link>
+              <Link href="/terms" className="underline hover:text-white transition-colors">Điều khoản</Link>
               {" "}và{" "}
-              <Link href="/privacy" className="underline hover:text-white transition-colors">Chính sách bảo mật</Link>.
+              <Link href="/privacy" className="underline hover:text-white transition-colors">Bảo mật</Link>.
             </p>
 
             {/* Nút đăng ký */}
@@ -384,7 +386,7 @@ export default function RegisterPage() {
               id="btn-register-submit"
               type="submit"
               disabled={isSubmitting}
-              className="mt-1 w-full rounded-xl py-3 text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl py-2.5 text-xs sm:text-sm font-semibold transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               style={{
                 background: "linear-gradient(135deg, #2FD98C 0%, #1E9A63 100%)",
                 color: "#07090E",
@@ -392,7 +394,7 @@ export default function RegisterPage() {
             >
               {isSubmitting ? (
                 <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
@@ -404,33 +406,32 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1" style={{ background: "#232935" }} />
-            <span className="text-xs" style={{ color: "#565E6C" }}>
+          {/* Phân cách */}
+          <div className="my-3 flex items-center gap-2.5">
+            <div className="h-px flex-1 bg-[#232935]" />
+            <span className="text-[11px] text-[#565E6C]">
               hoặc
             </span>
-            <div className="h-px flex-1" style={{ background: "#232935" }} />
+            <div className="h-px flex-1 bg-[#232935]" />
           </div>
 
           {/* Đăng ký bằng Google */}
           <a
             id="btn-register-google"
             href={`${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000"}/api/v1/auth/google`}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl border py-2.5 text-sm font-medium transition-all hover:border-white/20 hover:bg-white/5"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border py-2 text-xs sm:text-sm font-medium transition-all hover:border-white/20 hover:bg-white/5"
             style={{ borderColor: "#232935", color: "#EDEFF3" }}
           >
             <IconGoogle />
             Đăng ký với Google
           </a>
 
-          {/* Link đăng nhập */}
-          <p className="mt-6 text-center text-sm" style={{ color: "#8890A0" }}>
+          {/* Link chuyển sang trang đăng nhập */}
+          <p className="mt-3 text-center text-xs text-[#8890A0]">
             Đã có tài khoản?{" "}
             <Link
               href="/login"
-              className="font-semibold transition-colors hover:underline"
-              style={{ color: "#2FD98C" }}
+              className="font-semibold transition-colors hover:underline text-[#2FD98C]"
             >
               Đăng nhập
             </Link>

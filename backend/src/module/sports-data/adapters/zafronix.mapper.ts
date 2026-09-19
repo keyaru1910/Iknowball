@@ -7,13 +7,29 @@ import {
   NormalizedTeam,
 } from './football-provider.interface';
 
-const slug = (value: string) =>
-  value
+/**
+ * Chuẩn hóa tên đội bóng loại bỏ các hậu tố/tiền tố viết tắt (FC, CF, RCD...)
+ * để đảm bảo slug giữa danh sách Team và Fixtures luôn khớp nhau tuyệt đối.
+ */
+export const normalizeTeamSlug = (value: string): string => {
+  if (!value) return 'unknown';
+  let clean = value
     .toLowerCase()
     .normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '') // Bỏ dấu tiếng Việt / ký tự có dấu Tây Ban Nha, Pháp, Đức
+    .trim();
+
+  // Bỏ các từ tiền tố/hậu tố đội bóng phổ biến
+  clean = clean.replace(/\b(fc|cf|cd|rcd|ud|sd|ca|afc|bsc|sc|sad|fk|vfb|vfl|tsg|tsv)\b/gi, ' ');
+
+  const result = clean
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+    .replace(/^-+|-+$/g, '');
+
+  return result || value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+};
+
+const slug = (value: string) => normalizeTeamSlug(value);
 
 @Injectable()
 export class ZafronixMapper {
@@ -28,7 +44,7 @@ export class ZafronixMapper {
 
   toTeam(teamName: string, leagueExternalId: string): NormalizedTeam {
     const cleanName = teamName.trim();
-    const teamSlug = slug(cleanName);
+    const teamSlug = normalizeTeamSlug(cleanName);
     return {
       externalId: `zafronix:${leagueExternalId}:${teamSlug}`,
       leagueExternalId,

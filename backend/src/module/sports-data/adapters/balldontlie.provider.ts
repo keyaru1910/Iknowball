@@ -1,4 +1,3 @@
-// src/module/sports-data/adapters/balldontlie.provider.ts
 import { Injectable, Logger, HttpException } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import type {
@@ -8,6 +7,7 @@ import type {
   NormalizedTeam,
   SportsDataProvider,
 } from './football-provider.interface';
+import { KeyPoolManager } from './utils/key-pool.util';
 
 /**
  * Adapter cho nhà cung cấp dữ liệu balldontlie (NBA và thể thao tương thích)
@@ -17,14 +17,16 @@ export class BalldontlieProvider implements SportsDataProvider {
   readonly sportName = 'basketball' as const;
   private readonly logger = new Logger(BalldontlieProvider.name);
   private readonly client: AxiosInstance;
+  private readonly keyPool: KeyPoolManager;
 
   constructor() {
+    this.keyPool = new KeyPoolManager(
+      'Balldontlie',
+      process.env.BALLDONTLIE_API_KEY || process.env.API_BASKETBALL_KEY || '',
+    );
     this.client = axios.create({
       baseURL: 'https://api.balldontlie.io/v1',
       timeout: 8000,
-      headers: {
-        Authorization: process.env.BALLDONTLIE_API_KEY || process.env.API_BASKETBALL_KEY || '',
-      },
     });
   }
 
@@ -36,17 +38,22 @@ export class BalldontlieProvider implements SportsDataProvider {
     params: Record<string, any> = {},
     attempt = 1,
   ): Promise<T> {
+    const activeKey = this.keyPool.getActiveKey();
     try {
-      const response = await this.client.get(path, { params });
+      const response = await this.client.get(path, {
+        params,
+        headers: activeKey ? { Authorization: activeKey } : {},
+      });
       return response.data;
     } catch (err: any) {
       const status = err?.response?.status;
 
       // Xử lý Rate Limit 429
       if (status === 429 && attempt <= 3) {
+        this.keyPool.markKeyRateLimited(activeKey, 60);
         const backoffMs = 1000 * 2 ** attempt; // 2s, 4s, 8s
         this.logger.warn(
-          `[Balldontlie] Bị giới hạn tần suất (429) tại ${path}, thử lại sau ${backoffMs}ms (lần ${attempt})`,
+          `[Balldontlie] Bị giới hạn tần suất (429) tại ${path}, xoay key và thử lại sau ${backoffMs}ms (lần ${attempt})`,
         );
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
         return this.requestWithRetry<T>(path, params, attempt + 1);

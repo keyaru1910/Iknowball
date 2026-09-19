@@ -380,38 +380,39 @@ export class PredictionService {
     const avgLogLoss = entries.reduce((sum, x) => sum + Number(x.logLoss), 0) / entries.length;
     const avgBrierScore = entries.reduce((sum, x) => sum + Number(x.brierScore), 0) / entries.length;
 
-    await this.prisma.modelPerformance.upsert({
+    const existing = await this.prisma.modelPerformance.findFirst({
       where: {
-        modelVersion_leagueId_periodStart_periodEnd: {
-          modelVersion: MODEL_VERSION,
-          leagueId: leagueId,
-          periodStart,
-          periodEnd,
-        },
-      },
-      create: {
         modelVersion: MODEL_VERSION,
-        leagueId,
+        leagueId: leagueId ?? null,
         periodStart,
         periodEnd,
-        accuracy,
-        precision: macro('precision'),
-        recall: macro('recall'),
-        f1: macro('f1'),
-        avgLogLoss,
-        avgBrierScore,
-        sampleSize: entries.length,
-      },
-      update: {
-        accuracy,
-        precision: macro('precision'),
-        recall: macro('recall'),
-        f1: macro('f1'),
-        avgLogLoss,
-        avgBrierScore,
-        sampleSize: entries.length,
       },
     });
+
+    const data = {
+      modelVersion: MODEL_VERSION,
+      leagueId,
+      periodStart,
+      periodEnd,
+      accuracy,
+      precision: macro('precision'),
+      recall: macro('recall'),
+      f1: macro('f1'),
+      avgLogLoss,
+      avgBrierScore,
+      sampleSize: entries.length,
+    };
+
+    if (existing) {
+      await this.prisma.modelPerformance.update({
+        where: { id: existing.id },
+        data,
+      });
+    } else {
+      await this.prisma.modelPerformance.create({
+        data,
+      });
+    }
   }
 
   /**

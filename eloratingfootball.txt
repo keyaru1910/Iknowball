@@ -1,0 +1,33 @@
+BẢNG XẾP HẠNG ELO RATING - CÁC CLB THUỘC 5 GIẢI VĐQG HÀNG ĐẦU CHÂU ÂU
+(Premier League - Anh | La Liga - Tây Ban Nha | Bundesliga - Đức | Serie A - Ý | Ligue 1 - Pháp)
+Nguồn: ClubElo.com | Dữ liệu tổng hợp gần đây nhất có thể truy cập được
+
+Hạng | CLB              | Giải đấu     | Điểm Elo
+-----+------------------+--------------+---------
+ 1   | Arsenal          | Premier League| 2061
+ 2   | Bayern Munich    | Bundesliga   | 1999
+ 3   | Barcelona        | La Liga      | 1989
+ 4   | Paris Saint-Germain | Ligue 1   | 1954
+ 5   | Real Madrid      | La Liga      | 1946
+ 6   | Manchester City  | Premier League| 1941
+ 7   | Liverpool        | Premier League| 1926
+ 8   | Inter Milan      | Serie A      | 1892
+ 9   | Aston Villa      | Premier League| 1885
+10   | Manchester United| Premier League| 1881
+11   | Chelsea          | Premier League| 1869
+12   | Atlético Madrid  | La Liga      | 1863
+13   | Borussia Dortmund| Bundesliga   | 1846
+14   | Brighton         | Premier League| 1844
+15   | Newcastle United | Premier League| 1840
+16   | Brentford        | Premier League| 1832
+17   | Everton          | Premier League| 1831
+18   | Bournemouth      | Premier League| 1822
+19   | Bayer Leverkusen | Bundesliga   | 1808
+20   | AC Milan         | Serie A      | 1808
+21   | Napoli           | Serie A      | 1806
+22   | Fulham           | Premier League| 1801
+
+Ghi chú:
+- Elo rating phản ánh sức mạnh tương đối của CLB dựa trên kết quả thi đấu gần đây (thắng đội mạnh được cộng điểm nhiều hơn thắng đội yếu).
+- Danh sách trên lấy từ dữ liệu công khai của ClubElo.com, chỉ bao gồm các CLB lọt vào top mạnh nhất châu Âu nên số lượng đại diện của mỗi giải không đều nhau (Premier League có nhiều CLB nhất do đang là giải mạnh nhất theo Elo hiện tại).
+- Vì ClubElo cập nhật điểm số liên tục sau mỗi vòng đấu, con số có thể lệch nhẹ so với thời điểm bạn xem file này. Muốn số liệu real-time chính xác tuyệt đối, nên truy cập trực tiếp clubelo.com.

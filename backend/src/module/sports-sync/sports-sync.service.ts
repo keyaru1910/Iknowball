@@ -323,6 +323,78 @@ export class SportsSyncService {
   }
 
   /**
+   * Đảm bảo đội bóng luôn tồn tại trong DB (Cơ chế Auto-healing on-the-fly).
+   * Nếu chưa có theo externalId, thử tìm theo tên trong leagueId hoặc tự động tạo mới.
+   */
+  private async ensureTeamExists(
+    externalId: string,
+    fallbackName: string,
+    leagueId: string,
+    season: string,
+  ) {
+    // 1. Tìm chính xác theo externalId
+    let team = await this.prisma.team.findUnique({
+      where: { externalId },
+    });
+    if (team) return team;
+
+    // 2. Fallback tìm theo tên tương đồng trong cùng giải đấu
+    const cleanFallback = fallbackName.trim();
+    const teamByName = await this.prisma.team.findFirst({
+      where: {
+        leagueId,
+        name: { equals: cleanFallback, mode: 'insensitive' },
+      },
+    });
+
+    if (teamByName) {
+      return teamByName;
+    }
+
+    // 3. Tự động khởi tạo đội bóng mới on-the-fly
+    this.logger.log(
+      `[Auto-Healing] Tự động tạo đội bóng mới: "${cleanFallback}" (ExtID: ${externalId}, LeagueID: ${leagueId})`,
+    );
+    team = await this.prisma.team.create({
+      data: {
+        leagueId,
+        name: cleanFallback,
+        externalId,
+      },
+    });
+
+    // 4. Khởi tạo TeamStats mặc định cho mùa giải nếu chưa có
+    try {
+      await this.prisma.teamStats.upsert({
+        where: {
+          teamId_leagueId_season: {
+            teamId: team.id,
+            leagueId,
+            season,
+          },
+        },
+        update: {},
+        create: {
+          teamId: team.id,
+          leagueId,
+          season,
+          eloRating: 1500,
+          matchesPlayed: 0,
+          wins: 0,
+          draws: 0,
+          losses: 0,
+          goalsFor: 0,
+          goalsAgainst: 0,
+        },
+      });
+    } catch (statsErr: any) {
+      this.logger.warn(`Không thể khởi tạo TeamStats cho đội ${team.id}: ${statsErr.message}`);
+    }
+
+    return team;
+  }
+
+  /**
    * 3. Đồng bộ Trận đấu (Matches / Fixtures)
    */
   async syncMatches(options?: {
@@ -361,16 +433,13 @@ export class SportsSyncService {
 
         for (const m of fixtures) {
           try {
-            const [homeTeam, awayTeam] = await Promise.all([
-              this.prisma.team.findUnique({ where: { externalId: m.homeTeamExternalId } }),
-              this.prisma.team.findUnique({ where: { externalId: m.awayTeamExternalId } }),
-            ]);
+            const rawHomeName = String(m.rawData?.homeTeam || m.rawData?.home || 'Home Team').trim();
+            const rawAwayName = String(m.rawData?.awayTeam || m.rawData?.away || 'Away Team').trim();
 
-            if (!homeTeam || !awayTeam) {
-              const errorMsg = `Match ${m.externalId}: Thiếu đội bóng (home: ${m.homeTeamExternalId}, away: ${m.awayTeamExternalId})`;
-              errors.push(errorMsg);
-              continue;
-            }
+            const [homeTeam, awayTeam] = await Promise.all([
+              this.ensureTeamExists(m.homeTeamExternalId, rawHomeName, league.id, league.season),
+              this.ensureTeamExists(m.awayTeamExternalId, rawAwayName, league.id, league.season),
+            ]);
 
             resolved.push({
               id: randomUUID(),
@@ -474,14 +543,8 @@ export class SportsSyncService {
 
         for (const s of standings) {
           try {
-            const team = await this.prisma.team.findUnique({
-              where: { externalId: s.teamExternalId },
-            });
-
-            if (!team) {
-              errors.push(`Standing: Không tìm thấy team ${s.teamExternalId}`);
-              continue;
-            }
+            const rawTeamName = (s.teamExternalId.split(':').pop() || 'Team').replace(/-/g, ' ');
+            const team = await this.ensureTeamExists(s.teamExternalId, rawTeamName, league.id, s.season);
 
             // Upsert bảng Standing
             const standingRecord = await this.prisma.standing.upsert({

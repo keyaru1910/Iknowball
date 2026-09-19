@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { MatchStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { calculateEloUpdate, DEFAULT_ELO, EloResult, kFactor } from './elo.calculator';
@@ -6,7 +6,7 @@ import { calculateEloUpdate, DEFAULT_ELO, EloResult, kFactor } from './elo.calcu
 @Injectable()
 export class EloService {
   private readonly logger = new Logger(EloService.name);
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   /**
    * Áp dụng cập nhật Elo cho một trận đấu đã kết thúc.
