@@ -15,8 +15,7 @@
     "seed": "npm run build && node dist/module/prisma/seed.js",
     "seed:admin": "npm run build && node -e \"require('./dist/seed-admin')\"",
     "seed:sports": "npm run build && node -e \"require('./dist/seed-sports')\"",
-    "seed:basketball": "npm run build && node -e \"require('./dist/seed-basketball')\"",
-    "postinstall": "prisma skills sync || exit 0"
+    "seed:basketball": "npm run build && node -e \"require('./dist/seed-basketball')\""
   },
   "dependencies": {
     "@nestjs/bullmq": "^11.0.0",
@@ -48,11 +47,12 @@
     "reflect-metadata": "^0.2.2",
     "resend": "^6.26.0",
     "rxjs": "^7.8.2",
-    "stripe": "^22.6.2"
+    "stripe": "^22.6.2",
+    "@prisma/client": "^7.10.0",
+    "prisma": "^7.10.0"
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
-    "@prisma/client": "^7.10.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/node": "^26.4.1",
@@ -64,7 +64,6 @@
     "install": "^0.13.0",
     "nodemon": "^3.0.1",
     "npm": "^11.19.1",
-    "prisma": "^7.10.0",
     "supertest": "^7.2.2",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
