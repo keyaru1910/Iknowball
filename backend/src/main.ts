@@ -38,16 +38,25 @@ async function bootstrap() {
   // 3. Cookie Parser cho Refresh Token an toàn
   app.use(cookieParser());
 
-  // 4. Cấu hình CORS Allowlist nghiêm ngặt
+  // 4. Cấu hình CORS Allowlist linh hoạt và an toàn
+  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
   const allowedOrigins = [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
+    frontendUrl,
+    'http://localhost:3000',
     'http://localhost:3001',
     'https://iknowball.vercel.app',
+    'https://iknowball-inky.vercel.app',
   ];
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      if (!origin) return callback(null, true);
+      const normalized = origin.replace(/\/+$/, '');
+      if (
+        allowedOrigins.includes(normalized) ||
+        normalized.endsWith('.vercel.app') ||
+        process.env.NODE_ENV !== 'production'
+      ) {
         callback(null, true);
       } else {
         callback(new Error('Chặn bởi chính sách CORS'));
