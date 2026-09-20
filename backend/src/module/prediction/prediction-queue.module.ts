@@ -10,7 +10,6 @@ import { EloModule } from '../elo/elo.module';
   imports: [
     PredictionModule,
     EloModule,
-    BullModule.forRootAsync({ imports: [ConfigModule], inject: [ConfigService], useFactory: (config: ConfigService) => ({ connection: { host: config.get('REDIS_HOST', 'localhost'), port: config.get<number>('REDIS_PORT', 6379), password: config.get('REDIS_PASSWORD') || undefined } }) }),
     BullModule.registerQueue({ name: PREDICTION_QUEUE, defaultJobOptions: { attempts: 3, backoff: { type: 'exponential', delay: 5000 }, removeOnComplete: { count: 100 }, removeOnFail: { count: 500 } } }),
   ],
   providers: [PredictionProcessor],

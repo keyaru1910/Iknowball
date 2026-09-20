@@ -20,6 +20,9 @@ import { CommentsModule } from './module/comments/comments.module';
 import { TelegramModule } from './module/telegram/telegram.module';
 import { AlertModule } from './module/alert/alert.module';
 
+import { BullModule } from '@nestjs/bullmq';
+import { getBullMqRedisConnection } from './config/redis.config';
+
 const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQueueModule, SportsSyncModule] : [];
 
 @Module({
@@ -31,6 +34,9 @@ const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQu
         limit: 60,
       },
     ]),
+    BullModule.forRoot({
+      connection: getBullMqRedisConnection(),
+    }),
     SharedModule,
     HealthModule,
     AuthModule,
