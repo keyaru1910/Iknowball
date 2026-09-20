@@ -128,10 +128,10 @@ export class MatchService {
     return this.cacheService.getOrSet(cacheKey, 60, async () => {
       const where: any = {};
 
-      // Filter theo ngày (UTC ngày bắt đầu và kết thúc)
+      // Filter theo ngày theo múi giờ Việt Nam (UTC+7) để đảm bảo không sót trận rạng sáng và đêm muộn
       if (date) {
-        const startOfDay = new Date(`${date}T00:00:00.000Z`);
-        const endOfDay = new Date(`${date}T23:59:59.999Z`);
+        const startOfDay = new Date(`${date}T00:00:00.000+07:00`);
+        const endOfDay = new Date(`${date}T23:59:59.999+07:00`);
         where.matchDate = {
           gte: startOfDay,
           lte: endOfDay,

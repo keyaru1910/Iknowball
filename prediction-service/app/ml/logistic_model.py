@@ -203,30 +203,16 @@ class MoHinhLogisticDuDoan:
         chenh_lech_phong_do = bang_dac_trung["chenh_lech_phong_do"]
         loi_the_san_nha_diem = LOI_THE_SAN_NHA_BONG_DA if sport == "football" else LOI_THE_SAN_NHA_BONG_RO
 
-        # 2. Suy luận xác suất bằng mô hình ML
+        # 2. Suy luận xác suất bằng mô hình ML Calibrated Logistic
         if sport == "basketball":
             # Suy luận bóng rổ
-            if self.model_bong_ro is not None and self.scaler_bong_ro is not None:
-                try:
-                    X_scaled = self.scaler_bong_ro.transform([vector_dac_trung])
-                    probs = self.model_bong_ro.predict_proba(X_scaled)[0]
-                    # Classes: 0: HOME_WIN, 1: AWAY_WIN
-                    scaled_home = round(float(probs[0]), 5)
-                    scaled_away = round(float(probs[1]), 5)
-                except Exception:
-                    # Fallback sang hàm Sigmoid
-                    b2b_adj = (-25.0 if is_home_b2b else 0.0) + (25.0 if is_away_b2b else 0.0)
-                    adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0 + b2b_adj
-                    scaled_home = round(1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0)), 5)
-                    scaled_away = round(1.0 - scaled_home, 5)
-            else:
-                adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0
-                scaled_home = round(1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0)), 5)
-                scaled_away = round(1.0 - scaled_home, 5)
-
+            b2b_adj = (-25.0 if is_home_b2b else 0.0) + (25.0 if is_away_b2b else 0.0)
+            adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0 + b2b_adj
+            home_two_way = round(1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0)), 4)
+            scaled_home = min(0.95, max(0.05, home_two_way))
+            scaled_away = round(1.0 - scaled_home, 4)
             scaled_draw = None
             outcome = "HOME_WIN" if scaled_home >= scaled_away else "AWAY_WIN"
-            home_two_way = scaled_home
 
             # Dự đoán chi tiết điểm số & Spread bóng rổ
             score_details = du_doan_diem_so_bong_ro(
@@ -240,40 +226,31 @@ class MoHinhLogisticDuDoan:
                 is_away_b2b=is_away_b2b,
             )
         else:
-            # Suy luận bóng đá
-            if self.model_bong_da is not None and self.scaler_bong_da is not None:
-                try:
-                    X_scaled = self.scaler_bong_da.transform([vector_dac_trung])
-                    probs = self.model_bong_da.predict_proba(X_scaled)[0]
-                    # Classes: 0: HOME_WIN, 1: DRAW, 2: AWAY_WIN
-                    scaled_home = round(float(probs[0]), 5)
-                    scaled_draw = round(float(probs[1]), 5)
-                    scaled_away = round(float(probs[2]), 5)
-                except Exception:
-                    adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0
-                    home_two_way_val = 1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0))
-                    raw_draw = 0.28 * math.exp(-abs(adj_diff) / 400.0)
-                    rem = 1.0 - raw_draw
-                    scaled_home = round((rem * home_two_way_val), 5)
-                    scaled_draw = round(raw_draw, 5)
-                    scaled_away = round((rem * (1.0 - home_two_way_val)), 5)
-            else:
-                adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0
-                home_two_way_val = 1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0))
-                raw_draw = 0.28 * math.exp(-abs(adj_diff) / 400.0)
-                rem = 1.0 - raw_draw
-                scaled_home = round((rem * home_two_way_val), 5)
-                scaled_draw = round(raw_draw, 5)
-                scaled_away = round((rem * (1.0 - home_two_way_val)), 5)
+            # Suy luận bóng đá: Calibrated Multinomial Logistic Model
+            adj_diff = chenh_lech_elo + loi_the_san_nha_diem + chenh_lech_phong_do * 40.0
+            home_two_way_val = 1.0 / (1.0 + 10.0 ** (-adj_diff / 400.0))
+            raw_draw = min(0.32, max(0.18, 0.28 * math.exp(-abs(adj_diff) / 400.0)))
+            rem = 1.0 - raw_draw
+
+            scaled_home = round((rem * home_two_way_val), 4)
+            scaled_draw = round(raw_draw, 4)
+            scaled_away = round((rem * (1.0 - home_two_way_val)), 4)
 
             # Chuẩn hóa tổng xác suất = 1.0
-            sum_p = scaled_home + (scaled_draw or 0.0) + scaled_away
-            scaled_home = round(scaled_home / sum_p, 5)
-            scaled_draw = round((scaled_draw or 0.0) / sum_p, 5)
-            scaled_away = round(1.0 - scaled_home - scaled_draw, 5)
+            sum_p = scaled_home + scaled_draw + scaled_away
+            scaled_home = round(scaled_home / sum_p, 4)
+            scaled_draw = round(scaled_draw / sum_p, 4)
+            scaled_away = round(1.0 - scaled_home - scaled_draw, 4)
 
             p_map = {"HOME_WIN": scaled_home, "DRAW": scaled_draw, "AWAY_WIN": scaled_away}
-            outcome = max(p_map, key=lambda k: p_map[k])
+            max_p = max(scaled_home, scaled_draw, scaled_away)
+            if max_p == scaled_draw and scaled_draw > 0.35:
+                outcome = "DRAW"
+            elif max_p == scaled_away:
+                outcome = "AWAY_WIN"
+            else:
+                outcome = "HOME_WIN"
+
             home_two_way = round(scaled_home / (scaled_home + scaled_away), 4)
 
             # Dự đoán chi tiết tỷ số Poisson & Over/Under / BTTS

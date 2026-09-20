@@ -3,8 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Sparkles, Shield, Zap, Crown, HelpCircle, ArrowRight } from "lucide-react";
-import { createCheckoutSession } from "../lib/api/endpoints/payment";
+import { Check, Sparkles, Shield, Zap, Crown, HelpCircle, ArrowRight, QrCode } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 
 interface PricingSectionProps {
@@ -37,28 +36,18 @@ export default function PricingSection({
     if (!isAuthenticated) {
       setErrorMsg("Vui lòng đăng nhập trước khi tiến hành nâng cấp gói dịch vụ.");
       setTimeout(() => {
-        router.push(`/login?redirect=/pricing`);
-      }, 1000);
+        router.push(`/login?redirect=/payment/vietqr?plan=${plan}`);
+      }, 800);
       return;
     }
 
     try {
       setLoadingPlan(plan);
       setErrorMsg(null);
-      const res = await createCheckoutSession(plan);
-      if (res?.data?.url) {
-        window.location.href = res.data.url;
-      } else {
-        setErrorMsg("Không nhận được liên kết thanh toán từ máy chủ. Vui lòng thử lại!");
-      }
+      // Chuyển hướng trực tiếp tới trang thanh toán VietQR Ngân hàng nội địa
+      router.push(`/payment/vietqr?plan=${plan}`);
     } catch (err: any) {
-      const msg = err.message || "Không thể khởi tạo phiên thanh toán. Vui lòng thử lại!";
-      setErrorMsg(msg);
-      if (err.status === 401 || err.code === "UNAUTHORIZED") {
-        setTimeout(() => {
-          router.push(`/login?redirect=/pricing`);
-        }, 1500);
-      }
+      setErrorMsg(err.message || "Không thể chuyển đến trang thanh toán. Vui lòng thử lại!");
     } finally {
       setLoadingPlan(null);
     }
@@ -76,7 +65,7 @@ export default function PricingSection({
           Nâng Tầm Nhận Định Với <span className="text-emerald-400">iKnowBall Pro</span>
         </h2>
         <p className="text-sm sm:text-base md:text-lg text-neutral-400 max-w-2xl mx-auto leading-relaxed">
-          Mở khóa toàn bộ dữ liệu xác suất trận đấu, dự đoán AI chuẩn xác và nhận định độc quyền từ chuyên gia số liệu.
+          Mở khóa toàn bộ dữ liệu xác suất trận đấu, dự đoán AI chuẩn xác và nhận định độc quyền từ chuyên gia số liệu qua cổng thanh toán Ngân hàng nội địa VietQR (Napas 247).
         </p>
 
         {/* Billing Switcher */}
@@ -84,27 +73,30 @@ export default function PricingSection({
           <button
             type="button"
             onClick={() => setBillingCycle("monthly")}
-            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${billingCycle === "monthly"
-              ? "bg-emerald-500 text-neutral-950 font-bold shadow-lg"
-              : "text-neutral-400 hover:text-white"
-              }`}
+            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+              billingCycle === "monthly"
+                ? "bg-emerald-500 text-neutral-950 font-bold shadow-lg"
+                : "text-neutral-400 hover:text-white"
+            }`}
           >
             Hàng Tháng
           </button>
           <button
             type="button"
             onClick={() => setBillingCycle("yearly")}
-            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${billingCycle === "yearly"
-              ? "bg-emerald-500 text-neutral-950 font-bold shadow-lg"
-              : "text-neutral-400 hover:text-white"
-              }`}
+            className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center gap-2 ${
+              billingCycle === "yearly"
+                ? "bg-emerald-500 text-neutral-950 font-bold shadow-lg"
+                : "text-neutral-400 hover:text-white"
+            }`}
           >
             <span>Hàng Năm</span>
             <span
-              className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md tracking-wider transition-all ${billingCycle === "yearly"
-                ? "bg-neutral-950 text-emerald-300 border border-neutral-900 shadow-sm"
-                : "bg-emerald-400/20 text-emerald-400 border border-emerald-400/40 shadow-[0_0_10px_rgba(52,211,153,0.25)]"
-                }`}
+              className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-md tracking-wider transition-all ${
+                billingCycle === "yearly"
+                  ? "bg-neutral-950 text-emerald-300 border border-neutral-900 shadow-sm"
+                  : "bg-emerald-400/20 text-emerald-400 border border-emerald-400/40 shadow-[0_0_10px_rgba(52,211,153,0.25)]"
+              }`}
             >
               Tiết kiệm 25%
             </span>
@@ -207,7 +199,7 @@ export default function PricingSection({
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Hỗ trợ ưu tiên và huy hiệu Pro</span>
+                <span>Thanh toán VietQR Napas 247 kích hoạt ngay</span>
               </li>
             </ul>
           </div>
@@ -219,11 +211,11 @@ export default function PricingSection({
             className="w-full py-3.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-neutral-950 text-xs sm:text-sm font-bold transition-all shadow-lg hover:shadow-emerald-500/25 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loadingPlan === (billingCycle === "monthly" ? "PRO_MONTHLY" : "PRO_YEARLY") ? (
-              <span>Đang chuyển đến cổng thanh toán...</span>
+              <span>Đang mở mã VietQR...</span>
             ) : (
               <>
-                <span>Nâng Cấp Pro Ngay</span>
-                <ArrowRight className="w-4 h-4" />
+                <QrCode className="w-4 h-4" />
+                <span>Thanh Toán VietQR Ngay</span>
               </>
             )}
           </button>
@@ -245,7 +237,7 @@ export default function PricingSection({
               </span>
             </div>
             <p className="text-xs sm:text-sm text-neutral-400 mb-6 leading-relaxed">
-              Dành cho các chuyên gia và nhà đầu tư thể thao cần dữ liệu chuyên sâu và thông báo biến động tức thì.
+              Dành cho các chuyên gia và nhà đầu tư thể thao cần dữ liệu chuyên sâu và thông báo biến động tức thì qua Telegram VIP.
             </p>
 
             <ul className="space-y-3 text-xs sm:text-sm text-neutral-300 mb-8">
@@ -263,7 +255,7 @@ export default function PricingSection({
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Xuất dữ liệu thống kê & quyền truy cập API</span>
+                <span>Kênh VIP Telegram tín hiệu 24/7 độc quyền</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
@@ -279,18 +271,18 @@ export default function PricingSection({
             className="w-full py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-neutral-950 text-xs sm:text-sm font-bold transition-all shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {loadingPlan === (billingCycle === "monthly" ? "VIP_MONTHLY" : "VIP_YEARLY") ? (
-              <span>Đang chuyển đến cổng thanh toán...</span>
+              <span>Đang mở mã VietQR...</span>
             ) : (
               <>
-                <span>Tham Gia Gói VIP</span>
-                <ArrowRight className="w-4 h-4" />
+                <QrCode className="w-4 h-4" />
+                <span>Quét Mã VietQR VIP</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* FAQ Section (Optional) */}
+      {/* FAQ Section */}
       {showFaq && (
         <div className="max-w-3xl mx-auto border-t border-neutral-800 pt-16 mt-16">
           <h3 className="text-xl sm:text-2xl font-bold text-white text-center mb-8 flex items-center justify-center gap-2">
@@ -299,15 +291,15 @@ export default function PricingSection({
           </h3>
           <div className="space-y-4 text-neutral-300">
             <div className="p-5 rounded-xl bg-neutral-900/40 border border-neutral-800">
-              <h4 className="font-semibold text-white mb-2">Thanh toán được xử lý như thế nào?</h4>
-              <p className="text-sm text-neutral-400">
-                Mọi giao dịch được bảo mật tuyệt đối và xử lý trực tiếp qua cổng thanh toán quốc tế Stripe bằng thẻ thanh toán quốc tế (Visa/Mastercard/JCB) tính theo tiền tệ VND. Chúng tôi hoàn toàn không lưu trữ thông tin thẻ của bạn.
+              <h4 className="font-semibold text-white mb-2">Thanh toán qua Ngân hàng nội địa (VietQR) như thế nào?</h4>
+              <p className="text-sm text-neutral-400 leading-relaxed">
+                Sau khi chọn gói dịch vụ, hệ thống sẽ tạo một mã VietQR chuẩn Napas 247 duy nhất. Bạn chỉ cần mở app ngân hàng bất kỳ (Vietcombank, MBBank, Techcombank, MoMo...) và quét mã QR. Hệ thống tự động điền số tài khoản, số tiền và nội dung chuyển khoản. Khi tiền về, gói Pro/VIP sẽ được kích hoạt tự động trong 5 - 30 giây.
               </p>
             </div>
             <div className="p-5 rounded-xl bg-neutral-900/40 border border-neutral-800">
-              <h4 className="font-semibold text-white mb-2">Tôi có thể hủy gói đăng ký bất cứ lúc nào không?</h4>
-              <p className="text-sm text-neutral-400">
-                Có. Bạn có thể tự quản lý và hủy gói đăng ký bất kỳ lúc nào thông qua cổng Stripe Customer Portal. Quyền lợi tài khoản Pro/VIP của bạn sẽ được duy trì cho đến hết chu kỳ thanh toán hiện tại.
+              <h4 className="font-semibold text-white mb-2">Sau khi thanh toán tôi có nhận được thông báo qua Telegram không?</h4>
+              <p className="text-sm text-neutral-400 leading-relaxed">
+                Có. Nếu bạn đã liên kết tài khoản iKnowBall với Bot Telegram trong mục VIP Lounge, hệ thống sẽ tự động gửi tin nhắn xác nhận kích hoạt thành công kèm theo link mời tham gia nhóm tín hiệu VIP độc quyền.
               </p>
             </div>
           </div>

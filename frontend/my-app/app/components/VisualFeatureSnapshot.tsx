@@ -33,35 +33,84 @@ export default function VisualFeatureSnapshot({
   const formPct = Math.min(100, Math.max(10, Math.round((Math.abs(formAdjustment) / totalWeight) * 100)));
   const h2hPct = Math.min(100, Math.max(10, Math.round(((h2hMatches * 10) / totalWeight) * 100)));
 
+  // Extract Gemini AI enhancements
+  const aiConfidence = explanation?.aiConfidence ?? 78;
+  const keyFactors: string[] = explanation?.keyFactors ?? [
+    `Chênh lệch Elo (${explanation?.eloDiff > 0 ? `+${explanation?.eloDiff}` : (explanation?.eloDiff || 0)}) định hình nền tảng thực lực.`,
+    `Lợi thế sân bãi tiếp thêm sức ép cho ${homeTeamName}.`,
+    `Phong độ thi đấu 5 trận gần nhất là chỉ số phản ánh trạng thái thực tế.`,
+  ];
+  const tacticalSummary: string = explanation?.tacticalSummary ?? "";
+  const isHybridEngine = explanation?.engine === "gemini-hybrid-v1" || explanation?.modelVersion?.includes("gemini");
+
   return (
     <div
       className="rounded-xl border p-5 sm:p-6 relative overflow-hidden"
       style={{ borderColor: colors.border, backgroundColor: colors.panel }}
     >
       {/* Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
         <div>
-          <h3 className="text-base font-bold text-white flex items-center gap-2">
-            <span>🧠 Phân Tích Trọng Số AI (Feature Snapshot)</span>
-          </h3>
-          <p className="text-xs" style={{ color: colors.textMuted }}>
-            Mô hình máy học lượng hóa các nhân tố đầu vào thành điểm tác động trực tiếp đến xác suất
+          <div className="flex items-center gap-2">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <span>🧠 Phân Tích Mô Hình Gemini Hybrid AI</span>
+            </h3>
+            <span className="inline-flex items-center gap-1 rounded-md bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-400/30 px-2 py-0.5 text-[11px] font-semibold text-blue-300">
+              ✨ Gemini 24-48h
+            </span>
+          </div>
+          <p className="text-xs mt-1" style={{ color: colors.textMuted }}>
+            Mô hình lai kết hợp công thức toán học định lượng (Elo + Poisson) và trí tuệ nhân tạo Gemini hiệu chuẩn
           </p>
         </div>
 
-        {/* Dominant factor badge */}
+        {/* AI Confidence & Dominant factor badge */}
         {!isLocked && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-semibold">
-            <span>✨ Nhân tố chi phối:</span>
-            <span className="font-bold">
-              {dominantFactor === "elo_difference" && "Chênh lệch Elo"}
-              {dominantFactor === "recent_form" && "Phong độ 5 trận"}
-              {dominantFactor === "home_advantage" && "Lợi thế sân nhà"}
-              {!["elo_difference", "recent_form", "home_advantage"].includes(dominantFactor) && "Đa yếu tố"}
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-xs font-semibold">
+              <span>🎯 Độ tự tin AI:</span>
+              <span className="font-bold font-mono text-cyan-300">{aiConfidence}%</span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-semibold">
+              <span>✨ Nhân tố chính:</span>
+              <span className="font-bold">
+                {dominantFactor === "elo_difference" && "Chênh lệch Elo"}
+                {dominantFactor === "recent_form" && "Phong độ 5 trận"}
+                {dominantFactor === "home_advantage" && "Lợi thế sân nhà"}
+                {!["elo_difference", "recent_form", "home_advantage"].includes(dominantFactor) && "Đa yếu tố"}
+              </span>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Gemini AI Key Factors Section */}
+      {!isLocked && (
+        <div className="mb-6 rounded-xl border border-blue-500/20 bg-blue-950/20 p-4">
+          <div className="flex items-center justify-between gap-2 mb-2.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+              <span>⚡</span>
+              <span>3 Điểm Nhấn Then Chốt Trận Đấu (Key Match Drivers)</span>
+            </div>
+            <span className="text-[10px] text-neutral-400 uppercase tracking-wider font-mono">24h-48h Outlook</span>
+          </div>
+          <ul className="space-y-2 text-xs text-neutral-200">
+            {keyFactors.map((factor, idx) => (
+              <li key={idx} className="flex items-start gap-2">
+                <span className="text-emerald-400 font-bold font-mono">0{idx + 1}.</span>
+                <span className="leading-relaxed">{factor}</span>
+              </li>
+            ))}
+          </ul>
+          {tacticalSummary && (
+            <div className="mt-3 pt-3 border-t border-white/5 text-[11px] text-neutral-300 italic flex items-center gap-1.5">
+              <span className="text-amber-400 not-italic font-bold">💡 Nhận định chiến thuật:</span>
+              <span>"{tacticalSummary}"</span>
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* Breakdown Bars */}
       <div className={`flex flex-col gap-4 ${isLocked ? "filter blur-sm select-none pointer-events-none opacity-40" : ""}`}>

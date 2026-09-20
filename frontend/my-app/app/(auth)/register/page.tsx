@@ -80,14 +80,32 @@ interface PasswordStrength {
 
 function checkPasswordStrength(pw: string): PasswordStrength {
   if (!pw) return { level: 0, label: "", color: "" };
-  let score = 0;
-  if (pw.length >= 8) score++;
-  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score++;
 
-  if (score === 1) return { level: 1, label: "Yếu", color: "#E5484D" };
-  if (score === 2) return { level: 2, label: "Trung bình", color: "#F2A93B" };
-  return { level: 3, label: "Mạnh", color: "#2FD98C" };
+  const hasLower = /[a-z]/.test(pw);
+  const hasUpper = /[A-Z]/.test(pw);
+  const hasNumber = /\d/.test(pw);
+  const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+
+  // Số lượng loại ký tự khác nhau có trong mật khẩu
+  const charTypeCount = [hasLower, hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+
+  // 1. Mật khẩu YẾU:
+  // - Dưới 6 ký tự, hoặc chỉ dùng duy nhất 1 nhóm ký tự (chỉ toàn số, hoặc chỉ toàn chữ thường)
+  if (pw.length < 6 || charTypeCount <= 1) {
+    return { level: 1, label: "Yếu", color: "#E5484D" };
+  }
+
+  // 2. Mật khẩu MẠNH:
+  // - Độ dài >= 8 ký tự và kết hợp từ 3 nhóm ký tự trở lên (VD: Chữ hoa + Chữ thường + Số)
+  // - Hoặc độ dài >= 12 ký tự và có ít nhất 2 nhóm ký tự
+  if ((pw.length >= 8 && charTypeCount >= 3) || (pw.length >= 12 && charTypeCount >= 2)) {
+    return { level: 3, label: "Mạnh", color: "#2FD98C" };
+  }
+
+  // 3. Mật khẩu TRUNG BÌNH:
+  // - Các trường hợp còn lại: độ dài >= 8 ký tự kết hợp 2 nhóm ký tự (VD: chữ + số),
+  //   hoặc 6-7 ký tự nhưng có sự kết hợp đa dạng ký tự
+  return { level: 2, label: "Trung bình", color: "#F2A93B" };
 }
 
 // ─── Component chính ─────────────────────────────────────────────────────────

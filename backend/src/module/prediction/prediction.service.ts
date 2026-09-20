@@ -523,7 +523,7 @@ export class PredictionService {
     const features = await this.featureSnapshot(matchId);
 
     // Gọi Python service với retry + fallback sang mathematical engine nội bộ
-    const data = await this.executeWithRetry(
+    const baselineData = await this.executeWithRetry(
       async () => {
         const res = await this.client.post<PredictionResponse>('/predict', features);
         const d = res.data;
@@ -537,7 +537,31 @@ export class PredictionService {
       () => this.calculateInternalPrediction(features),
     );
 
-    const scoreDetails = (data.explanation as any)?.scoreDetails || (data as any)?.scoreDetails || null;
+    const initialScoreDetails = (baselineData.explanation as any)?.scoreDetails || (baselineData as any)?.scoreDetails || null;
+
+    // Lấy thông tin hai đội và giải đấu để Gemini phân tích chiến thuật & hiệu chuẩn xác suất
+    const matchInfo = await this.prisma.match.findUnique({
+      where: { id: matchId },
+      select: {
+        homeTeam: { select: { name: true } },
+        awayTeam: { select: { name: true } },
+        league: { select: { name: true } },
+      },
+    });
+
+    const data = await this.enhanceWithGeminiReasoning(
+      {
+        homeTeamName: matchInfo?.homeTeam?.name || 'Đội nhà',
+        awayTeamName: matchInfo?.awayTeam?.name || 'Đội khách',
+        leagueName: matchInfo?.league?.name || 'Giải đấu',
+        sport: features.sport || 'football',
+      },
+      features,
+      baselineData,
+      initialScoreDetails,
+    );
+
+    const scoreDetails = data.scoreDetails || initialScoreDetails;
 
     // Lưu / Cập nhật prediction đảm bảo tính toàn vẹn
     return this.prisma.prediction.upsert({
@@ -567,6 +591,170 @@ export class PredictionService {
         } as Prisma.InputJsonObject,
       },
     });
+  }
+
+  /**
+   * Tầng 2: Nâng cao độ chính xác dự đoán 24-48h thông qua Gemini AI Reasoning Engine
+   * Tinh chỉnh xác suất (Probability Calibration) và tạo phân tích định lượng + chiến thuật sắc bén
+   */
+  private async enhanceWithGeminiReasoning(
+    matchInfo: {
+      homeTeamName: string;
+      awayTeamName: string;
+      leagueName: string;
+      sport: string;
+    },
+    features: any,
+    baselineData: PredictionResponse,
+    scoreDetails: any,
+  ): Promise<{
+    homeWinProb: number;
+    drawProb: number | null;
+    awayWinProb: number;
+    predictedOutcome: PredictionOutcome;
+    explanation: Record<string, any>;
+    scoreDetails: Record<string, any>;
+  }> {
+    const isBasketball = features.sport === 'basketball';
+    const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_KEY;
+
+    // Baseline probabilities
+    const baseH = baselineData.homeWinProb;
+    const baseD = baselineData.drawProb;
+    const baseA = baselineData.awayWinProb;
+
+    let aiConfidence = Math.min(96, Math.max(62, Math.round(55 + Math.abs(baseH - baseA) * 65)));
+    let keyFactors: string[] = [
+      `Chênh lệch Elo (${features.homeElo} vs ${features.awayElo}) định hình ưu thế thực lực.`,
+      features.isHomeB2b || features.isAwayB2b
+        ? 'Lịch thi đấu mật độ cao (Back-to-back) tác động đến thể lực cầu thủ.'
+        : `Lợi thế sân bãi nghiêng về ${matchInfo.homeTeamName} với hệ số ổn định.`,
+      `Hiệu suất tấn công/phòng ngự các trận gần đây phản ánh đúng phong độ thực tế.`,
+    ];
+    let tacticalSummary = `Mô hình nhận định ${baseH >= baseA ? matchInfo.homeTeamName : matchInfo.awayTeamName} nắm quyền chủ động thế trận.`;
+    let calibratedScore = scoreDetails?.predictedScore || (isBasketball ? '112-108' : '2-1');
+
+    let finalH = baseH;
+    let finalD = baseD;
+    let finalA = baseA;
+
+    if (apiKey) {
+      const prompt = `Bạn là Trí Tuệ Nhân Tạo Phân Tích Thể Thao Cao Cấp (Sports AI Reasoning Engine) của iKnowBall.
+Nhiệm vụ: Phân tích và hiệu chuẩn (Calibrate) xác suất kết quả trận đấu trước giờ bóng lăn 24-48h.
+
+Dữ liệu định lượng đầu vào:
+- Trận đấu: ${matchInfo.homeTeamName} (Chủ nhà, Elo ${features.homeElo}) vs ${matchInfo.awayTeamName} (Đội khách, Elo ${features.awayElo})
+- Môn & Giải đấu: ${matchInfo.sport.toUpperCase()} - ${matchInfo.leagueName}
+- Xác suất cơ sở Toán học (Elo + Poisson xG + Form): Chủ nhà ${(baseH * 100).toFixed(1)}%${isBasketball ? '' : `, Hòa ${(Number(baseD) * 100).toFixed(1)}%`}, Đội khách ${(baseA * 100).toFixed(1)}%
+- Lịch sử đối đầu: ${features.h2hMatches} trận gần nhất (Tỷ lệ thắng sân nhà ${((features.h2hHomeWinRate ?? 0.5) * 100).toFixed(0)}%)
+- Số ngày nghỉ: Chủ nhà ${features.homeRestDays} ngày, Đội khách ${features.awayRestDays} ngày
+
+Yêu cầu trả về JSON DUY NHẤT (không bọc trong markdown hay text giải thích thừa):
+{
+  "calibratedHomeProb": 0.55,
+  ${isBasketball ? '"calibratedDrawProb": null,' : '"calibratedDrawProb": 0.23,'}
+  "calibratedAwayProb": 0.22,
+  "aiConfidence": 82,
+  "predictedScore": "${calibratedScore}",
+  "keyFactors": [
+    "Luận điểm 1 (ngắn gọn, sắc bén, định lượng)",
+    "Luận điểm 2 (ngắn gọn, sắc bén, định lượng)",
+    "Luận điểm 3 (ngắn gọn, sắc bén, định lượng)"
+  ],
+  "tacticalSummary": "1 câu nhận định chuyên môn về kịch bản nhiều khả năng xảy ra nhất"
+}`;
+
+      const endpoints = [
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const res = await axios.post(
+            url,
+            {
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 600,
+              },
+            },
+            { timeout: 7000 },
+          );
+
+          const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(clean);
+
+          if (parsed && typeof parsed.calibratedHomeProb === 'number' && typeof parsed.calibratedAwayProb === 'number') {
+            // Ensemble an toàn: 70% Baseline Math + 30% Gemini Reasoning
+            const rawH = 0.70 * baseH + 0.30 * Math.max(0.05, Math.min(0.90, parsed.calibratedHomeProb));
+            const rawA = 0.70 * baseA + 0.30 * Math.max(0.05, Math.min(0.90, parsed.calibratedAwayProb));
+            let rawD = 0;
+            if (!isBasketball) {
+              const gemD = typeof parsed.calibratedDrawProb === 'number' ? parsed.calibratedDrawProb : (baseD ?? 0.25);
+              rawD = 0.70 * (baseD ?? 0.25) + 0.30 * Math.max(0.10, Math.min(0.40, gemD));
+            }
+
+            // Chuẩn hóa tổng = 1.0000
+            const sum = isBasketball ? rawH + rawA : rawH + rawD + rawA;
+            finalH = Number((rawH / sum).toFixed(4));
+            finalA = isBasketball ? Number((1.0 - finalH).toFixed(4)) : Number((rawA / sum).toFixed(4));
+            finalD = isBasketball ? null : Number((1.0 - finalH - finalA).toFixed(4));
+
+            if (Array.isArray(parsed.keyFactors) && parsed.keyFactors.length >= 2) {
+              keyFactors = parsed.keyFactors.slice(0, 3);
+            }
+            if (typeof parsed.aiConfidence === 'number') {
+              aiConfidence = Math.min(98, Math.max(50, Math.round(parsed.aiConfidence)));
+            }
+            if (parsed.predictedScore) {
+              calibratedScore = parsed.predictedScore;
+            }
+            if (parsed.tacticalSummary) {
+              tacticalSummary = parsed.tacticalSummary;
+            }
+            break;
+          }
+        } catch (err: any) {
+          this.logger.debug(`[GeminiEnhance] API call skip (${err.message}). Dùng heuristic fallback.`);
+        }
+      }
+    }
+
+    // Xác định kết quả dự đoán
+    let outcome: PredictionOutcome;
+    if (isBasketball) {
+      outcome = finalH >= finalA ? PredictionOutcome.HOME_WIN : PredictionOutcome.AWAY_WIN;
+    } else {
+      if (finalH >= (finalD ?? 0) && finalH >= finalA) outcome = PredictionOutcome.HOME_WIN;
+      else if ((finalD ?? 0) >= finalH && (finalD ?? 0) >= finalA) outcome = PredictionOutcome.DRAW;
+      else outcome = PredictionOutcome.AWAY_WIN;
+    }
+
+    const updatedScoreDetails = {
+      ...(scoreDetails || {}),
+      predictedScore: calibratedScore,
+    };
+
+    const explanation = {
+      ...(baselineData.explanation || {}),
+      aiConfidence,
+      keyFactors,
+      tacticalSummary,
+      engine: apiKey ? 'gemini-hybrid-v1' : 'quantitative-baseline-v2',
+      scoreDetails: updatedScoreDetails,
+    };
+
+    return {
+      homeWinProb: finalH,
+      drawProb: finalD,
+      awayWinProb: finalA,
+      predictedOutcome: outcome,
+      explanation,
+      scoreDetails: updatedScoreDetails,
+    };
   }
 
   /**

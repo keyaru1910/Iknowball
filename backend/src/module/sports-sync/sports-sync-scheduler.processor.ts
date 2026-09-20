@@ -56,6 +56,26 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
       // Giữ: sync matches/finished (cần cho Elo + Prediction evaluate)
       // ────────────────────────────────────────────────────────────────
 
+      // 0. Sync ngay khi vừa sang ngày mới — 00:05 sáng VN
+      //    → Chốt kết quả các trận tối hôm trước kết thúc trước nửa đêm
+      //    → Làm mới lịch thi đấu ngày mới cho người dùng theo dõi
+      await this.schedulerQueue.add(
+        SportsSyncJob.TRIGGER_FINISHED_SYNC,
+        {},
+        {
+          repeat: { pattern: '5 0 * * *', tz: cronTz },
+          jobId: 'finished-matches-sync-midnight',
+        },
+      );
+      await this.schedulerQueue.add(
+        SportsSyncJob.TRIGGER_FIXTURES_LIMITED_SYNC,
+        {},
+        {
+          repeat: { pattern: '5 0 * * *', tz: cronTz },
+          jobId: 'fixtures-limited-sync-midnight',
+        },
+      );
+
       // 1. Full sync (Leagues + Teams + Matches) mỗi ngày lúc 03:00 sáng VN
       //    → Dữ liệu tĩnh ít thay đổi, chỉ cần sync 1 lần/ngày
       //    → Không sync standings (frontend đã bỏ trang BXH, tiết kiệm quota)
@@ -121,7 +141,7 @@ export class SportsSyncSchedulerProcessor extends WorkerHost implements OnModule
 
       this.logger.log(
         `Đã đăng ký lịch đồng bộ Prediction-first (${cronTz}): ` +
-        'Full(03:00) | Finished-Football(01:00+04:00) | Fixtures(07:00) | NBA(14:00) — Standings: TẮT',
+        'Midnight(00:05) | Full(03:00) | Finished-Football(01:00+04:00) | Fixtures(07:00) | NBA(14:00) — Standings: TẮT',
       );
     } catch (err: any) {
       this.logger.warn(`Không thể khởi tạo cron scheduler: ${err.message}`);

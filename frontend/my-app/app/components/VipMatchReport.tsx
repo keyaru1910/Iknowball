@@ -34,8 +34,9 @@ export default function VipMatchReport({
     setIsChatLoading(true);
 
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
       const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      const res = await fetch(`http://localhost:8000/api/v1/predictions/${matchId}/chat`, {
+      const res = await fetch(`${apiUrl}/api/v1/predictions/${matchId}/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -60,8 +61,9 @@ export default function VipMatchReport({
     if (isRegenerating) return;
     setIsRegenerating(true);
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
       const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
-      await fetch(`http://localhost:8000/api/v1/predictions/${matchId}/vip-report/regenerate`, {
+      await fetch(`${apiUrl}/api/v1/predictions/${matchId}/vip-report/regenerate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
