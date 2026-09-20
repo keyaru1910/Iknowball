@@ -214,7 +214,7 @@ export default function Navbar() {
 
   return (
     <header
-      className="sticky top-0 z-30 border-b backdrop-blur-md"
+      className="sticky top-0 z-30 border-b backdrop-blur-md font-navbar"
       style={{
         borderColor: colors.borderSoft,
         backgroundColor: `${colors.bg}E6`,
@@ -223,14 +223,21 @@ export default function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-3.5 sm:px-6 py-3 gap-3">
         {/* Logo & Brand & Sport Switcher */}
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 transition-opacity hover:opacity-90">
-            <img
-              src="/img/fasvicon.png"
-              alt="iKnowBall Logo"
-              className="h-7 w-7 rounded-md object-contain shrink-0"
-            />
-            <span className="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap shrink-0">
-              iKnowBall
+          <Link
+            href="/"
+            className="group flex items-center gap-2 sm:gap-2.5 shrink-0 select-none"
+          >
+            <div className="relative flex items-center justify-center shrink-0">
+              <img
+                src="/img/favicon.png"
+                alt="iKnowBall Logo"
+                className="h-7 w-7 sm:h-8 sm:w-8 rounded-md object-contain shrink-0 animate-logo-icon transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+              />
+            </div>
+            <span
+              className="animate-logo-text font-logo text-base sm:text-xl font-normal tracking-wide whitespace-nowrap shrink-0 transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(24,174,89,0.55)] text-[#18AE59] group-hover:text-[#22c55e]"
+            >
+              iknowball
             </span>
           </Link>
 

@@ -10,6 +10,16 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-plus-jakarta), "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", monospace;
+  --font-logo: var(--font-logo), "Pacifico", cursive, sans-serif;
+  --font-navbar: var(--font-navbar), "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+.font-logo {
+  font-family: var(--font-logo), "Pacifico", cursive, sans-serif;
+}
+
+.font-navbar {
+  font-family: var(--font-navbar), "Outfit", "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -43,4 +53,95 @@ body {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+}
+
+/* ==========================================================================
+   Hiệu ứng chuyển động Logo & Icon iKnowBall trên Navbar (Mượt mà, không giật layout)
+   ========================================================================== */
+@keyframes logoIconEntrance {
+  0% {
+    opacity: 0;
+    transform: translate3d(-28px, 0, 0) rotate(-180deg) scale(0.5);
+    filter: drop-shadow(0 0 0px rgba(16, 185, 129, 0));
+  }
+  55% {
+    opacity: 1;
+    transform: translate3d(4px, 0, 0) rotate(12deg) scale(1.18);
+    filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.85));
+  }
+  78% {
+    transform: translate3d(-2px, 0, 0) rotate(-4deg) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+    filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.35));
+  }
+}
+
+@keyframes logoTextReveal {
+  0% {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    transform: translate3d(-18px, 0, 0);
+  }
+  40% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0% 0 0);
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-logo-icon {
+  animation: logoIconEntrance 1.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity, filter;
+  backface-visibility: hidden;
+}
+
+.animate-logo-text {
+  display: inline-block;
+  white-space: nowrap;
+  animation: logoTextReveal 1.35s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+  will-change: transform, opacity, clip-path;
+  backface-visibility: hidden;
+}
+
+/* ==========================================================================
+   Hiệu ứng chuyển động Floating & Glow cho Hero Section & Landing Page
+   ========================================================================== */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+/* Pattern nền lưới công nghệ mờ tinh tế */
+.bg-tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
 }

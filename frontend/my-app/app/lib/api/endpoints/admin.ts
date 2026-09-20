@@ -207,5 +207,19 @@ export async function getAdminAuditLogs(params?: { page?: number; limit?: number
   return apiFetch<AdminAuditLogItem[]>(`/admin/audit-logs${qs ? `?${qs}` : ""}`);
 }
 
+export interface TriggerSyncParams {
+  type?: "full" | "leagues" | "teams" | "matches" | "standings" | "live" | "upcoming" | "finished";
+  sport?: "football" | "basketball";
+  days?: number;
+}
+
+export async function triggerAdminSync(params: TriggerSyncParams = { type: "full" }) {
+  return apiFetch<any>("/admin/sync/trigger", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+}
+
 export const getNewsSources = () => apiFetch<Array<{key:string;sport:string;category?:string;name:string}>>("/admin/news/sources");
 export const syncNews = () => apiFetch<{sources:number;recordsProcessed:number;failed:number}>("/admin/news/sync", { method: "POST" });
+

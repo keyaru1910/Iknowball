@@ -6,7 +6,7 @@ import { useMatches } from "../../hooks/useMatches";
 import { useLeagues } from "../../hooks/useLeagues";
 import { useSport } from "../../context/SportContext";
 import MatchCard from "../../components/MatchCard";
-import MatchDateFilter from "../../components/MatchDateFilter";
+import MatchDateFilter, { dinhDangNgayDiaPhuong } from "../../components/MatchDateFilter";
 import PredictionDisclaimer from "../../components/PredictionDisclaimer";
 import CsvExportButton from "../../components/CsvExportButton";
 import { layMuaGiaiHienTai } from "../../lib/constants/seasons";
@@ -21,10 +21,12 @@ export default function PredictionsPage() {
   const { isBasketball } = useSport();
 
   const sport = isBasketball ? "basketball" : "football";
-  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined);
+  // Mặc định chọn ngày hôm nay theo múi giờ địa phương khi truy cập trang
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(() => dinhDangNgayDiaPhuong());
   const [selectedLeagueId, setSelectedLeagueId] = useState<string | undefined>(undefined);
   const [selectedSeason, setSelectedSeason] = useState<string>(() => layMuaGiaiHienTai(sport));
   const [statusTab, setStatusTab] = useState<"all" | MatchStatus>("all");
+  const [proFilter, setProFilter] = useState<"all" | "high-confidence" | "value-bet">("all");
 
   // Tự động đồng bộ mùa giải khi chuyển đổi giữa Bóng đá và Bóng rổ
   useEffect(() => {
@@ -43,8 +45,20 @@ export default function PredictionsPage() {
   const displayMatches = matchesData ?? [];
 
   const filteredMatches = displayMatches.filter((m) => {
-    if (statusTab === "all") return true;
-    return m.status === statusTab;
+    if (statusTab !== "all" && m.status !== statusTab) return false;
+    if (proFilter === "high-confidence") {
+      const p = m.prediction;
+      if (!p) return false;
+      const maxP = Math.max(Number(p.homeWinProb || 0), Number(p.awayWinProb || 0), Number(p.drawProb || 0));
+      return maxP >= 0.58;
+    }
+    if (proFilter === "value-bet") {
+      const p = m.prediction;
+      if (!p) return false;
+      const diff = Math.abs(Number(p.homeWinProb || 0) - Number(p.awayWinProb || 0));
+      return diff >= 0.25;
+    }
+    return true;
   });
 
   const liveCount = displayMatches.filter((m) => m.status === "live").length;
@@ -114,7 +128,7 @@ export default function PredictionsPage() {
           </span>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-xs sm:text-sm font-bold text-white">Tín Hiệu Biến Động Odds & Value Bet Hôm Nay</p>
+              <p className="text-xs sm:text-sm font-bold text-white">Tín Hiệu Biến Động Odds & Value Hôm Nay</p>
               <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30">
                 VIP Signals
               </span>
@@ -168,9 +182,8 @@ export default function PredictionsPage() {
         <button
           type="button"
           onClick={() => setStatusTab("all")}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-            statusTab === "all" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${statusTab === "all" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "all" ? colors.panelAlt : "transparent",
             color: statusTab === "all" ? colors.accent : colors.textMuted,
@@ -182,9 +195,8 @@ export default function PredictionsPage() {
         <button
           type="button"
           onClick={() => setStatusTab("live")}
-          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-            statusTab === "live" ? "shadow-sm" : "hover:text-white"
-          }`}
+          className={`flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${statusTab === "live" ? "shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "live" ? colors.panelAlt : "transparent",
             color: statusTab === "live" ? colors.live : colors.textMuted,
@@ -197,9 +209,8 @@ export default function PredictionsPage() {
         <button
           type="button"
           onClick={() => setStatusTab("upcoming")}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-            statusTab === "upcoming" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${statusTab === "upcoming" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "upcoming" ? colors.panelAlt : "transparent",
             color: statusTab === "upcoming" ? colors.accent : colors.textMuted,
@@ -211,9 +222,8 @@ export default function PredictionsPage() {
         <button
           type="button"
           onClick={() => setStatusTab("finished")}
-          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
-            statusTab === "finished" ? "text-white shadow-sm" : "hover:text-white"
-          }`}
+          className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${statusTab === "finished" ? "text-white shadow-sm" : "hover:text-white"
+            }`}
           style={{
             backgroundColor: statusTab === "finished" ? colors.panelAlt : "transparent",
             color: statusTab === "finished" ? colors.accent : colors.textMuted,
@@ -221,6 +231,33 @@ export default function PredictionsPage() {
         >
           Đã kết thúc ({finishedCount})
         </button>
+
+        {/* Pro / VIP Smart Filter Pills */}
+        <div className="ml-auto flex items-center gap-1.5 pl-4 border-l border-neutral-800 shrink-0">
+          <span className="text-[10px] uppercase font-bold text-amber-400">⚡ Pro Filters:</span>
+          <button
+            type="button"
+            onClick={() => setProFilter(proFilter === "high-confidence" ? "all" : "high-confidence")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+              proFilter === "high-confidence"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
+                : "bg-white/5 text-neutral-400 hover:text-white border border-transparent"
+            }`}
+          >
+            <span>🎯 Độ tự tin cao (&ge; 60%)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setProFilter(proFilter === "value-bet" ? "all" : "value-bet")}
+            className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+              proFilter === "value-bet"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm"
+                : "bg-white/5 text-neutral-400 hover:text-white border border-transparent"
+            }`}
+          >
+            <span>👑 Kèo Giá Trị (+EV)</span>
+          </button>
+        </div>
       </div>
 
       {/* Match Prediction Cards Grid */}

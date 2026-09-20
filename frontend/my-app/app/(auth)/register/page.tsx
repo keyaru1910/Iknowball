@@ -201,7 +201,7 @@ export default function RegisterPage() {
           <div className="mb-4 text-center">
             <Link href="/" className="inline-flex items-center gap-2 mb-1.5 group">
               <img
-                src="/img/fasvicon.png"
+                src="/img/favicon.png"
                 alt="iKnowBall"
                 className="h-7 w-7 rounded-lg object-contain group-hover:opacity-90 transition-opacity"
               />

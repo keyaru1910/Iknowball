@@ -42,7 +42,7 @@ export default function Footer() {
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-flex items-center gap-3 transition-opacity hover:opacity-90">
               <img
-                src="/img/fasvicon.png"
+                src="/img/favicon.png"
                 alt="iKnowBall Logo"
                 className="h-8 w-8 rounded-lg object-contain shadow-sm"
               />

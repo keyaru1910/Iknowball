@@ -19,6 +19,9 @@ export const FOOTBALL_DATA_LEAGUES: FootballDataLeagueConfig[] = [
   { code: 'CL', name: 'UEFA Champions League', country: 'Europe', externalId: '2' },
 ];
 
+let lastFootballDataRequestTime = 0;
+const MIN_REQUEST_INTERVAL_MS = 6200; // Đảm bảo không quá 10 req/phút của FootballData free tier
+
 @Injectable()
 export class FootballDataAdapter {
   private readonly logger = new Logger(FootballDataAdapter.name);
@@ -26,10 +29,11 @@ export class FootballDataAdapter {
   private readonly keyPool: KeyPoolManager;
 
   constructor() {
-    this.keyPool = new KeyPoolManager('FootballData', process.env.FOOTBALL_DATA_API_KEY || '');
+    const apiKey = process.env.FOOTBALLDATA_API_KEY || process.env.FOOTBALL_DATA_API_KEY || '';
+    this.keyPool = new KeyPoolManager('FootballData', apiKey);
     this.client = axios.create({
       baseURL: 'https://api.football-data.org/v4',
-      timeout: 9000,
+      timeout: 12000,
     });
   }
 
@@ -49,6 +53,15 @@ export class FootballDataAdapter {
     const res = await this.requestWithRetry<{ matches?: any[] }>(`/competitions/${competitionCode}/matches`, {
       season: year,
     });
+    return res?.matches || [];
+  }
+
+  async getTodayMatches(options?: { dateFrom?: string; dateTo?: string; status?: string }): Promise<any[]> {
+    const params: Record<string, any> = {};
+    if (options?.dateFrom) params.dateFrom = options.dateFrom;
+    if (options?.dateTo) params.dateTo = options.dateTo;
+    if (options?.status) params.status = options.status;
+    const res = await this.requestWithRetry<{ matches?: any[] }>('/matches', params);
     return res?.matches || [];
   }
 
@@ -74,6 +87,15 @@ export class FootballDataAdapter {
     attempt = 1,
   ): Promise<T> {
     const activeKey = this.keyPool.getActiveKey();
+
+    // Pacing throttle: đảm bảo khoảng cách giữa các request >= 6.2s
+    const now = Date.now();
+    const diff = now - lastFootballDataRequestTime;
+    if (diff < MIN_REQUEST_INTERVAL_MS) {
+      await new Promise((r) => setTimeout(r, MIN_REQUEST_INTERVAL_MS - diff));
+    }
+    lastFootballDataRequestTime = Date.now();
+
     try {
       const response = await this.client.get(path, {
         params,
@@ -84,7 +106,7 @@ export class FootballDataAdapter {
       const status = err?.response?.status;
       if (status === 429 && attempt <= 3) {
         this.keyPool.markKeyRateLimited(activeKey, 60);
-        const backoffMs = 1000 * 2 ** attempt;
+        const backoffMs = 7000 * attempt;
         this.logger.warn(`[FootballData] Rate Limit (429) tại ${path}, xoay key và thử lại sau ${backoffMs}ms`);
         await new Promise((resolve) => setTimeout(resolve, backoffMs));
         return this.requestWithRetry<T>(path, params, attempt + 1);
@@ -94,3 +116,4 @@ export class FootballDataAdapter {
     }
   }
 }
+

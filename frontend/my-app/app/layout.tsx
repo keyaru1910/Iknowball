@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, JetBrains_Mono, Pacifico, Outfit } from "next/font/google";
 import "./globals.css";
 import Providers from "./Providers";
 
@@ -15,13 +15,28 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const pacifico = Pacifico({
+  weight: "400",
+  variable: "--font-logo",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+});
+
+const outfit = Outfit({
+  variable: "--font-navbar",
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "iKnowBall — Dự đoán bóng đá bằng dữ liệu",
   description: "Hệ thống phân tích và dự đoán thể thao thông minh dựa trên dữ liệu thật và Elo rating.",
   icons: {
-    icon: "/img/fasvicon.png",
-    shortcut: "/img/fasvicon.png",
-    apple: "/img/fasvicon.png",
+    icon: [
+      { url: "/img/favicon.png", type: "image/png" },
+    ],
+    shortcut: "/img/favicon.png",
+    apple: "/img/favicon.png",
   },
 };
 
@@ -33,7 +48,7 @@ export default function RootLayout({
   return (
     <html
       lang="vi"
-      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} ${pacifico.variable} ${outfit.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-[#0B0E13] text-[#EDEFF3]">
         <Providers>{children}</Providers>

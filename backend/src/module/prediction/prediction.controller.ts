@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Res, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { CurrentUser } from '../decorators/current-user.decorator';
 import { Public } from '../decorators/public.decorator';
@@ -52,6 +52,14 @@ export class PredictionController {
       return res.send(csvContent);
     }
     return csvContent;
+  }
+
+  /** Danh sách Daily VIP Top Picks (hội viên VIP / Pro) */
+  @Get('vip/top-picks')
+  @Public()
+  async getVipTopPicks(@Query('sport') sport?: string) {
+    const data = await this.service.getVipTopPicks(sport);
+    return { data, meta: null, error: null };
   }
 
   /** Danh sách dự đoán (public, phân trang) */
@@ -185,6 +193,34 @@ export class PredictionController {
     @CurrentUser() user?: { id: string; role: string; tier?: string },
   ) {
     const data = await this.vipReportService.getOrGenerateVipReport(matchId, user);
+    return { data, meta: null, error: null };
+  }
+
+  /**
+   * Tái tạo báo cáo nhận định AI VIP (Admin only)
+   */
+  @Post(':matchId/vip-report/regenerate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async regenerateVipReport(
+    @Param('matchId') matchId: string,
+    @CurrentUser() user?: { id: string; role: string; tier?: string },
+  ) {
+    const data = await this.vipReportService.getOrGenerateVipReport(matchId, user, true);
+    return { data, meta: null, error: null };
+  }
+
+  /**
+   * Trợ lý ảo hỏi đáp thông minh theo trận đấu (Match AI Chatbot)
+   */
+  @Post(':matchId/chat')
+  @UseGuards(OptionalJwtAuthGuard)
+  async chatWithMatchAi(
+    @Param('matchId') matchId: string,
+    @Body('message') message: string,
+    @CurrentUser() user?: { id: string; role: string; tier?: string },
+  ) {
+    const data = await this.vipReportService.chatWithMatchAi(matchId, message || '', user);
     return { data, meta: null, error: null };
   }
 

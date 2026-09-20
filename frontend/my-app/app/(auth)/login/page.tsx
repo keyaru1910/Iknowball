@@ -129,7 +129,7 @@ function LoginForm() {
           <div className="mb-8 text-center">
             <Link href="/" className="inline-flex items-center gap-2.5 mb-5 group">
               <img
-                src="/img/fasvicon.png"
+                src="/img/favicon.png"
                 alt="iKnowBall"
                 className="h-8 w-8 rounded-lg object-contain group-hover:opacity-90 transition-opacity"
               />

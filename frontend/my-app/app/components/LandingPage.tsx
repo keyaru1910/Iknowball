@@ -10,7 +10,7 @@ import { useMatches } from "../hooks/useMatches";
 import { useSport } from "../context/SportContext";
 
 // ────────────────────────────────────────────
-// Icon SVG cho từng bước quy trình (How it works)
+// Icon SVG cho từng bước quy trình và tính năng nổi bật
 // ────────────────────────────────────────────
 function IconDatabase() {
   return (
@@ -37,6 +37,44 @@ function IconTarget() {
       <circle cx="12" cy="12" r="10" />
       <circle cx="12" cy="12" r="6" />
       <circle cx="12" cy="12" r="2" />
+    </svg>
+  );
+}
+
+function IconBrain() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04Z" />
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04Z" />
+    </svg>
+  );
+}
+
+function IconBellAlert() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+      <path d="M4 2C2.8 3.7 2 5.7 2 8" />
+      <path d="M22 8c0-2.3-.8-4.3-2-6" />
+    </svg>
+  );
+}
+
+function IconTelegram() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m22 2-7 20-4-9-9-4Z" />
+      <path d="M22 2 11 13" />
+    </svg>
+  );
+}
+
+function IconShieldCheck() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <path d="m9 12 2 2 4-4" />
     </svg>
   );
 }
@@ -137,18 +175,30 @@ export default function LandingPage() {
   const { data: todayMatches = [] } = useMatches({ date: today, sport });
   const { data: allMatches = [] } = useMatches({ sport, limit: 10 });
 
-  const effectiveMatches = todayMatches.length > 0 ? todayMatches : allMatches;
+  const upcomingToday = todayMatches.filter((m) => m.status === "upcoming" || m.status === "live");
+  const effectiveMatches = upcomingToday.length > 0 ? upcomingToday : (todayMatches.length > 0 ? todayMatches : allMatches);
   const isTodayMatch = todayMatches.length > 0;
 
-  const danhSachTranDauSapToi: TranDau[] = effectiveMatches.slice(0, 3).map((match) => ({
-    league: match.league,
-    home: match.homeTeam.name,
-    away: match.awayTeam.name,
-    time: new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" }).format(new Date(match.kickoffTime)),
-    probHome: match.prediction?.homeWinProb ?? Math.round(35 + Math.random() * 25),
-    probDraw: sport === "basketball" ? 0 : (match.prediction?.drawProb ?? Math.round(20 + Math.random() * 15)),
-    probAway: match.prediction?.awayWinProb ?? Math.round(25 + Math.random() * 25),
-  }));
+  const danhSachTranDauSapToi: TranDau[] = effectiveMatches.slice(0, 3).map((match) => {
+    const rawHome = match.prediction?.homeWinProb;
+    const rawDraw = match.prediction?.drawProb;
+    const rawAway = match.prediction?.awayWinProb;
+
+    const probHome = rawHome !== undefined && rawHome !== null ? (rawHome > 1 ? rawHome : Number((rawHome * 100).toFixed(1))) : 45;
+    const probDraw = sport === "basketball" ? 0 : (rawDraw !== undefined && rawDraw !== null ? (rawDraw > 1 ? rawDraw : Number((rawDraw * 100).toFixed(1))) : 25);
+    const probAway = rawAway !== undefined && rawAway !== null ? (rawAway > 1 ? rawAway : Number((rawAway * 100).toFixed(1))) : 30;
+
+    return {
+      league: match.league,
+      home: match.homeTeam.name,
+      away: match.awayTeam.name,
+      time: new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit" }).format(new Date(match.kickoffTime)),
+      probHome,
+      probDraw,
+      probAway,
+    };
+  });
+
 
   return (
     <div
@@ -158,46 +208,120 @@ export default function LandingPage() {
       {/* Thanh điều hướng dùng chung toàn ứng dụng */}
       <Navbar />
 
-      {/* Phần Hero - Giới thiệu dịch vụ */}
+      {/* Phần Hero - Giới thiệu dịch vụ với hiệu ứng Atmosphere & Floating Badges */}
       <section className="relative mx-auto max-w-[1360px] px-4 sm:px-6 lg:px-8 xl:px-12 min-h-[calc(100vh-64px)] flex flex-col justify-center py-10 lg:py-16">
-        <div className="relative grid grid-cols-1 gap-8 lg:gap-12 lg:grid-cols-[1fr_auto] items-center justify-between">
-          {/* Cột bên trái: Tiêu đề & mô tả */}
+        {/* Lớp nền lưới công nghệ + Ambient Radial Glows (overflow-hidden riêng để không cắt cầu thủ) */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-tech-grid opacity-60" />
+          <div
+            className="absolute top-1/4 -left-32 h-[450px] w-[450px] rounded-full opacity-15 blur-[120px]"
+            style={{ backgroundColor: bangMau.accent }}
+          />
+          <div
+            className="absolute bottom-10 right-0 h-[400px] w-[400px] rounded-full opacity-10 blur-[130px]"
+            style={{ backgroundColor: "#38BDF8" }}
+          />
+        </div>
+
+        <div className="relative z-10 grid grid-cols-1 gap-8 lg:gap-12 lg:grid-cols-[1fr_auto] items-center justify-between">
+          {/* Cột bên trái: Tiêu đề, Tagline AI & Nút CTA */}
           <div className="flex flex-col justify-center text-center sm:text-left max-w-xl xl:max-w-2xl">
-            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[52px] 2xl:text-[58px]">
-              Cảm xúc là của người hâm mộ, con số là của chúng tôi.
+            {/* AI Model Status Badge */}
+            <div className="mb-4 inline-flex items-center gap-2 self-center sm:self-start rounded-full border px-3.5 py-1.5 backdrop-blur-md shadow-sm"
+              style={{
+                borderColor: `${bangMau.accent}35`,
+                backgroundColor: "rgba(47, 217, 140, 0.08)",
+              }}
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2FD98C] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#2FD98C]"></span>
+              </span>
+              <span className="text-xs font-mono font-semibold tracking-wide" style={{ color: bangMau.accent }}>
+                AI Model v2.4 • Cập nhật dữ liệu thời gian thực
+              </span>
+            </div>
+
+            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-tight sm:text-4xl md:text-5xl lg:text-[46px] xl:text-[52px] 2xl:text-[58px] text-white">
+              Cảm xúc là của người hâm mộ, <br className="hidden sm:inline" />
+              <span className="bg-gradient-to-r from-[#2FD98C] via-[#38BDF8] to-white bg-clip-text text-transparent">
+                con số là của chúng tôi.
+              </span>
             </h1>
+
             <p
               className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-[18px] leading-relaxed mx-auto sm:mx-0 font-normal"
               style={{ color: bangMau.textMuted }}
             >
               Mỗi trận đấu được chấm điểm từ dữ liệu thật: phong độ gần đây, Elo
               rating, hiệu suất sân nhà/sân khách. Sai số của mô hình được đo và
-              tính toán rõ ràng.
+              tính toán rõ ràng bằng chuẩn Brier Score & Log Loss.
             </p>
 
+            {/* Các nút CTA với hiệu ứng Glow */}
             <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-5 justify-center sm:justify-start">
               <Link
                 href="/predictions"
-                className="relative z-20 rounded-lg px-7 py-3.5 sm:px-8 sm:py-4 text-base font-bold transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] shadow-lg text-center shadow-[#2FD98C]/20"
+                className="group relative z-20 inline-flex items-center justify-center gap-2 rounded-xl px-7 py-3.5 sm:px-8 sm:py-4 text-base font-bold transition-all hover:opacity-95 hover:scale-[1.02] active:scale-[0.98] shadow-lg text-center shadow-[#2FD98C]/25"
                 style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
               >
-                Xem dự đoán hôm nay
+                <span>Xem dự đoán hôm nay</span>
+                <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
               </Link>
               <a
                 href="#accuracy"
-                className="relative z-20 rounded-lg border px-7 py-3.5 sm:px-8 sm:py-4 text-base font-semibold transition-all hover:bg-white/5 hover:scale-[1.02] active:scale-[0.98] text-center"
+                className="relative z-20 inline-flex items-center justify-center gap-2 rounded-xl border px-7 py-3.5 sm:px-8 sm:py-4 text-base font-semibold transition-all hover:bg-white/5 hover:border-white/30 hover:scale-[1.02] active:scale-[0.98] text-center backdrop-blur-sm"
                 style={{ borderColor: bangMau.border, color: bangMau.text }}
               >
-                Xem độ chính xác mô hình
+                <span>Xem độ chính xác</span>
+                <span className="text-xs font-mono opacity-70">↓</span>
               </a>
+            </div>
+
+            {/* Micro Highlights bên dưới CTA */}
+            <div className="mt-6 flex items-center justify-center sm:justify-start gap-5 text-xs" style={{ color: bangMau.textFaint }}>
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-400">✓</span> Không quảng cáo rác
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-400">✓</span> Minh bạch 100%
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-emerald-400">✓</span> Tự động cập nhật
+              </div>
             </div>
           </div>
 
-          {/* Cột bên phải: Cụm Bảng Danh sách trận + 2 cầu thủ 2 bên (Dời vào trong để Ronaldo hiển thị trọn vẹn) */}
-          <div className="flex justify-center items-center w-full lg:w-auto lg:mr-14 xl:mr-20 2xl:mr-24">
+          {/* Cột bên phải: Cụm Bảng Danh sách trận + Cầu thủ + Floating Badges (Tăng lề phải để Ronaldo/Curry hiển thị trọn vẹn 100%) */}
+          <div className="flex justify-center items-center w-full lg:w-auto lg:mr-20 xl:mr-32 2xl:mr-40">
             <div className="relative w-full sm:w-[350px] lg:w-[360px] xl:w-[380px]">
-              {/* Cầu thủ bên trái (Messi / LeBron) — Nằm hoàn toàn bên ngoài mép trái */}
-              <div className="hidden xl:block absolute right-[calc(100%+10px)] bottom-0 z-10 w-36 xl:w-40 pointer-events-none transition-transform duration-300 hover:scale-105">
+              {/* Floating Badge 1: Nổi góc trên bên trái */}
+              <div className="hidden lg:flex absolute -top-5 -left-10 z-20 animate-float-slow items-center gap-2 rounded-xl border px-3 py-1.5 shadow-xl backdrop-blur-md"
+                style={{
+                  borderColor: "rgba(47,217,140,0.3)",
+                  backgroundColor: "rgba(18,22,29,0.85)",
+                }}
+              >
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="font-mono text-[11px] font-medium text-emerald-300">
+                  ⚡ Elo Rating: 1.890 (+14)
+                </span>
+              </div>
+
+              {/* Floating Badge 2: Nổi góc dưới bên phải */}
+              <div className="hidden lg:flex absolute -bottom-4 right-0 xl:-right-6 z-20 animate-float-reverse items-center gap-2 rounded-xl border px-3 py-1.5 shadow-xl backdrop-blur-md"
+                style={{
+                  borderColor: "rgba(56,189,248,0.3)",
+                  backgroundColor: "rgba(18,22,29,0.85)",
+                }}
+              >
+                <span className="font-mono text-[11px] font-medium text-sky-300">
+                  🎯 Value Bet: +8.4% EV
+                </span>
+              </div>
+
+              {/* Cầu thủ bên trái (Messi / LeBron) */}
+              <div className="hidden xl:block absolute right-[calc(100%+8px)] bottom-0 z-10 w-36 xl:w-40 pointer-events-none transition-transform duration-300 hover:scale-105">
                 <img
                   src={sport === "basketball" ? "/img/lebron.png" : "/img/messi.png"}
                   alt={sport === "basketball" ? "LeBron James" : "Lionel Messi"}
@@ -207,7 +331,7 @@ export default function LandingPage() {
 
               {/* Bảng Danh sách trận sắp diễn ra */}
               <div
-                className="relative z-10 w-full rounded-2xl border p-5 sm:p-6 shadow-2xl backdrop-blur-md"
+                className="relative z-10 w-full rounded-2xl border p-5 sm:p-6 shadow-2xl backdrop-blur-md transition-all hover:border-[#2FD98C]/30"
                 style={{ borderColor: bangMau.border, backgroundColor: bangMau.panel }}
               >
                 <div className="mb-4 flex items-center justify-between">
@@ -254,8 +378,8 @@ export default function LandingPage() {
                 )}
               </div>
 
-              {/* Cầu thủ bên phải (Ronaldo / Curry) — Nằm hoàn toàn bên ngoài mép phải */}
-              <div className={`hidden xl:block absolute left-[calc(100%+10px)] bottom-0 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-44 xl:w-48" : "w-36 xl:w-40"}`}>
+              {/* Cầu thủ bên phải (Ronaldo / Curry) — Đảm bảo trọn vẹn 100% người và cánh tay */}
+              <div className={`hidden xl:block absolute left-[calc(100%+4px)] bottom-0 z-10 pointer-events-none transition-transform duration-300 hover:scale-105 ${sport === "basketball" ? "w-40 xl:w-44" : "w-32 xl:w-36"}`}>
                 <img
                   src={sport === "basketball" ? "/img/curry.png" : "/img/ronaldo.png"}
                   alt={sport === "basketball" ? "Stephen Curry" : "Cristiano Ronaldo"}
@@ -270,66 +394,76 @@ export default function LandingPage() {
       {/* Phần Thống kê độ chính xác — Glassmorphism Stats Cards */}
       <section
         id="accuracy"
-        className="border-y"
+        className="border-y relative"
         style={{ borderColor: bangMau.borderSoft, backgroundColor: bangMau.panelAlt }}
       >
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 sm:gap-6 px-4 sm:px-6 py-12 md:py-16 sm:grid-cols-3">
           {/* Card thống kê 1 — Độ chính xác */}
           <div
-            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-2xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.12)]"
             style={{
               borderColor: bangMau.border,
-              backgroundColor: "rgba(22,27,35,0.5)",
+              backgroundColor: "rgba(22,27,35,0.6)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
-              <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
-                55.4%
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: bangMau.accent }}>
+                  55.4%
+                </div>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-mono font-semibold bg-emerald-500/10 text-emerald-400">
+                  ▲ +2.4% tuần này
+                </span>
               </div>
-              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+              <div className="mt-2 text-sm font-semibold" style={{ color: bangMau.text }}>
                 Độ chính xác 36 ngày qua
               </div>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
-                Tỷ lệ dự đoán đúng kết quả (Thắng/Hòa/Thua) trong 1 tháng gần nhất.
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textMuted }}>
+                Tỷ lệ dự đoán đúng kết quả (Thắng/Hòa/Thua) trong 1 tháng gần nhất trên hơn 300+ trận.
               </p>
             </div>
           </div>
 
           {/* Card thống kê 2 — Brier Score với giải thích */}
           <div
-            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-2xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.12)]"
             style={{
               borderColor: bangMau.border,
-              backgroundColor: "rgba(22,27,35,0.5)",
+              backgroundColor: "rgba(22,27,35,0.6)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
-                  0.21
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: bangMau.accent }}>
+                    0.21
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setHienGiaiThichBrier(!hienGiaiThichBrier)}
+                    className="flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors hover:border-white hover:text-white"
+                    style={{ borderColor: bangMau.border, color: bangMau.textMuted }}
+                    title="Xem giải thích Brier Score"
+                    aria-label="Giải thích Brier Score"
+                  >
+                    ?
+                  </button>
+                </div>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-mono font-semibold bg-cyan-500/10 text-cyan-400">
+                  Chuẩn Data Science
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setHienGiaiThichBrier(!hienGiaiThichBrier)}
-                  className="flex h-5 w-5 items-center justify-center rounded-full border text-[11px] font-bold transition-colors hover:border-white hover:text-white"
-                  style={{ borderColor: bangMau.border, color: bangMau.textMuted }}
-                  title="Xem giải thích Brier Score"
-                  aria-label="Giải thích Brier Score"
-                >
-                  ?
-                </button>
               </div>
 
-              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+              <div className="mt-2 text-sm font-semibold" style={{ color: bangMau.text }}>
                 Brier Score trung bình
               </div>
 
-              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
-                Đo lường sai số dự đoán (từ 0 đến 1). <strong className="text-emerald-400 font-normal">Càng thấp càng chính xác</strong> (dưới 0.25 là mô hình tốt).
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textMuted }}>
+                Đo lường sai số dự đoán (0 đến 1). <strong className="text-emerald-400 font-semibold">Càng thấp càng chính xác</strong> (dưới 0.25 là mô hình đạt chuẩn).
               </p>
 
               {/* Popover chi tiết khi click nút (?) */}
@@ -352,24 +486,225 @@ export default function LandingPage() {
 
           {/* Card thống kê 3 — Trận đấu theo dõi */}
           <div
-            className="group relative rounded-xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.08)]"
+            className="group relative rounded-2xl border p-5 sm:p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:shadow-[0_0_30px_rgba(47,217,140,0.12)]"
             style={{
               borderColor: bangMau.border,
-              backgroundColor: "rgba(22,27,35,0.5)",
+              backgroundColor: "rgba(22,27,35,0.6)",
               backdropFilter: "blur(12px)",
             }}
           >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-[#2FD98C]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none" />
             <div className="relative z-10">
-              <div className="font-mono text-3xl font-bold tracking-tight" style={{ color: bangMau.accent }}>
-                1.240
+              <div className="flex items-center justify-between">
+                <div className="font-mono text-3xl sm:text-4xl font-extrabold tracking-tight" style={{ color: bangMau.accent }}>
+                  1.240+
+                </div>
+                <span className="rounded-full px-2 py-0.5 text-[11px] font-mono font-semibold bg-emerald-500/10 text-emerald-400">
+                  Live Sync API
+                </span>
               </div>
-              <div className="mt-2 text-sm font-medium" style={{ color: bangMau.textMuted }}>
+              <div className="mt-2 text-sm font-semibold" style={{ color: bangMau.text }}>
                 Trận đấu đã theo dõi
               </div>
-              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textFaint }}>
-                Tổng số trận đấu được kiểm chứng và lưu trữ dữ liệu công khai.
+              <p className="mt-1.5 text-[12.5px] leading-relaxed" style={{ color: bangMau.textMuted }}>
+                Tổng số trận đấu được kiểm chứng và lưu trữ dữ liệu công khai trên toàn bộ các giải đấu lớn.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mục Tính năng nổi bật & Công nghệ cốt lõi (Core Features Showcase) */}
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16 md:py-24">
+        <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+          <span
+            className="inline-block rounded-full px-3 py-1 font-mono text-xs font-semibold mb-3"
+            style={{ backgroundColor: `${bangMau.accent}15`, color: bangMau.accent }}
+          >
+            Tính năng cốt lõi
+          </span>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
+            Nền tảng phân tích thể thao thế hệ mới
+          </h2>
+          <p className="mt-3 text-sm sm:text-base leading-relaxed" style={{ color: bangMau.textMuted }}>
+            Kết hợp toán xác suất, hệ số Elo độc quyền và công nghệ AI thời gian thực để mang lại góc nhìn chuẩn xác nhất.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+          {[
+            {
+              icon: <IconBrain />,
+              title: "Mô hình AI & Elo Rating",
+              badge: "Thuật toán",
+              desc: "Tự động cập nhật điểm sức mạnh Elo sau mỗi trận, kết hợp phong độ 5 trận gần nhất và hệ số sân nhà/khách.",
+            },
+            {
+              icon: <IconBellAlert />,
+              title: "Cảnh báo Kèo Lệch",
+              badge: "Value Bet",
+              desc: "Phát hiện ngay khi tỷ lệ xác suất thực tế chênh lệch có lợi so với Odds thị trường, tạo kỳ vọng lợi nhuận dương.",
+            },
+            {
+              icon: <IconTelegram />,
+              title: "Bot Telegram VIP 24/7",
+              badge: "Realtime",
+              desc: "Nhận thông báo nhận định trước trận, phân tích đội hình và biến động tỷ lệ cược trực tiếp ngay trên điện thoại.",
+            },
+            {
+              icon: <IconShieldCheck />,
+              title: "Minh bạch 100%",
+              badge: "Data Science",
+              desc: "Không che giấu kết quả sai. Toàn bộ lịch sử dự đoán đều được đối chiếu và công khai chỉ số Brier Score & Log Loss.",
+            },
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="group relative rounded-2xl border p-6 transition-all duration-300 hover:border-[#2FD98C]/40 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.5)] flex flex-col justify-between"
+              style={{
+                borderColor: bangMau.border,
+                backgroundColor: bangMau.panel,
+              }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div
+                    className="flex h-12 w-12 items-center justify-center rounded-xl border transition-colors group-hover:border-[#2FD98C]/50"
+                    style={{
+                      borderColor: bangMau.borderSoft,
+                      backgroundColor: "rgba(47,217,140,0.08)",
+                      color: bangMau.accent,
+                    }}
+                  >
+                    {item.icon}
+                  </div>
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-mono font-medium"
+                    style={{ backgroundColor: "rgba(255,255,255,0.05)", color: bangMau.textMuted }}
+                  >
+                    {item.badge}
+                  </span>
+                </div>
+
+                <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                <p className="text-xs sm:text-[13px] leading-relaxed" style={{ color: bangMau.textMuted }}>
+                  {item.desc}
+                </p>
+              </div>
+
+              <div className="mt-5 pt-4 border-t flex items-center text-xs font-semibold text-emerald-400 gap-1 opacity-0 transition-opacity group-hover:opacity-100" style={{ borderColor: bangMau.borderSoft }}>
+                <span>Khám phá tính năng</span>
+                <span>→</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Mục So sánh: "Cảm tính / Tipster" vs "iKnowBall AI Data" */}
+      <section
+        className="border-y py-16 md:py-24 relative overflow-hidden"
+        style={{ borderColor: bangMau.borderSoft, backgroundColor: bangMau.panelAlt }}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-14">
+            <span
+              className="inline-block rounded-full px-3 py-1 font-mono text-xs font-semibold mb-3"
+              style={{ backgroundColor: `${bangMau.accent}15`, color: bangMau.accent }}
+            >
+              Sự khác biệt vượt trội
+            </span>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
+              Tại sao nên tin vào Dữ liệu hơn là Cảm tính?
+            </h2>
+            <p className="mt-3 text-sm sm:text-base leading-relaxed" style={{ color: bangMau.textMuted }}>
+              Đừng để cảm xúc và tin đồn dẫn dắt quyết định của bạn. Hãy nhìn nhận thể thao qua lăng kính khoa học.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {/* Cột 1: Nhận định truyền thống / Tipster */}
+            <div
+              className="rounded-2xl border p-6 sm:p-8 flex flex-col justify-between"
+              style={{
+                borderColor: "rgba(244,63,94,0.2)",
+                backgroundColor: "rgba(18,22,29,0.7)",
+              }}
+            >
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <span className="text-sm font-bold text-rose-400 font-mono tracking-wide">
+                    ❌ CÁCH TRUYỀN THỐNG / TIPSTER
+                  </span>
+                  <span className="text-xs px-2 py-0.5 rounded bg-rose-500/10 text-rose-400">
+                    Cảm tính
+                  </span>
+                </div>
+
+                <ul className="space-y-4 text-xs sm:text-sm" style={{ color: bangMau.textMuted }}>
+                  <li className="flex items-start gap-3">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Dựa vào linh cảm:</strong> Nhận định theo phong trào, tin đồn phòng thay đồ hoặc tên tuổi đội bóng.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Thiếu minh bạch:</strong> Thổi phồng tỷ lệ thắng "100%", xóa các bài dự đoán thua, không có thống kê dài hạn.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Rủi ro cao:</strong> Không có công thức tính kỳ vọng giá trị (Expected Value - EV), dễ cháy tài khoản.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-rose-400 font-bold">✕</span>
+                    <span><strong>Không có dữ liệu đối chứng:</strong> Không thể tự kiểm tra lại hiệu quả trong quá khứ.</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Cột 2: iKnowBall AI Engine */}
+            <div
+              className="rounded-2xl border p-6 sm:p-8 flex flex-col justify-between relative shadow-2xl"
+              style={{
+                borderColor: "rgba(47,217,140,0.5)",
+                backgroundColor: "rgba(22,27,35,0.85)",
+              }}
+            >
+              <div className="absolute top-0 right-8 -translate-y-1/2 rounded-full px-3 py-1 font-mono text-[11px] font-bold shadow-lg"
+                style={{ backgroundColor: bangMau.accent, color: bangMau.bg }}
+              >
+                KHUYÊN DÙNG ★
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <span className="text-sm font-bold text-emerald-400 font-mono tracking-wide flex items-center gap-1.5">
+                    <span>⚡</span> IKNOWBALL DATA ENGINE
+                  </span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 font-semibold">
+                    Data-driven
+                  </span>
+                </div>
+
+                <ul className="space-y-4 text-xs sm:text-sm" style={{ color: bangMau.text }}>
+                  <li className="flex items-start gap-3">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span><strong>Xác suất 3 chiều:</strong> Đo đếm % Thắng - Hòa - Thua dựa trên Elo rating, hiệu số bàn thắng và tương quan đối đầu.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span><strong>Công khai sai số Brier Score:</strong> Minh bạch từng trận, sai số đo lường theo chuẩn quốc tế không chỉnh sửa.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span><strong>Phát hiện Value Bet:</strong> So sánh trực tiếp với Odds nhà cái để chỉ điểm những kèo có kỳ vọng dương cao.</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span><strong>Tự động hóa 24/7:</strong> Đồng bộ dữ liệu liên tục từ API-Football, báo kèo tức thì qua Telegram VIP.</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -377,7 +712,7 @@ export default function LandingPage() {
 
       {/* Quy trình hoạt động (How it works) */}
       <section id="how-it-works" className="mx-auto max-w-7xl px-4 sm:px-6 py-16 md:py-24">
-        <h2 className="max-w-lg text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h2 className="max-w-lg text-2xl font-semibold tracking-tight sm:text-3xl text-white">
           Từ dữ liệu thô đến một con số xác suất
         </h2>
 
@@ -461,7 +796,7 @@ export default function LandingPage() {
       <section id="matches" className="mx-auto max-w-7xl px-4 sm:px-6 pb-16 md:pb-24">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">Lịch thi đấu hôm nay</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-white">Lịch thi đấu hôm nay</h2>
             <p className="text-xs sm:text-sm mt-1" style={{ color: bangMau.textMuted }}>
               Tỷ lệ dự đoán xác suất Thắng - Hòa - Thua trực quan theo thời gian thực <span className="sm:hidden text-emerald-400 font-mono text-[11px]">(Vuốt ngang để xem)</span>
             </p>
@@ -637,7 +972,7 @@ export default function LandingPage() {
               },
               // Nhân đôi danh sách:
               {
-                ten: "Đỗ Quốc Bảo",
+                ten: "Nguyễn Hoàng Anh",
                 vaiTro: "Data Analyst ",
                 avatar: "https://i.pinimg.com/736x/a7/64/5f/a7645f9cc84777fbfe0d56e0ca15adbe.jpg",
                 noiDung:

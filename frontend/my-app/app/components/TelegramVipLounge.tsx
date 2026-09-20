@@ -136,7 +136,7 @@ export default function TelegramVipLounge() {
             Cộng Đồng & Kênh Tín Hiệu <span className="text-cyan-400">Telegram VIP</span>
           </h1>
           <p className="text-sm sm:text-base text-neutral-300 leading-relaxed">
-            Nhận tín hiệu biến động Odds sớm, cơ hội cược giá trị (Value Bet) và phân tích chiến thuật gửi trực tiếp 24/7 vào ứng dụng Telegram của bạn.
+            Nhận tín hiệu biến động Odds và phân tích chiến thuật gửi trực tiếp 24/7 vào ứng dụng Telegram của bạn.
           </p>
         </div>
 
@@ -148,11 +148,10 @@ export default function TelegramVipLounge() {
       {/* Feedback Banner */}
       {feedback && (
         <div
-          className={`p-4 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all ${
-            feedback.type === "success"
+          className={`p-4 rounded-2xl text-xs sm:text-sm flex items-center gap-2.5 transition-all ${feedback.type === "success"
               ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300"
               : "bg-red-500/15 border border-red-500/30 text-red-300"
-          }`}
+            }`}
         >
           {feedback.type === "success" ? (
             <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />

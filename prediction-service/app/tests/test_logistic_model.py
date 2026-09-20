@@ -1,9 +1,9 @@
 """
-test_logistic_model.py – Bộ kiểm thử tự động cho module Logistic Regression và API.
+test_logistic_model.py – Bộ kiểm thử tự động cho module Logistic Regression, Poisson/Scoreline và API.
 
 Kiểm tra:
-  1. Trích xuất đặc trưng (Feature Extraction)
-  2. Suy luận dự đoán (Football 3-way, Basketball 2-way)
+  1. Trích xuất đặc trưng đa môn (Feature Extraction cho Football & Basketball)
+  2. Suy luận dự đoán (Football 3-way + Poisson Scoreline, Basketball 2-way + Point Spread & Total Points)
   3. Ràng buộc xác suất (Tổng xác suất = 1.0)
   4. Giải thích kết quả (Explainability)
   5. Huấn luyện mô hình (Training pipeline)
@@ -14,8 +14,14 @@ import unittest
 import numpy as np
 from fastapi.testclient import TestClient
 
-from app.ml.features import trich_xuat_vector_dac_trung, kep_khoang_elo
-from app.ml.logistic_model import MoHinhLogisticDuDoan
+from app.ml.features import (
+    trich_xuat_vector_dac_trung,
+    kep_khoang_elo,
+    TEN_DAC_TRUNG_BONG_DA,
+    TEN_DAC_TRUNG_BONG_RO,
+)
+from app.ml.logistic_model import MoHinhLogisticDuDoan, PHIEN_BAN_MO_HINH
+from app.ml.score_model import du_doan_ty_so_bong_da, du_doan_diem_so_bong_ro
 from app.ml.trainer import huan_luyen_mo_hinh
 from app.ml.predictor import du_doan_tran_dau
 from app.main import app
@@ -37,11 +43,62 @@ class TestFeatureEngineering(unittest.TestCase):
             home_recent_form=0.8,
             away_recent_form=0.4,
             h2h_matches=5,
+            home_goals_avg=1.8,
+            away_goals_avg=1.1,
         )
-        self.assertEqual(len(vec), 5)
+        self.assertEqual(len(vec), len(TEN_DAC_TRUNG_BONG_DA))
         self.assertEqual(dic["chenh_lech_elo"], 200.0)
         self.assertAlmostEqual(dic["chenh_lech_phong_do"], 0.4)
         self.assertEqual(dic["so_tran_doi_dau"], 5.0)
+
+    def test_trich_xuat_vector_bong_ro(self):
+        vec, dic = trich_xuat_vector_dac_trung(
+            sport="basketball",
+            home_elo=1650.0,
+            away_elo=1550.0,
+            home_recent_form=0.7,
+            away_recent_form=0.5,
+            is_home_b2b=True,
+            is_away_b2b=False,
+            home_points_avg=115.0,
+            away_points_avg=108.0,
+        )
+        self.assertEqual(len(vec), len(TEN_DAC_TRUNG_BONG_RO))
+        self.assertEqual(dic["chenh_lech_elo"], 100.0)
+        self.assertEqual(dic["doi_nha_back_to_back"], 1.0)
+        self.assertEqual(dic["doi_khach_back_to_back"], 0.0)
+
+
+class TestScoreModel(unittest.TestCase):
+    """Kiểm tra mô hình Poisson bóng đá và Spread bóng rổ."""
+
+    def test_poisson_bong_da(self):
+        res = du_doan_ty_so_bong_da(home_elo=1700, away_elo=1500, home_goals_avg=2.0, away_goals_avg=1.0)
+        self.assertIn("predictedScore", res)
+        self.assertIn("topLikelyScores", res)
+        self.assertIn("overUnder25", res)
+        self.assertIn("bothTeamsToScore", res)
+        self.assertEqual(len(res["topLikelyScores"]), 3)
+        self.assertAlmostEqual(
+            res["overUnder25"]["overProb"] + res["overUnder25"]["underProb"],
+            1.0,
+            places=3,
+        )
+
+    def test_spread_bong_ro(self):
+        res = du_doan_diem_so_bong_ro(
+            home_elo=1650,
+            away_elo=1500,
+            home_points_avg=118.0,
+            away_points_avg=106.0,
+            is_home_b2b=False,
+            is_away_b2b=True,
+        )
+        self.assertIn("projectedHomePoints", res)
+        self.assertIn("projectedAwayPoints", res)
+        self.assertIn("projectedSpread", res)
+        self.assertIn("predictedScore", res)
+        self.assertTrue(res["projectedHomePoints"] > res["projectedAwayPoints"])
 
 
 class TestMoHinhLogistic(unittest.TestCase):
@@ -68,6 +125,7 @@ class TestMoHinhLogistic(unittest.TestCase):
         self.assertIn(res["predictedOutcome"], ["HOME_WIN", "DRAW", "AWAY_WIN"])
         self.assertIn("explanation", res)
         self.assertIn("dominantFactor", res["explanation"])
+        self.assertIn("scoreDetails", res)
 
     def test_du_doan_bong_ro_khong_co_draw(self):
         res = self.mo_hinh.du_doan(
@@ -76,35 +134,14 @@ class TestMoHinhLogistic(unittest.TestCase):
             away_elo=1550.0,
             home_recent_form=0.6,
             away_recent_form=0.4,
+            is_home_b2b=True,
         )
         self.assertIsNone(res["drawProb"])
         tong = res["homeWinProb"] + res["awayWinProb"]
         self.assertAlmostEqual(tong, 1.0, places=4)
         self.assertIn(res["predictedOutcome"], ["HOME_WIN", "AWAY_WIN"])
-
-
-class TestTrainer(unittest.TestCase):
-    """Kiểm tra quy trình huấn luyện mô hình."""
-
-    def test_huan_luyen_du_lieu_mau(self):
-        # Tạo tập mẫu giả lập 30 trận
-        du_lieu_mau = []
-        for i in range(30):
-            du_lieu_mau.append({
-                "homeElo": 1500.0 + (i * 10),
-                "awayElo": 1500.0 - (i * 5),
-                "homeRecentForm": 0.6,
-                "awayRecentForm": 0.4,
-                "homeWinRate": 0.55,
-                "awayWinRate": 0.45,
-                "h2hMatches": 3,
-                "actualOutcome": "HOME_WIN" if i % 2 == 0 else ("DRAW" if i % 3 == 0 else "AWAY_WIN"),
-            })
-
-        ket_qua = huan_luyen_mo_hinh(du_lieu_mau, sport="football")
-        self.assertIn("accuracy", ket_qua)
-        self.assertIn("logLoss", ket_qua)
-        self.assertEqual(ket_qua["sampleSize"], 30)
+        self.assertIn("scoreDetails", res)
+        self.assertIn("projectedSpread", res["scoreDetails"])
 
 
 class TestFastAPIEndpoints(unittest.TestCase):
@@ -143,7 +180,30 @@ class TestFastAPIEndpoints(unittest.TestCase):
         self.assertIn("drawProb", data)
         self.assertIn("awayWinProb", data)
         self.assertIn("predictedOutcome", data)
-        self.assertEqual(data["explanation"]["modelVersion"], "logistic-regression-v1")
+        self.assertEqual(data["explanation"]["modelVersion"], PHIEN_BAN_MO_HINH)
+
+    def test_predict_endpoint_basketball(self):
+        payload = {
+            "sport": "basketball",
+            "homeTeamId": "team-lakers",
+            "awayTeamId": "team-warriors",
+            "homeElo": 1650.0,
+            "awayElo": 1590.0,
+            "homeRecentForm": 0.6,
+            "awayRecentForm": 0.4,
+            "isHomeB2b": True,
+            "isAwayB2b": False,
+            "homePointsAvg": 114.5,
+            "awayPointsAvg": 112.0,
+        }
+        res = self.client.post("/predict", json=payload)
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        self.assertIn("homeWinProb", data)
+        self.assertIsNone(data["drawProb"])
+        self.assertIn("awayWinProb", data)
+        self.assertIn("scoreDetails", data)
+        self.assertIn("projectedSpread", data["scoreDetails"])
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useVipReport } from "../hooks/useVipReport";
 import { colors } from "../lib/design-tokens";
@@ -18,7 +18,63 @@ export default function VipMatchReport({
   awayTeamName,
   isVipUser = false,
 }: VipMatchReportProps) {
-  const { data: report, isLoading, isError } = useVipReport(matchId);
+  const { data: report, isLoading, isError, refetch } = useVipReport(matchId);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([]);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const handleSendChat = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const userMsg = chatInput.trim();
+    setChatInput("");
+    setChatMessages((prev) => [...prev, { sender: "user", text: userMsg }]);
+    setIsChatLoading(true);
+
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      const res = await fetch(`http://localhost:8000/api/v1/predictions/${matchId}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ message: userMsg }),
+      });
+      const json = await res.json();
+      const reply = json.data?.reply || "Chưa thể phân tích câu trả lời vào lúc này.";
+      setChatMessages((prev) => [...prev, { sender: "ai", text: reply }]);
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: "ai", text: "Lỗi kết nối tới Trợ lý AI. Vui lòng thử lại sau." },
+      ]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (isRegenerating) return;
+    setIsRegenerating(true);
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      await fetch(`http://localhost:8000/api/v1/predictions/${matchId}/vip-report/regenerate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      await refetch();
+    } catch {
+      // ignore
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -50,6 +106,8 @@ export default function VipMatchReport({
   }
 
   const isLocked = report.isLocked && !isVipUser;
+  const scoreDetails = (report as any).scoreDetails;
+  const isBasketball = scoreDetails?.projectedSpread !== undefined || scoreDetails?.projectedTotalPoints !== undefined;
 
   return (
     <div
@@ -78,8 +136,18 @@ export default function VipMatchReport({
                 VIP Match Intelligence Report
               </span>
               <span className="text-[10px] px-2 py-0.2 rounded-full bg-amber-400/20 text-amber-300 font-mono font-bold border border-amber-400/30">
-                {report.generatedBy === "GEMINI_FLASH" ? "Gemini Flash AI" : "Heuristic AI"}
+                {report.generatedBy === "GEMINI_FLASH" ? "Gemini 2.0 Flash AI" : "Heuristic AI"}
               </span>
+              {report.userTier === "admin" && (
+                <button
+                  onClick={handleRegenerate}
+                  disabled={isRegenerating}
+                  className="text-[10px] px-2 py-0.5 rounded-lg bg-white/10 hover:bg-white/20 text-neutral-300 border border-white/15 transition-all"
+                  title="Tái tạo phân tích AI với dữ liệu mới nhất"
+                >
+                  {isRegenerating ? "Đang tạo..." : "🔄 Tái tạo AI"}
+                </button>
+              )}
             </div>
             <h3 className="text-sm font-bold text-white mt-0.5">
               {report.headline || `${homeTeamName} vs ${awayTeamName}`}
@@ -88,7 +156,7 @@ export default function VipMatchReport({
         </div>
 
         {/* Confidence & Score Preview */}
-        <div className="flex items-center gap-2 self-start sm:self-auto">
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {report.predictedScore && !isLocked && (
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold">
               <span>🎯 Dự đoán:</span>
@@ -121,6 +189,77 @@ export default function VipMatchReport({
           </p>
         </div>
 
+        {/* Section: Quantitative Deep Metrics (Poisson for Football, Spread/O-U for Basketball) */}
+        {scoreDetails && !isLocked && (
+          <div
+            className="rounded-xl border p-4.5"
+            style={{ borderColor: "rgba(56, 189, 248, 0.25)", backgroundColor: "rgba(15, 23, 42, 0.6)" }}
+          >
+            <div className="text-[11px] font-bold uppercase tracking-wider text-sky-400 mb-3 flex items-center gap-1.5">
+              <span>📊</span>
+              <span>{isBasketball ? "Chỉ số Định lượng Bóng rổ (Point Spread & Total Points)" : "Chỉ số Định lượng Bóng đá (Poisson Model & Kèo Phụ)"}</span>
+            </div>
+
+            {isBasketball ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-neutral-400 text-[10px] mb-1">Dự đoán Điểm số</div>
+                  <div className="font-bold text-white font-mono text-sm">{scoreDetails.projectedHomePoints} - {scoreDetails.projectedAwayPoints}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-neutral-400 text-[10px] mb-1">Kèo Chấp Điểm (Spread)</div>
+                  <div className="font-bold text-amber-400 font-mono text-sm">{scoreDetails.projectedSpread > 0 ? `+${scoreDetails.projectedSpread}` : scoreDetails.projectedSpread}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-neutral-400 text-[10px] mb-1">Tổng điểm kỳ vọng (O/U)</div>
+                  <div className="font-bold text-emerald-400 font-mono text-sm">{scoreDetails.projectedTotalPoints} pts</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                  <div className="text-neutral-400 text-[10px] mb-1">Thể lực Back-to-Back</div>
+                  <div className="font-semibold text-neutral-200 text-xs">
+                    {scoreDetails.b2bFactors?.homeIsBackToBack ? "⚠️ Chủ nhà B2B" : (scoreDetails.b2bFactors?.awayIsBackToBack ? "⚠️ Khách B2B" : "✅ Thể lực tốt")}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                {scoreDetails.topLikelyScores && (
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="text-neutral-400 text-[10px] mb-1.5">Top 3 Tỷ số Poisson</div>
+                    <div className="flex gap-2">
+                      {scoreDetails.topLikelyScores.map((s: any, idx: number) => (
+                        <span key={idx} className="px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 font-mono text-xs border border-sky-500/30">
+                          {s.score} ({Math.round(s.probability * 100)}%)
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {scoreDetails.overUnder25 && (
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="text-neutral-400 text-[10px] mb-1.5">Tài / Xỉu 2.5 Bàn</div>
+                    <div className="font-mono text-xs flex gap-2">
+                      <span className="text-emerald-400 font-bold">Tài: {Math.round(scoreDetails.overUnder25.overProb * 100)}%</span>
+                      <span className="text-neutral-400">|</span>
+                      <span className="text-amber-400 font-bold">Xỉu: {Math.round(scoreDetails.overUnder25.underProb * 100)}%</span>
+                    </div>
+                  </div>
+                )}
+                {scoreDetails.bothTeamsToScore && (
+                  <div className="p-3 rounded-lg bg-white/5 border border-white/10">
+                    <div className="text-neutral-400 text-[10px] mb-1.5">Cả hai đội ghi bàn (BTTS)</div>
+                    <div className="font-mono text-xs flex gap-2">
+                      <span className="text-emerald-400 font-bold">Có: {Math.round(scoreDetails.bothTeamsToScore.yesProb * 100)}%</span>
+                      <span className="text-neutral-400">|</span>
+                      <span className="text-neutral-400">Không: {Math.round(scoreDetails.bothTeamsToScore.noProb * 100)}%</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Section 2 & 3: Tactical Analysis & Key Battles (Blurred if Locked) */}
         <div className={`flex flex-col gap-5 ${isLocked ? "filter blur-md select-none pointer-events-none opacity-25" : ""}`}>
           {/* Tactical Breakdown */}
@@ -131,7 +270,7 @@ export default function VipMatchReport({
             >
               <div className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2.5 flex items-center gap-2">
                 <span>⚔️</span>
-                <span>Phân tích chiến thuật & Khắc chế lối chơi:</span>
+                <span>{isBasketball ? "Phân tích chiến thuật & Nhịp độ trận đấu (Pace & Matchup):" : "Phân tích chiến thuật & Khắc chế lối chơi:"}</span>
               </div>
               <p className="text-xs text-neutral-300 leading-relaxed whitespace-pre-line">
                 {report.tacticalAnalysis}
@@ -184,6 +323,52 @@ export default function VipMatchReport({
               </div>
             </div>
           )}
+
+          {/* Section: Match AI Interactive Chat Assistant */}
+          <div
+            className="rounded-xl border p-4"
+            style={{ borderColor: "rgba(168, 85, 247, 0.3)", backgroundColor: "rgba(88, 28, 135, 0.1)" }}
+          >
+            <div className="text-xs font-bold uppercase tracking-wider text-purple-400 mb-3 flex items-center gap-2">
+              <span>🤖</span>
+              <span>Hỏi Đáp Chuyên Sâu với Trợ Lý AI iKnowBall:</span>
+            </div>
+
+            {chatMessages.length > 0 && (
+              <div className="flex flex-col gap-2.5 mb-3 max-h-60 overflow-y-auto pr-1">
+                {chatMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-xl text-xs leading-relaxed ${
+                      msg.sender === "user"
+                        ? "bg-amber-500/20 text-white self-end max-w-[85%] border border-amber-500/30"
+                        : "bg-white/5 text-neutral-200 self-start max-w-[90%] border border-white/10"
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <form onSubmit={handleSendChat} className="flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Đặt câu hỏi cho AI về trận đấu (VD: Phân tích khả năng nổ tài hiệp 1, phong độ chủ lực...)"
+                className="flex-1 rounded-xl bg-black/40 border border-white/15 px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-purple-400"
+                disabled={isChatLoading}
+              />
+              <button
+                type="submit"
+                disabled={isChatLoading || !chatInput.trim()}
+                className="rounded-xl bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 text-xs font-semibold disabled:opacity-50 transition-all flex items-center gap-1.5"
+              >
+                {isChatLoading ? "..." : "Gửi"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
 

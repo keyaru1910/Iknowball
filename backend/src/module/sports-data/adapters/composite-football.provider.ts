@@ -22,19 +22,20 @@ export class CompositeFootballProvider implements SportsDataProvider {
   private readonly providers: { name: string; instance: SportsDataProvider }[];
 
   constructor(
-    @Inject(ZafronixProvider)
-    private readonly zafronix: ZafronixProvider,
-    @Inject(ApiFootballProvider)
-    private readonly apiFootball: ApiFootballProvider,
     @Inject(FootballDataProvider)
     private readonly footballData: FootballDataProvider,
+    @Inject(ApiFootballProvider)
+    private readonly apiFootball: ApiFootballProvider,
+    @Inject(ZafronixProvider)
+    private readonly zafronix: ZafronixProvider,
   ) {
     this.providers = [
-      { name: 'Zafronix', instance: this.zafronix },
-      { name: 'API-Football', instance: this.apiFootball },
       { name: 'Football-Data.org', instance: this.footballData },
+      { name: 'API-Football', instance: this.apiFootball },
+      { name: 'Zafronix', instance: this.zafronix },
     ];
   }
+
 
   /**
    * Thực hiện gọi hàm với cơ chế tự động chuyển đổi sang Provider kế tiếp khi gặp sự cố

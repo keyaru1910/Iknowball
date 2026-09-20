@@ -4,15 +4,10 @@ main.py – FastAPI Prediction Service cho iKnowBall.
 Endpoints:
   GET  /          – Kiểm tra trạng thái service và phiên bản mô hình
   GET  /health    – Health check
-  POST /predict   – Dự đoán kết quả trận đấu (sử dụng module Machine Learning độc lập)
-
-Thiết kế:
-  - Tách biệt hoàn toàn tầng API (FastAPI) và tầng nghiệp vụ Machine Learning (app/ml).
-  - Nhận feature snapshot point-in-time đã được tạo từ dữ liệu TRƯỚC thời điểm trận đấu (Zero Data Leakage).
-  - Trả về explanation giúp người dùng hiểu cơ sở định lượng của dự đoán (Explainable AI).
+  POST /predict   – Dự đoán kết quả trận đấu (Football & Basketball, Poisson, Spread, Over/Under)
 """
 
-from typing import Literal, Optional, Dict, Any
+from typing import Literal, Optional, Dict, Any, List
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
@@ -22,8 +17,8 @@ from app.ml.predictor import du_doan_tran_dau, MODEL_VERSION
 
 app = FastAPI(
     title="iKnowBall Prediction Service",
-    description="ML Prediction Service sử dụng Logistic Regression & Feature Engineering (Explainable AI)",
-    version="2.0.0",
+    description="ML Prediction Service hỗ trợ Football (Poisson & Logistic) & Basketball (Point Spread & B2B Analysis)",
+    version="2.1.0",
 )
 
 app.add_middleware(
@@ -38,25 +33,39 @@ app.add_middleware(
 # ── Schema Yêu Cầu & Phản Hồi ──────────────────────────────────────────────────
 
 class PredictRequest(BaseModel):
-    """
-    Feature snapshot point-in-time được tạo từ dữ liệu TRƯỚC thời điểm trận đấu.
-    Backend (NestJS) chịu trách nhiệm đảm bảo tính chính xác trước trận.
-    """
     sport: Literal["football", "basketball"] = "football"
     homeTeamId: str
     awayTeamId: str
-    homeElo: float = Field(default=1500.0, description="Elo đội nhà tại thời điểm trước trận (tự động clamp 800-2200)")
-    awayElo: float = Field(default=1500.0, description="Elo đội khách tại thời điểm trước trận (tự động clamp 800-2200)")
-    homeRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng 5 trận gần nhất đội nhà (trước trận)")
-    awayRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng 5 trận gần nhất đội khách (trước trận)")
-    # Giữ tương thích với schema cũ
-    homeWinRate: float = Field(default=0.5, ge=0, le=1, description="Tỷ lệ thắng toàn mùa đội nhà (fallback)")
-    awayWinRate: float = Field(default=0.5, ge=0, le=1, description="Tỷ lệ thắng toàn mùa đội khách (fallback)")
-    h2hMatches: int = Field(default=0, ge=0, description="Số trận đối đầu lịch sử")
+    homeElo: float = Field(default=1500.0, description="Elo đội nhà")
+    awayElo: float = Field(default=1500.0, description="Elo đội khách")
+    homeRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Phong độ 5 trận đội nhà")
+    awayRecentForm: float = Field(default=0.5, ge=0.0, le=1.0, description="Phong độ 5 trận đội khách")
+    homeWinRate: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng toàn mùa đội nhà")
+    awayWinRate: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng toàn mùa đội khách")
+    h2hMatches: int = Field(default=0, ge=0, description="Số trận đối đầu")
+    h2hHomeWinRate: float = Field(default=0.5, ge=0.0, le=1.0, description="Tỷ lệ thắng đối đầu của đội nhà")
+
+    # Mở rộng cho Bóng đá
+    homeGoalsAvg: float = Field(default=1.5, description="Bàn thắng trung bình/trận đội nhà")
+    awayGoalsAvg: float = Field(default=1.2, description="Bàn thắng trung bình/trận đội khách")
+    homeConcededAvg: float = Field(default=1.1, description="Bàn thua trung bình/trận đội nhà")
+    awayConcededAvg: float = Field(default=1.4, description="Bàn thua trung bình/trận đội khách")
+    homeSpecificForm: float = Field(default=0.5, description="Phong độ riêng tại sân nhà của đội nhà")
+    awaySpecificForm: float = Field(default=0.5, description="Phong độ riêng khi làm khách của đội khách")
+    homeRestDays: int = Field(default=4, description="Số ngày nghỉ ngơi đội nhà")
+    awayRestDays: int = Field(default=4, description="Số ngày nghỉ ngơi đội khách")
+    standingsPointsDiff: int = Field(default=0, description="Chênh lệch điểm BXH (Home - Away)")
+
+    # Mở rộng cho Bóng rổ
+    homePointsAvg: float = Field(default=112.0, description="Điểm ghi được trung bình/trận đội nhà")
+    awayPointsAvg: float = Field(default=110.0, description="Điểm ghi được trung bình/trận đội khách")
+    homePointsAgainstAvg: float = Field(default=110.0, description="Điểm thủng lưới trung bình/trận đội nhà")
+    awayPointsAgainstAvg: float = Field(default=112.0, description="Điểm thủng lưới trung bình/trận đội khách")
+    isHomeB2b: bool = Field(default=False, description="Đội nhà có đá Back-to-Back không")
+    isAwayB2b: bool = Field(default=False, description="Đội khách có đá Back-to-Back không")
 
 
 class PredictionExplanation(BaseModel):
-    """Giải thích định lượng các yếu tố đóng góp vào dự đoán."""
     eloDiff: float
     homeAdvantage: float
     formAdjustment: float
@@ -65,6 +74,7 @@ class PredictionExplanation(BaseModel):
     dominantFactor: str
     h2hMatchesConsidered: int
     modelVersion: str
+    scoreDetails: Optional[Dict[str, Any]] = None
 
 
 class PredictResponse(BaseModel):
@@ -73,6 +83,7 @@ class PredictResponse(BaseModel):
     awayWinProb: float
     predictedOutcome: Literal["HOME_WIN", "DRAW", "AWAY_WIN"]
     explanation: PredictionExplanation
+    scoreDetails: Optional[Dict[str, Any]] = None
 
     @model_validator(mode="after")
     def probabilities_sum_to_one(self):
@@ -86,35 +97,28 @@ class PredictResponse(BaseModel):
 
 @app.get("/")
 async def root():
-    """Kiểm tra service và model version."""
     return {
         "message": "iKnowBall Prediction Service is running",
         "modelVersion": MODEL_VERSION,
-        "framework": "FastAPI + Scikit-Learn Logistic Regression",
+        "framework": "FastAPI + Scikit-Learn Logistic Regression + Poisson/Spread",
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Kiểm tra tình trạng hoạt động (Health check)."""
     return {
         "status": "healthy",
         "service": "prediction-service",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "modelVersion": MODEL_VERSION,
     }
 
 
 @app.post("/predict", response_model=PredictResponse)
 async def predict(payload: PredictRequest):
-    """
-    Dự đoán kết quả trận đấu dựa trên feature snapshot point-in-time.
-    Gọi module ML độc lập trong app/ml.
-    """
     home_form = payload.homeRecentForm if "homeRecentForm" in payload.model_fields_set else payload.homeWinRate
     away_form = payload.awayRecentForm if "awayRecentForm" in payload.model_fields_set else payload.awayWinRate
 
-    # Gọi qua module suy luận riêng biệt
     ket_qua = du_doan_tran_dau(
         sport=payload.sport,
         home_elo=payload.homeElo,
@@ -124,6 +128,22 @@ async def predict(payload: PredictRequest):
         home_win_rate=payload.homeWinRate,
         away_win_rate=payload.awayWinRate,
         h2h_matches=payload.h2hMatches,
+        h2h_home_win_rate=payload.h2hHomeWinRate,
+        home_goals_avg=payload.homeGoalsAvg,
+        away_goals_avg=payload.awayGoalsAvg,
+        home_conceded_avg=payload.homeConcededAvg,
+        away_conceded_avg=payload.awayConcededAvg,
+        home_specific_form=payload.homeSpecificForm,
+        away_specific_form=payload.awaySpecificForm,
+        home_rest_days=payload.homeRestDays,
+        away_rest_days=payload.awayRestDays,
+        standings_points_diff=payload.standingsPointsDiff,
+        home_points_avg=payload.homePointsAvg,
+        away_points_avg=payload.awayPointsAvg,
+        home_points_against_avg=payload.homePointsAgainstAvg,
+        away_points_against_avg=payload.awayPointsAgainstAvg,
+        is_home_b2b=payload.isHomeB2b,
+        is_away_b2b=payload.isAwayB2b,
     )
 
     return PredictResponse(
@@ -132,6 +152,7 @@ async def predict(payload: PredictRequest):
         awayWinProb=ket_qua["awayWinProb"],
         predictedOutcome=ket_qua["predictedOutcome"],
         explanation=PredictionExplanation(**ket_qua["explanation"]),
+        scoreDetails=ket_qua.get("scoreDetails"),
     )
 
 

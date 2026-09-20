@@ -197,13 +197,23 @@ function PaymentSuccessContent() {
 
             {/* Actions */}
             <div className="space-y-3">
-              <Link
-                href="/predictions"
-                className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-neutral-950 text-sm sm:text-base font-extrabold transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
-              >
-                <span>Khám Phá Dự Đoán AI Ngay</span>
-                <ArrowRight className="w-5 h-5" />
-              </Link>
+              {isVip ? (
+                <Link
+                  href="/vip"
+                  className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 text-sm sm:text-base font-extrabold transition-all shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2"
+                >
+                  <span>👑 Khám Phá VIP Intelligence Hub</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              ) : (
+                <Link
+                  href="/predictions"
+                  className="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-neutral-950 text-sm sm:text-base font-extrabold transition-all shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2"
+                >
+                  <span>Khám Phá Dự Đoán AI Ngay</span>
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              )}
               <Link
                 href="/"
                 className="w-full py-3 px-6 rounded-xl border border-neutral-800 hover:border-neutral-700 bg-neutral-900/50 hover:bg-neutral-800 text-neutral-300 hover:text-white text-xs sm:text-sm font-semibold transition-all flex items-center justify-center gap-2"

@@ -17,11 +17,31 @@ interface MatchDateFilterProps {
 /**
  * Định dạng đối tượng Date thành chuỗi YYYY-MM-DD theo giờ địa phương của người dùng (tránh lệch UTC)
  */
-function dinhDangNgayDiaPhuong(d: Date): string {
+export function dinhDangNgayDiaPhuong(d: Date = new Date()): string {
   const nam = d.getFullYear();
   const thang = String(d.getMonth() + 1).padStart(2, "0");
   const ngay = String(d.getDate()).padStart(2, "0");
   return `${nam}-${thang}-${ngay}`;
+}
+
+const TEN_THU_VIET_TAT = [
+  "Chủ nhật",
+  "Thứ 2",
+  "Thứ 3",
+  "Thứ 4",
+  "Thứ 5",
+  "Thứ 6",
+  "Thứ 7",
+];
+
+/**
+ * Định dạng thứ và ngày tháng theo định dạng đồng nhất giữa Server và Client (tránh lỗi Hydration)
+ */
+function dinhDangThuVaNgay(d: Date): string {
+  const tenThu = TEN_THU_VIET_TAT[d.getDay()];
+  const ngay = String(d.getDate()).padStart(2, "0");
+  const thang = String(d.getMonth() + 1).padStart(2, "0");
+  return `${tenThu}, ${ngay}/${thang}`;
 }
 
 export default function MatchDateFilter({
@@ -52,11 +72,7 @@ export default function MatchDateFilter({
       } else if (offset === 1) {
         label = "Ngày mai";
       } else {
-        label = new Intl.DateTimeFormat("vi-VN", {
-          weekday: "short",
-          day: "2-digit",
-          month: "2-digit",
-        }).format(d);
+        label = dinhDangThuVaNgay(d);
       }
 
       dates.push({

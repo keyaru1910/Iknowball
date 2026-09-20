@@ -7,20 +7,30 @@ interface MatchHeaderProps {
   match: MatchDetail;
 }
 
+const TEN_THU_DAY_DU = [
+  "Chủ nhật",
+  "Thứ hai",
+  "Thứ ba",
+  "Thứ tư",
+  "Thứ năm",
+  "Thứ sáu",
+  "Thứ bảy",
+];
+
 function formatMatchTime(utcIso: string): { date: string; time: string } {
   try {
     const d = new Date(utcIso);
-    const date = new Intl.DateTimeFormat("vi-VN", {
-      weekday: "long",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    }).format(d);
-    const time = new Intl.DateTimeFormat("vi-VN", {
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(d);
-    return { date, time };
+    const tenThu = TEN_THU_DAY_DU[d.getDay()];
+    const ngay = String(d.getDate()).padStart(2, "0");
+    const thang = String(d.getMonth() + 1).padStart(2, "0");
+    const nam = d.getFullYear();
+    const gio = String(d.getHours()).padStart(2, "0");
+    const phut = String(d.getMinutes()).padStart(2, "0");
+
+    return {
+      date: `${tenThu}, ${ngay}/${thang}/${nam}`,
+      time: `${gio}:${phut}`,
+    };
   } catch {
     return { date: "--/--/----", time: "--:--" };
   }
