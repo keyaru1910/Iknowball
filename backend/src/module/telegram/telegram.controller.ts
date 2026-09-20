@@ -49,6 +49,16 @@ export class TelegramController {
     }
 
     /**
+     * Cài đặt Webhook URL tới Telegram API
+     */
+    @UseGuards(JwtAuthGuard)
+    @Post('setup-webhook')
+    async setupWebhook(@Body() body: { webhookUrl?: string }) {
+        const data = await this.telegramService.setupWebhook(body?.webhookUrl);
+        return { data, meta: null, error: null };
+    }
+
+    /**
      * Webhook nhận cập nhật từ Telegram Bot
      */
     @Public()

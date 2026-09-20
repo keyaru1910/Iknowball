@@ -479,9 +479,9 @@ model Subscription {
   id                   String             @id @default(uuid())
   userId               String
   user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  stripeCustomerId     String
+  stripeCustomerId     String?
   stripeSubscriptionId String?            @unique
-  stripePriceId        String
+  stripePriceId        String?
   plan                 SubscriptionPlan   @default(PRO_MONTHLY)
   status               SubscriptionStatus @default(ACTIVE)
   currentPeriodStart   DateTime
@@ -503,19 +503,24 @@ model Payment {
   user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId        String?
   subscription          Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  orderCode             String?       @unique // Mã đơn hàng dùng cho nội dung chuyển khoản ngân hàng (vd: IKB123456)
   stripeSessionId       String?       @unique
   stripePaymentIntentId String?       @unique
-  amount                Decimal       @db.Decimal(10, 2)
-  currency              String        @default("usd")
+  amount                Decimal       @db.Decimal(12, 2)
+  currency              String        @default("vnd")
   status                PaymentStatus @default(PENDING)
   receiptUrl            String?
-  paymentMethod         String?
+  paymentMethod         String?       // "vietqr" | "bank_transfer" | "stripe_card"
+  bankCode              String?       // Mã ngân hàng (vd: MB, VCB)
+  bankAccount           String?       // Số tài khoản người nhận
+  qrCodeUrl             String?       // Link mã VietQR QuickLink
   errorMessage          String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 
   @@index([userId])
   @@index([subscriptionId])
+  @@index([orderCode])
   @@index([status])
   @@index([createdAt])
 }

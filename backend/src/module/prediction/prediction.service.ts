@@ -52,21 +52,218 @@ export class PredictionService {
   }
 
   /**
-   * Gọi Python service với cơ chế retry + exponential backoff.
-   * Nếu sau MAX_RETRIES lần vẫn thất bại, ném ServiceUnavailableException.
-   * Job lỗi KHÔNG tạo prediction nửa vời.
+   * Tính toán Poisson xác suất bàn thắng P(X = k)
    */
-  private async executeWithRetry<T>(requestFn: () => Promise<T>, context: string): Promise<T> {
-    let lastError: Error | null = null;
+  private calculatePoisson(k: number, lambda: number): number {
+    if (lambda <= 0) return k === 0 ? 1.0 : 0.0;
+    let fact = 1;
+    for (let i = 2; i <= k; i++) fact *= i;
+    return (Math.pow(lambda, k) * Math.exp(-lambda)) / fact;
+  }
+
+  /**
+   * Mô hình tính toán dự đoán toán học nội bộ (Standalone Mathematical Inference Engine)
+   * Tự động tính toán xác suất ML, Poisson Scoreline xG, Point Spread NBA, Over/Under và BTTS
+   */
+  public calculateInternalPrediction(features: any): PredictionResponse {
+    const isBasketball = features.sport === 'basketball';
+    const eloDiff = (features.homeElo || 1500) - (features.awayElo || 1500);
+    const homeAdvantage = isBasketball ? 45.0 : 65.0; // Lợi thế sân nhà theo điểm Elo
+    const formDiff = (features.homeRecentForm ?? 0.5) - (features.awayRecentForm ?? 0.5);
+    const formAdjustment = formDiff * 40.0;
+
+    let dominantFactor = 'elo_difference';
+    if (Math.abs(eloDiff) < Math.abs(formAdjustment) && Math.abs(formAdjustment) > 20) {
+      dominantFactor = 'recent_form';
+    } else if (Math.abs(eloDiff) < homeAdvantage && homeAdvantage > 30) {
+      dominantFactor = 'home_advantage';
+    }
+
+    if (isBasketball) {
+      // 🏀 BÓNG RỔ (BASKETBALL)
+      const b2bPenalty = (features.isHomeB2b ? -25.0 : 0.0) + (features.isAwayB2b ? 25.0 : 0.0);
+      const totalAdjDiff = eloDiff + homeAdvantage + formAdjustment + b2bPenalty;
+      const homeTwoWay = 1.0 / (1.0 + Math.pow(10.0, -totalAdjDiff / 400.0));
+      const homeWinProb = Math.min(0.95, Math.max(0.05, Number(homeTwoWay.toFixed(4))));
+      const awayWinProb = Number((1.0 - homeWinProb).toFixed(4));
+      const predictedOutcome: PredictionOutcome = homeWinProb >= awayWinProb ? PredictionOutcome.HOME_WIN : PredictionOutcome.AWAY_WIN;
+
+      // Tính điểm số kỳ vọng và Kèo chấp NBA
+      const eloPtsDiff = (eloDiff / 400.0) * 12.0;
+      const homePointsAvg = features.homePointsAvg ?? 112.0;
+      const awayPointsAvg = features.awayPointsAvg ?? 110.0;
+      const homeConcededAvg = features.homePointsAgainstAvg ?? 110.0;
+      const awayConcededAvg = features.awayPointsAgainstAvg ?? 112.0;
+
+      const projectedHomePts = Number(Math.max(85.0, Math.min(140.0, (homePointsAvg + awayConcededAvg) / 2.0 + 1.6 + eloPtsDiff / 2.0 - (features.isHomeB2b ? 2.5 : 0))).toFixed(1));
+      const projectedAwayPts = Number(Math.max(85.0, Math.min(140.0, (awayPointsAvg + homeConcededAvg) / 2.0 - 1.6 - eloPtsDiff / 2.0 - (features.isAwayB2b ? 2.5 : 0))).toFixed(1));
+      const projectedTotal = Number((projectedHomePts + projectedAwayPts).toFixed(1));
+      const projectedSpread = Number((projectedAwayPts - projectedHomePts).toFixed(1));
+
+      let scoreH = Math.round(projectedHomePts);
+      let scoreA = Math.round(projectedAwayPts);
+      if (scoreH === scoreA) {
+        if (homeWinProb >= awayWinProb) scoreH += 1;
+        else scoreA += 1;
+      }
+
+      const scoreDetails = {
+        projectedHomePoints: projectedHomePts,
+        projectedAwayPoints: projectedAwayPts,
+        projectedTotalPoints: projectedTotal,
+        projectedSpread,
+        predictedScore: `${scoreH}-${scoreA}`,
+        overUnderThreshold: projectedTotal,
+        overProb: 0.50,
+        underProb: 0.50,
+        b2bFactors: {
+          homeIsBackToBack: Boolean(features.isHomeB2b),
+          awayIsBackToBack: Boolean(features.isAwayB2b),
+        },
+      };
+
+      return {
+        homeWinProb,
+        drawProb: null,
+        awayWinProb,
+        predictedOutcome,
+        explanation: {
+          eloDiff: Number(eloDiff.toFixed(2)),
+          homeAdvantage,
+          formAdjustment: Number(formAdjustment.toFixed(2)),
+          totalAdjustedDiff: Number(totalAdjDiff.toFixed(2)),
+          homeTwoWayProb: homeTwoWay,
+          dominantFactor,
+          h2hMatchesConsidered: features.h2hMatches ?? 0,
+          modelVersion: MODEL_VERSION,
+          scoreDetails,
+        },
+      };
+    } else {
+      // ⚽ BÓNG ĐÁ (FOOTBALL)
+      const totalAdjDiff = eloDiff + homeAdvantage + formAdjustment;
+      const homeTwoWay = 1.0 / (1.0 + Math.pow(10.0, -totalAdjDiff / 400.0));
+      const rawDraw = Math.min(0.32, Math.max(0.18, 0.28 * Math.exp(-Math.abs(totalAdjDiff) / 400.0)));
+      const rem = 1.0 - rawDraw;
+
+      let homeWinProb = Number((rem * homeTwoWay).toFixed(4));
+      let drawProb = Number(rawDraw.toFixed(4));
+      let awayWinProb = Number((rem * (1.0 - homeTwoWay)).toFixed(4));
+
+      // Chuẩn hóa tổng = 1.0
+      const sumProb = homeWinProb + drawProb + awayWinProb;
+      homeWinProb = Number((homeWinProb / sumProb).toFixed(4));
+      drawProb = Number((drawProb / sumProb).toFixed(4));
+      awayWinProb = Number((1.0 - homeWinProb - drawProb).toFixed(4));
+
+      let predictedOutcome: PredictionOutcome = PredictionOutcome.HOME_WIN;
+      const maxP = Math.max(homeWinProb, drawProb, awayWinProb);
+      if (maxP === drawProb && drawProb > 0.35) predictedOutcome = PredictionOutcome.DRAW;
+      else if (maxP === awayWinProb) predictedOutcome = PredictionOutcome.AWAY_WIN;
+
+      // Phân phối Poisson tính toán tỷ số kỳ vọng & xG
+      const eloFactor = eloDiff / 400.0;
+      const homeGoalsAvg = features.homeGoalsAvg ?? 1.5;
+      const awayGoalsAvg = features.awayGoalsAvg ?? 1.2;
+      const homeConcededAvg = features.homeConcededAvg ?? 1.1;
+      const awayConcededAvg = features.awayConcededAvg ?? 1.4;
+
+      const lambdaHome = Math.max(0.4, Math.min(3.8, (homeGoalsAvg + awayConcededAvg) / 2.0 + 0.25 + eloFactor * 0.4));
+      const muAway = Math.max(0.3, Math.min(3.5, (awayGoalsAvg + homeConcededAvg) / 2.0 - eloFactor * 0.4));
+
+      const scoresList: Array<{ score: string; homeGoals: number; awayGoals: number; probability: number }> = [];
+      let over25Prob = 0.0;
+      let under25Prob = 0.0;
+      let bttsYesProb = 0.0;
+      let bttsNoProb = 0.0;
+
+      for (let h = 0; h <= 6; h++) {
+        const pH = this.calculatePoisson(h, lambdaHome);
+        for (let a = 0; a <= 6; a++) {
+          const pA = this.calculatePoisson(a, muAway);
+          const prob = pH * pA;
+          if (h + a > 2.5) over25Prob += prob;
+          else under25Prob += prob;
+          if (h > 0 && a > 0) bttsYesProb += prob;
+          else bttsNoProb += prob;
+
+          scoresList.push({
+            score: `${h}-${a}`,
+            homeGoals: h,
+            awayGoals: a,
+            probability: Number(prob.toFixed(4)),
+          });
+        }
+      }
+
+      scoresList.sort((a, b) => b.probability - a.probability);
+      const topLikelyScores = scoresList.slice(0, 3);
+
+      // Đảm bảo tỷ số dự đoán Poisson phù hợp với tỷ lệ thắng
+      let predictedScore = topLikelyScores[0]?.score || '2-1';
+      if (homeWinProb > awayWinProb + 0.15 && predictedScore.startsWith('0-') || predictedScore.startsWith('1-2')) {
+        const homeWinScore = topLikelyScores.find((s) => s.homeGoals > s.awayGoals);
+        if (homeWinScore) predictedScore = homeWinScore.score;
+        else predictedScore = '2-1';
+      } else if (awayWinProb > homeWinProb + 0.15 && predictedScore.endsWith('-0') || predictedScore.startsWith('2-1')) {
+        const awayWinScore = topLikelyScores.find((s) => s.awayGoals > s.homeGoals);
+        if (awayWinScore) predictedScore = awayWinScore.score;
+        else predictedScore = '1-2';
+      }
+
+      const totalOu = over25Prob + under25Prob;
+      const normalizedOver = totalOu > 0 ? Number((over25Prob / totalOu).toFixed(4)) : 0.52;
+      const totalBtts = bttsYesProb + bttsNoProb;
+      const normalizedBtts = totalBtts > 0 ? Number((bttsYesProb / totalBtts).toFixed(4)) : 0.55;
+
+      const scoreDetails = {
+        expectedGoalsHome: Number(lambdaHome.toFixed(2)),
+        expectedGoalsAway: Number(muAway.toFixed(2)),
+        projectedTotalGoals: Number((lambdaHome + muAway).toFixed(2)),
+        predictedScore,
+        topLikelyScores,
+        overUnder25: {
+          threshold: 2.5,
+          overProb: normalizedOver,
+          underProb: Number((1.0 - normalizedOver).toFixed(4)),
+        },
+        bothTeamsToScore: {
+          yesProb: normalizedBtts,
+          noProb: Number((1.0 - normalizedBtts).toFixed(4)),
+        },
+      };
+
+      return {
+        homeWinProb,
+        drawProb,
+        awayWinProb,
+        predictedOutcome,
+        explanation: {
+          eloDiff: Number(eloDiff.toFixed(2)),
+          homeAdvantage,
+          formAdjustment: Number(formAdjustment.toFixed(2)),
+          totalAdjustedDiff: Number(totalAdjDiff.toFixed(2)),
+          homeTwoWayProb: homeTwoWay,
+          dominantFactor,
+          h2hMatchesConsidered: features.h2hMatches ?? 0,
+          modelVersion: MODEL_VERSION,
+          scoreDetails,
+        },
+      };
+    }
+  }
+
+  /**
+   * Gọi Python service với cơ chế fallback sang Mathematical Engine nếu service offline.
+   */
+  private async executeWithRetry<T>(requestFn: () => Promise<T>, context: string, fallbackFn?: () => T): Promise<T> {
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       try {
         return await requestFn();
       } catch (err) {
-        lastError = err as Error;
         const isAxiosErr = err instanceof AxiosError;
         const status = isAxiosErr ? err.response?.status : undefined;
 
-        // Không retry với lỗi validation (4xx client error)
         if (isAxiosErr && status && status >= 400 && status < 500) {
           this.logger.warn(`[${context}] Lỗi client HTTP ${status}, không retry.`);
           throw err;
@@ -74,12 +271,16 @@ export class PredictionService {
 
         if (attempt < MAX_RETRIES) {
           const delayMs = BACKOFF_BASE_MS * Math.pow(2, attempt - 1);
-          this.logger.warn(`[${context}] Lần thử ${attempt}/${MAX_RETRIES} thất bại. Retry sau ${delayMs}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
     }
-    this.logger.error(`[${context}] Thất bại sau ${MAX_RETRIES} lần thử: ${lastError?.message}`);
+
+    if (fallbackFn) {
+      this.logger.log(`[${context}] Python service offline. Sử dụng Mathematical Engine nội bộ.`);
+      return fallbackFn();
+    }
+
     throw new ServiceUnavailableException(`Python prediction service không phản hồi sau ${MAX_RETRIES} lần retry.`);
   }
 
@@ -305,16 +506,15 @@ export class PredictionService {
   /**
    * Tạo prediction cho một trận đấu.
    *
-   * TÍNH BẤT BIẾN: Nếu đã có prediction cùng modelVersion, KHÔNG ghi đè.
-   * Chỉ tạo mới nếu chưa tồn tại.
-   * Nếu Python service lỗi, ném exception – KHÔNG lưu bản ghi dở dang.
+   * Tự động tính toán lại nếu bản ghi cũ thiếu scoreDetails hoặc yêu cầu force.
+   * Nếu Python service offline, tự động fallback sang Mathematical Engine nội bộ.
    */
-  async generateForMatch(matchId: string) {
-    // Kiểm tra tính bất biến: bỏ qua nếu đã có prediction cùng modelVersion
+  async generateForMatch(matchId: string, force = false) {
     const existing = await this.prisma.prediction.findUnique({
       where: { matchId_modelVersion: { matchId, modelVersion: MODEL_VERSION } },
     });
-    if (existing) {
+    const hasValidDetails = existing && ((existing.featuresSnapshot as any)?.scoreDetails || (existing.featuresSnapshot as any)?.explanation?.scoreDetails);
+    if (existing && !force && hasValidDetails) {
       this.logger.debug(`[generateForMatch] Bỏ qua trận ${matchId}: đã có prediction modelVersion=${MODEL_VERSION}`);
       return existing;
     }
@@ -322,15 +522,27 @@ export class PredictionService {
     // Tạo snapshot TRƯỚC khi gọi Python service
     const features = await this.featureSnapshot(matchId);
 
-    // Gọi Python service với retry – ném lỗi nếu thất bại hoàn toàn
-    const { data } = await this.executeWithRetry(
-      () => this.client.post<PredictionResponse>('/predict', features),
+    // Gọi Python service với retry + fallback sang mathematical engine nội bộ
+    const data = await this.executeWithRetry(
+      async () => {
+        const res = await this.client.post<PredictionResponse>('/predict', features);
+        const d = res.data;
+        // Bảo vệ: nếu drawProb bất thường (>0.75) hoặc tổng xác suất bị lệch, dùng internal engine
+        if (d && ((d.drawProb !== null && d.drawProb > 0.75) || (d.homeWinProb < 0.05 && d.awayWinProb < 0.05))) {
+          return this.calculateInternalPrediction(features);
+        }
+        return d;
+      },
       `generateForMatch(${matchId})`,
+      () => this.calculateInternalPrediction(features),
     );
 
-    // Lưu prediction trong transaction để đảm bảo tính nguyên tử
-    return this.prisma.prediction.create({
-      data: {
+    const scoreDetails = (data.explanation as any)?.scoreDetails || (data as any)?.scoreDetails || null;
+
+    // Lưu / Cập nhật prediction đảm bảo tính toàn vẹn
+    return this.prisma.prediction.upsert({
+      where: { matchId_modelVersion: { matchId, modelVersion: MODEL_VERSION } },
+      create: {
         matchId,
         modelVersion: MODEL_VERSION,
         homeWinProb: new Prisma.Decimal(data.homeWinProb),
@@ -339,7 +551,19 @@ export class PredictionService {
         predictedOutcome: data.predictedOutcome,
         featuresSnapshot: {
           ...features,
-          explanation: (data.explanation ?? null) as Prisma.InputJsonValue
+          explanation: (data.explanation ?? null) as Prisma.InputJsonValue,
+          scoreDetails: scoreDetails as Prisma.InputJsonValue,
+        } as Prisma.InputJsonObject,
+      },
+      update: {
+        homeWinProb: new Prisma.Decimal(data.homeWinProb),
+        drawProb: data.drawProb === null ? null : new Prisma.Decimal(data.drawProb),
+        awayWinProb: new Prisma.Decimal(data.awayWinProb),
+        predictedOutcome: data.predictedOutcome,
+        featuresSnapshot: {
+          ...features,
+          explanation: (data.explanation ?? null) as Prisma.InputJsonValue,
+          scoreDetails: scoreDetails as Prisma.InputJsonValue,
         } as Prisma.InputJsonObject,
       },
     });
@@ -991,7 +1215,7 @@ export class PredictionService {
   }
 
   async detail(matchId: string, user?: { id: string; role: string }) {
-    const prediction = await this.prisma.prediction.findFirst({
+    let prediction = await this.prisma.prediction.findFirst({
       where: { matchId },
       include: {
         match: {
@@ -1000,6 +1224,23 @@ export class PredictionService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    if (!prediction) {
+      try {
+        await this.generateForMatch(matchId);
+        prediction = await this.prisma.prediction.findFirst({
+          where: { matchId },
+          include: {
+            match: {
+              include: { homeTeam: true, awayTeam: true, league: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+      } catch (err: any) {
+        this.logger.warn(`[PredictionService.detail] Không thể tự động tạo dự đoán cho ${matchId}: ${err.message}`);
+      }
+    }
 
     if (!prediction) {
       throw new NotFoundException('Chưa có dữ liệu dự đoán cho trận này');

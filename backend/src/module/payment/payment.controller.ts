@@ -4,6 +4,7 @@ import {
     Get,
     Headers,
     HttpCode,
+    HttpStatus,
     Param,
     Post,
     Req,
@@ -13,6 +14,7 @@ import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { PaymentService } from './payment.service';
 import { CreateCheckoutSessionDto } from './dto/create-checkout-session.dto';
+import { CreateVietQrPaymentDto } from './dto/create-vietqr-payment.dto';
 import { ConfirmSessionDto } from './dto/confirm-session.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
@@ -33,10 +35,89 @@ export class PaymentController {
     }
 
     /**
+     * Khởi tạo giao dịch thanh toán VietQR Ngân hàng nội địa (Napas 247)
+     */
+    @Post('vietqr/create')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(JwtAuthGuard)
+    @Throttle({ default: { limit: 20, ttl: 60000 } })
+    async createVietQrPayment(
+        @CurrentUser('id') userId: string,
+        @Body() dto: CreateVietQrPaymentDto,
+    ) {
+        const result = await this.paymentService.createVietQrPayment(userId, dto);
+        return { data: result, meta: null, error: null };
+    }
+
+    /**
+     * Tra cứu trạng thái thanh toán đơn hàng VietQR (Frontend Polling mỗi 3s)
+     */
+    @Get('vietqr/status/:orderCode')
+    @Public()
+    async checkVietQrPaymentStatus(@Param('orderCode') orderCode: string) {
+        const result = await this.paymentService.checkVietQrPaymentStatus(orderCode);
+        return { data: result, meta: null, error: null };
+    }
+
+    /**
+     * Xác nhận thanh toán VietQR thủ công (môi trường Test / Admin)
+     */
+    @Post('vietqr/manual-confirm')
+    @HttpCode(HttpStatus.OK)
+    @UseGuards(JwtAuthGuard)
+    async manualConfirmVietQrPayment(
+        @Body() body: { orderCode: string; plan?: any },
+    ) {
+        const result = await this.paymentService.manualConfirmVietQrPayment(body.orderCode, body.plan);
+        return { data: result, meta: null, error: null };
+    }
+
+    /**
+     * Nhận Webhook biến động số dư từ cổng thanh toán Ngân hàng nội địa (SePay, PayOS, Casso...)
+     */
+    @Post('webhook/domestic')
+    @Public()
+    @HttpCode(HttpStatus.OK)
+    async handleDomesticWebhook(
+        @Body() payload: any,
+        @Headers('authorization') authHeader?: string,
+    ) {
+        const result = await this.paymentService.handleDomesticWebhook(payload, authHeader);
+        return result;
+    }
+
+    /**
+     * Alias Webhook cho SePay
+     */
+    @Post('webhook/sepay')
+    @Public()
+    @HttpCode(HttpStatus.OK)
+    async handleSepayWebhook(
+        @Body() payload: any,
+        @Headers('authorization') authHeader?: string,
+    ) {
+        return this.paymentService.handleDomesticWebhook(payload, authHeader);
+    }
+
+    /**
+     * Alias Webhook cho PayOS
+     */
+    @Post('webhook/payos')
+    @Public()
+    @HttpCode(HttpStatus.OK)
+    async handlePayosWebhook(
+        @Body() payload: any,
+        @Headers('x-api-key') apiKey?: string,
+        @Headers('authorization') authHeader?: string,
+    ) {
+        return this.paymentService.handleDomesticWebhook(payload, authHeader || apiKey);
+    }
+
+    /**
      * Khởi tạo gói đăng ký / Checkout Session
      */
     @Post('subscriptions')
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     async createSubscription(
@@ -51,7 +132,7 @@ export class PaymentController {
      * Khởi tạo Stripe Checkout Session (backward compatibility)
      */
     @Post('create-checkout-session')
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     @Throttle({ default: { limit: 10, ttl: 60000 } })
     async createCheckoutSession(
@@ -66,7 +147,7 @@ export class PaymentController {
      * Xác nhận phiên thanh toán và kích hoạt gói Subscription
      */
     @Post('confirm-session')
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     async confirmSession(
         @CurrentUser('id') userId: string,
@@ -80,7 +161,7 @@ export class PaymentController {
      * Tạo Customer Portal Session
      */
     @Post('customer-portal')
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     @UseGuards(JwtAuthGuard)
     async createCustomerPortalSession(@CurrentUser('id') userId: string) {
         const result = await this.paymentService.createCustomerPortalSession(userId);
@@ -115,7 +196,7 @@ export class PaymentController {
      */
     @Post('webhook/stripe')
     @Public()
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     async handleStripeWebhook(
         @Req() req: Request,
         @Headers('stripe-signature') signature: string,
@@ -130,7 +211,7 @@ export class PaymentController {
      */
     @Post('webhook')
     @Public()
-    @HttpCode(200)
+    @HttpCode(HttpStatus.OK)
     async handleWebhook(
         @Req() req: Request,
         @Headers('stripe-signature') signature: string,

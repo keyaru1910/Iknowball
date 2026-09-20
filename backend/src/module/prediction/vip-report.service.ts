@@ -1,7 +1,8 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
+import { PredictionService } from './prediction.service';
 
 export interface VipReportResponse {
   isLocked: boolean;
@@ -23,7 +24,10 @@ export interface VipReportResponse {
 export class VipReportService {
   private readonly logger = new Logger(VipReportService.name);
 
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(forwardRef(() => PredictionService)) private readonly predictionService: PredictionService,
+  ) {}
 
   /**
    * Lấy hoặc sinh báo cáo nhận định AI chuyên sâu cho trận đấu (dành cho gói VIP)
@@ -33,7 +37,7 @@ export class VipReportService {
     user?: { id?: string; role?: string; tier?: string },
     forceRegenerate = false,
   ): Promise<VipReportResponse> {
-    const match = await this.prisma.match.findUnique({
+    let match = await this.prisma.match.findUnique({
       where: { id: matchId },
       include: {
         homeTeam: true,
@@ -49,6 +53,28 @@ export class VipReportService {
 
     if (!match) {
       throw new NotFoundException('Không tìm thấy thông tin trận đấu');
+    }
+
+    // Đảm bảo trận đấu có dữ liệu dự đoán toán học ML & Poisson xG
+    if (!match.predictions?.length) {
+      try {
+        await this.predictionService.generateForMatch(matchId);
+        match = await this.prisma.match.findUnique({
+          where: { id: matchId },
+          include: {
+            homeTeam: true,
+            awayTeam: true,
+            league: { include: { sport: true } },
+            predictions: {
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+            vipReport: true,
+          },
+        }) || match;
+      } catch (err: any) {
+        this.logger.warn(`[getOrGenerateVipReport] Lỗi khi tự động sinh dự đoán: ${err.message}`);
+      }
     }
 
     // Xác định phân hạng người dùng
@@ -434,7 +460,7 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
     scoreDetails?: any;
   }) {
     const eloDiff = ctx.homeElo - ctx.awayElo;
-    const isHomeFavored = ctx.homeProb > ctx.awayProb;
+    const isHomeFavored = ctx.homeProb >= ctx.awayProb;
     const dominantProb = Math.max(ctx.homeProb, ctx.awayProb, ctx.drawProb || 0);
 
     let confidence = 'HIGH';
@@ -445,16 +471,17 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
     }
 
     if (ctx.isBasketball) {
-      // BÓNG RỔ HEURISTIC
+      // 🏀 BÓNG RỔ HEURISTIC
       const projectedSpread = ctx.scoreDetails?.projectedSpread ?? (eloDiff > 0 ? -4.5 : 4.5);
       const predictedScore = ctx.scoreDetails?.predictedScore ?? (isHomeFavored ? '114-108' : '106-112');
       const stronger = isHomeFavored ? ctx.homeName : ctx.awayName;
       const weaker = isHomeFavored ? ctx.awayName : ctx.homeName;
+      const favoredProb = Math.max(ctx.homeProb, ctx.awayProb);
 
       return {
         headline: `${stronger} Nắm Ưu Thế Nhịp Độ Trận Đấu Trước ${weaker} Tại ${ctx.leagueName}`,
-        summary: `Mô hình AI dự báo ${stronger} chiếm ưu thế về hiệu suất tấn công và khả năng kiểm soát khu vực dưới bảng rổ. Lợi thế sân nhà cùng chênh lệch thực lực giúp ${stronger} đạt xác suất thắng ${Math.max(ctx.homeProb, ctx.awayProb)}%.`,
-        tacticalAnalysis: `${stronger} có xu hướng đẩy nhanh nhịp độ (Pace) và khai thác triệt để các pha chuyển trạng thái phản công nhanh (Fast-break). Ngược lại, ${weaker} cần chú trọng kiểm soát bóng và hạn chế tối đa các tình huống mất bóng (Turnovers) để không bị đối phương nới rộng cách biệt điểm số. Kèo chấp điểm dự kiến xoay quanh mốc ${projectedSpread} điểm.`,
+        summary: `Mô hình AI dự báo ${stronger} chiếm ưu thế về hiệu suất tấn công và khả năng kiểm soát khu vực dưới bảng rổ. Lợi thế chuyên môn giúp ${stronger} đạt xác suất thắng ${favoredProb}%.`,
+        tacticalAnalysis: `${stronger} có xu hướng đẩy nhanh nhịp độ (Pace) và khai thác triệt để các pha chuyển trạng thái phản công nhanh (Fast-break). Ngược lại, ${weaker} cần chú trọng kiểm soát bóng và hạn chế tối đa các tình huống mất bóng (Turnovers) để không bị đối phương nới rộng cách biệt điểm số. Kèo chấp điểm dự kiến xoay quanh mốc ${projectedSpread > 0 ? `+${projectedSpread}` : projectedSpread} điểm.`,
         keyBattles: [
           {
             title: `Trận địa tranh chấp Rebound & Hiệu suất ném ngoài vòng cung (3PT%)`,
@@ -467,55 +494,86 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
         ],
         predictedScore,
         confidence,
-        recommendation: `Kịch bản ${stronger} giành thắng lợi với cách biệt từ 4 đến 8 điểm có độ hội tụ thống kê cao. Chú ý theo dõi biến động điểm số hiệp 1.`,
+        recommendation: `Kịch bản ${stronger} giành thắng lợi với cách biệt điểm số dự báo là phương án có độ tin cậy thống kê cao.`,
         generatedBy: 'HEURISTIC_AI',
       };
     } else {
-      // BÓNG ĐÁ HEURISTIC
-      const predictedScore = ctx.scoreDetails?.predictedScore ?? (isHomeFavored ? '2-1' : '1-2');
-      if (Math.abs(eloDiff) > 80) {
-        const stronger = eloDiff > 0 ? ctx.homeName : ctx.awayName;
-        const weaker = eloDiff > 0 ? ctx.awayName : ctx.homeName;
+      // ⚽ BÓNG ĐÁ HEURISTIC
+      // Lấy tỷ số dự đoán từ mô hình Poisson xG hoặc suy luận phù hợp
+      let predictedScore = ctx.scoreDetails?.predictedScore;
+      if (!predictedScore) {
+        if (ctx.homeProb >= 55) predictedScore = '2-1';
+        else if (ctx.awayProb >= 55) predictedScore = '1-2';
+        else if (ctx.drawProb >= 30) predictedScore = '1-1';
+        else predictedScore = isHomeFavored ? '2-1' : '1-2';
+      }
+
+      // Kịch bản 1: Đội nhà áp đảo rõ rệt
+      if (ctx.homeProb >= 55 || eloDiff >= 70) {
         return {
-          headline: `${stronger} Áp Đảo Về Đẳng Cấp Elo Trước ${weaker} Tại ${ctx.leagueName}`,
-          summary: `Mô hình AI ghi nhận chênh lệch thực lực đáng kể (${Math.abs(eloDiff)} điểm Elo) nghiêng về ${stronger}. Lợi thế chiều sâu đội hình và tính tổ chức lối chơi tạo cơ sở vững chắc cho khả năng kiểm soát thế trận của ${stronger}.`,
-          tacticalAnalysis: `${stronger} có xu hướng đẩy cao cự ly đội hình và áp đặt quyền kiểm soát ở 1/3 sân đối phương. Trái lại, ${weaker} nhiều khả năng phải lùi sâu phòng ngự khối thấp (low-block) và chờ đợi cơ hội phản công từ các đường bóng dài. Điểm quyết định cục diện sẽ nằm ở khả năng chuyển hóa cơ hội từ các pha đánh biên và tình huống cố định.`,
+          headline: `${ctx.homeName} Nắm Thế Chủ Động & Áp Đặt Sức Ép Trước ${ctx.awayName}`,
+          summary: `Điểm tựa sân nhà kết hợp cùng chỉ số Elo vượt trội (${ctx.homeElo} vs ${ctx.awayElo}) mang lại cho ${ctx.homeName} cơ hội chiến thắng lên tới ${ctx.homeProb}%.`,
+          tacticalAnalysis: `${ctx.homeName} nhiều khả năng sẽ dâng cao đội hình nhằm áp đặt quyền kiểm soát ngay từ khu vực 1/3 sân đối phương. Về phía ${ctx.awayName}, phòng ngự khối thấp (Low-block) và chờ đợi cơ hội phản công biên sẽ là phương án khả dĩ nhất để nuôi hy vọng có điểm.`,
           keyBattles: [
             {
-              title: `Trận địa tuyến giữa & Tỷ lệ kiểm soát bóng`,
-              description: `Khả năng thoát pressing và phân phối bóng của trục tiền vệ ${isHomeFavored ? ctx.homeName : ctx.awayName} sẽ quyết định nhịp độ và quyền chủ động trên sân.`,
+              title: `Khả năng xuyên phá hành lang cánh & Tận dụng bóng cố định`,
+              description: `Sức ép liên tục từ các quả tạt và tình huống phạt góc của ${ctx.homeName} sẽ thử thách độ tập trung của hàng thủ ${ctx.awayName}.`,
             },
             {
-              title: `Hiệu suất chuyển hóa cơ hội phản công & Phòng ngự cố định`,
-              description: `Hàng thủ ${ctx.awayName} cần cảnh giác cao độ với các pha khoét nách trung lộ và tình huống phạt góc từ phía ${ctx.homeName}.`,
+              title: `Tốc độ chuyển đổi trạng thái phản công của ${ctx.awayName}`,
+              description: `Khai thác khoảng trống sau lưng các hậu vệ dâng cao của đội chủ nhà sẽ là chìa khóa duy nhất cho đội khách.`,
             },
           ],
           predictedScore,
           confidence,
-          recommendation: `Kịch bản ${stronger} giành trọn 3 điểm có độ hội tụ xác suất cao nhất (${Math.max(ctx.homeProb, ctx.awayProb)}%).`,
-          generatedBy: 'HEURISTIC_AI',
-        };
-      } else {
-        return {
-          headline: `${ctx.homeName} vs ${ctx.awayName}: Thế Trận Cân Não & Trận Đấu Giằng Co`,
-          summary: `Hai đội có mức điểm Elo tương đương (${ctx.homeElo} vs ${ctx.awayElo}), hứa hẹn một màn so tài quyết liệt. Lợi thế sân nhà ${ctx.homeName} đóng vai trò then chốt giúp nâng xác suất chiến thắng lên ${ctx.homeProb}%.`,
-          tacticalAnalysis: `Cả hai câu lạc bộ đều sở hữu hệ thống pressing tầm trung chặt chẽ. Khu trung tuyến sẽ là chiến trường nảy lửa nơi các tiền vệ tranh chấp từng mét vuông sân. Với tỷ lệ hòa dự báo ở mức ${ctx.drawProb}%, trận đấu có thể được định đoạt bởi khoảnh khắc tỏa sáng cá nhân hoặc một sai lầm nhỏ ở hàng thủ.`,
-          keyBattles: [
-            {
-              title: `Cuộc chiến đoạt bóng 2 & Nhịp điệu trung tuyến`,
-              description: `Khả năng tranh chấp bóng hai (second ball) và duy trì cự ly đội hình sẽ quyết định ai làm chủ cục diện.`,
-            },
-            {
-              title: `Khoảnh khắc đột biến cá nhân & Tận dụng bóng chết`,
-              description: `Trong thế trận giằng co chặt chẽ, các tình huống đá phạt trực tiếp hoặc phạt góc sẽ là chìa khóa mở khóa tỷ số.`,
-            },
-          ],
-          predictedScore,
-          confidence,
-          recommendation: `Trận đấu có tính rủi ro cân bằng cao. Nên chú trọng yếu tố bàn thắng hiệp 2 và khả năng xoay chuyển nhân sự từ băng ghế dự bị.`,
+          recommendation: `Kịch bản ${ctx.homeName} kiểm soát thế trận và giành trọn 3 điểm có độ hội tụ xác suất cao (${ctx.homeProb}%).`,
           generatedBy: 'HEURISTIC_AI',
         };
       }
+
+      // Kịch bản 2: Đội khách vượt trội
+      if (ctx.awayProb >= 55 || eloDiff <= -70) {
+        return {
+          headline: `${ctx.awayName} Thể Hiện Bản Lĩnh Vượt Trội Khi Hành Quân Tới Sân ${ctx.homeName}`,
+          summary: `Dù phải thi đấu xa nhà, ${ctx.awayName} với mức Elo ${ctx.awayElo} vượt trội so với ${ctx.homeElo} của đội chủ nhà được mô hình định lượng đánh giá nắm giữ ${ctx.awayProb}% cơ hội chiến thắng.`,
+          tacticalAnalysis: `${ctx.awayName} sở hữu chiều sâu đội hình và tính tổ chức đồng bộ, giúp họ duy trì cự ly đội hình lý tưởng và áp đặt nhịp điệu thi đấu. ${ctx.homeName} sẽ cần phải duy trì sự tập trung tối đa ở hàng thủ và hạn chế tối đa các lỗi cá nhân nguy hiểm trước vòng cấm.`,
+          keyBattles: [
+            {
+              title: `Khả năng kiểm soát trung tuyến của ${ctx.awayName}`,
+              description: `Trục tiền vệ của đội khách có khả năng thoát pressing và phân phối bóng tốt hơn, giúp duy trì quyền kiểm soát bóng chủ động.`,
+            },
+            {
+              title: `Khả năng phong tỏa ngòi nổ tấn công của ${ctx.homeName}`,
+              description: `Hàng thủ ${ctx.homeName} cần tổ chức bọc lót nhiều lớp để ngăn chặn các đường chuyền chọc khe trung lộ.`,
+            },
+          ],
+          predictedScore,
+          confidence,
+          recommendation: `Mô hình dự báo ưu thế trọn vẹn dành cho ${ctx.awayName} (${ctx.awayProb}% xác suất thắng).`,
+          generatedBy: 'HEURISTIC_AI',
+        };
+      }
+
+      // Kịch bản 3: Thế trận giằng co / Tương đương Elo
+      return {
+        headline: `${ctx.homeName} vs ${ctx.awayName}: Thế Trận Cân Não & Trận Đấu Giằng Co`,
+        summary: `Hai đội có mức điểm Elo tương đương (${ctx.homeElo} vs ${ctx.awayElo}), hứa hẹn một màn so tài quyết liệt. Lợi thế sân nhà giúp ${ctx.homeName} đạt ${ctx.homeProb}% cơ hội thắng, trong khi tỷ lệ hòa được ghi nhận ở mức ${ctx.drawProb}%.`,
+        tacticalAnalysis: `Cả hai câu lạc bộ đều sở hữu hệ thống pressing tầm trung chặt chẽ và không muốn để lộ sơ hở sớm. Khu trung tuyến sẽ là chiến trường nảy lửa nơi các tiền vệ tranh chấp từng mét vuông sân. Trận đấu nhiều khả năng được định đoạt bởi một khoảnh khắc tỏa sáng cá nhân hoặc tình huống cố định.`,
+        keyBattles: [
+          {
+            title: `Cuộc chiến đoạt bóng 2 & Nhịp điệu trung tuyến`,
+            description: `Khả năng tranh chấp bóng hai (second ball) và duy trì cự ly đội hình sẽ quyết định bên nào làm chủ cục diện trên sân.`,
+          },
+          {
+            title: `Khoảnh khắc đột biến cá nhân & Tận dụng tình huống cố định`,
+            description: `Trong thế trận giằng co chặt chẽ, các pha đá phạt trực tiếp hoặc phạt góc sẽ là chìa khóa mở khóa tỷ số trận đấu.`,
+          },
+        ],
+        predictedScore,
+        confidence,
+        recommendation: `Trận đấu có tính cân bằng cao. Dự kiến tỷ số sát nút với xác suất cao thuộc về kịch bản ${predictedScore}.`,
+        generatedBy: 'HEURISTIC_AI',
+      };
     }
   }
 
