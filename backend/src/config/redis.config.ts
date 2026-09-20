@@ -14,7 +14,7 @@ export function getBullMqRedisConnection() {
     try {
       const parsed = new URL(redisUrl);
       const isTls = parsed.protocol === 'rediss:';
-      logger.log(`[Redis] Sử dụng REDIS_URL kết nối tới ${parsed.hostname}:${parsed.port || 6379} (TLS: ${isTls})`);
+      logger.log(`[Redis] Đang kết nối tới Redis qua URL: ${parsed.hostname}:${parsed.port || 6379} (TLS: ${isTls})`);
       return {
         host: parsed.hostname,
         port: Number(parsed.port) || 6379,
@@ -22,6 +22,7 @@ export function getBullMqRedisConnection() {
         password: parsed.password ? decodeURIComponent(parsed.password) : undefined,
         tls: isTls ? { rejectUnauthorized: false } : undefined,
         maxRetriesPerRequest: null,
+        enableReadyCheck: false,
       };
     } catch (err: any) {
       logger.error(`[Redis] Không thể parse REDIS_URL: ${err.message}`);
@@ -31,12 +32,13 @@ export function getBullMqRedisConnection() {
   const host = process.env.REDIS_HOST || 'localhost';
   const isUpstashOrTls = process.env.REDIS_TLS === 'true' || host.includes('upstash.io');
   
-  logger.log(`[Redis] Sử dụng cấu hình host/port: ${host} (TLS: ${isUpstashOrTls})`);
+  logger.warn(`[Redis] Chưa cấu hình REDIS_URL! Sử dụng fallback: ${host}:${process.env.REDIS_PORT || 6379} (TLS: ${isUpstashOrTls})`);
   return {
     host,
     port: Number(process.env.REDIS_PORT || 6379),
     password: process.env.REDIS_PASSWORD || undefined,
     tls: isUpstashOrTls ? { rejectUnauthorized: false } : undefined,
     maxRetriesPerRequest: null,
+    enableReadyCheck: false,
   };
 }
