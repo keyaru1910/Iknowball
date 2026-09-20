@@ -269,7 +269,7 @@ export default function LandingPage() {
                 <span className="transition-transform duration-200 group-hover:translate-x-1">→</span>
               </Link>
               <a
-                href="#accuracy"
+                href="/predictions/performance"
                 className="relative z-20 inline-flex items-center justify-center gap-2 rounded-xl border px-7 py-3.5 sm:px-8 sm:py-4 text-base font-semibold transition-all hover:bg-white/5 hover:border-white/30 hover:scale-[1.02] active:scale-[0.98] text-center backdrop-blur-sm"
                 style={{ borderColor: bangMau.border, color: bangMau.text }}
               >

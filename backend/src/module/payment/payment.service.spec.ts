@@ -1,13 +1,21 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { TelegramService } from '../telegram/telegram.service';
 import { SubscriptionPlan, WebhookEventStatus } from '@prisma/client';
 
 describe('PaymentService', () => {
     let service: PaymentService;
     let prisma: any;
+    let telegramService: any;
 
     beforeEach(() => {
+        telegramService = {
+            setupWebhook: vi.fn(),
+            sendVipAlert: vi.fn(),
+            sendPaymentSuccessNotification: vi.fn(),
+        };
+
         prisma = {
             user: {
                 findUnique: vi.fn(),
@@ -25,8 +33,16 @@ describe('PaymentService', () => {
                 updateMany: vi.fn(),
             },
             payment: {
-                create: vi.fn(),
+                findUnique: vi.fn(),
                 findMany: vi.fn(),
+                create: vi.fn().mockResolvedValue({
+                    id: 'pay-1',
+                    userId: 'user-1',
+                    orderCode: 'ORD-123',
+                    amount: 99000,
+                    status: 'PENDING',
+                }),
+                update: vi.fn(),
             },
             webhookEvent: {
                 findUnique: vi.fn(),
@@ -39,14 +55,17 @@ describe('PaymentService', () => {
             $transaction: vi.fn(async (callback) => callback(prisma)),
         };
 
-        service = new PaymentService(prisma as PrismaService);
+        service = new PaymentService(
+            prisma as unknown as PrismaService,
+            telegramService as unknown as TelegramService,
+        );
     });
 
     it('should be defined', () => {
         expect(service).toBeDefined();
     });
 
-    it('should create mock checkout session when Stripe key is not configured', async () => {
+    it('should create VietQR payment session when Stripe key is not configured', async () => {
         prisma.user.findUnique.mockResolvedValue({
             id: 'user-1',
             email: 'user@example.com',
@@ -58,8 +77,8 @@ describe('PaymentService', () => {
         });
 
         expect(result).toBeDefined();
-        expect(result.mode).toBe('test_mock');
-        expect(result.url).toContain('/payment/success');
+        expect(result.mode).toBe('vietqr');
+        expect(result.url).toContain('/payment/vietqr');
     });
 
     it('should handle already processed webhook event (idempotency)', async () => {
