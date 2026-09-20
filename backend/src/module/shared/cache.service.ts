@@ -9,7 +9,13 @@ export class CacheService implements OnModuleInit, OnModuleDestroy {
   private isConnected = false;
 
   async onModuleInit() {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    let redisUrl = (process.env.REDIS_URL || 'redis://localhost:6379').trim();
+    if ((redisUrl.startsWith('"') && redisUrl.endsWith('"')) || (redisUrl.startsWith("'") && redisUrl.endsWith("'"))) {
+      redisUrl = redisUrl.slice(1, -1).trim();
+    }
+    if (redisUrl.includes('-u ')) {
+      redisUrl = redisUrl.split('-u ')[1].trim();
+    }
     try {
       this.client = createClient({
         url: redisUrl,
