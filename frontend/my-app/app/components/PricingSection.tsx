@@ -195,11 +195,11 @@ export default function PricingSection({
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Cập nhật dự đoán tự động 48h trước giờ đấu</span>
+                <span>Chuông báo Web App & Browser Push 24/7</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Thanh toán VietQR Napas 247 kích hoạt ngay</span>
+                <span>Xuất báo cáo định lượng PDF / Excel 1-click</span>
               </li>
             </ul>
           </div>
@@ -237,7 +237,7 @@ export default function PricingSection({
               </span>
             </div>
             <p className="text-xs sm:text-sm text-neutral-400 mb-6 leading-relaxed">
-              Dành cho các chuyên gia và nhà đầu tư thể thao cần dữ liệu chuyên sâu và thông báo biến động tức thì qua Telegram VIP.
+              Dành cho các chuyên gia và nhà đầu tư thể thao cần dữ liệu định lượng +EV, Trợ lý AI Copilot và Trình giả lập Monte Carlo.
             </p>
 
             <ul className="space-y-3 text-xs sm:text-sm text-neutral-300 mb-8">
@@ -247,19 +247,19 @@ export default function PricingSection({
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Báo cáo phân tích chuyên sâu trước trận đấu</span>
+                <span className="font-semibold text-white">Radar Kèo Giá Trị (+EV Value Bet Scanner)</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Cảnh báo biến động odds và tỷ lệ thắng tức thì</span>
+                <span>Trợ lý Phân tích AI Copilot 1-1 Chuyên Sâu</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Kênh VIP Telegram tín hiệu 24/7 độc quyền</span>
+                <span>Giả lập 10.000 Kịch bản Trận đấu (Monte Carlo)</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <Check className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>Kênh trao đổi & hỗ trợ trực tiếp 1-1 từ chuyên gia</span>
+                <span>Cấp Developer REST API Key truy cập dữ liệu</span>
               </li>
             </ul>
           </div>
@@ -297,9 +297,9 @@ export default function PricingSection({
               </p>
             </div>
             <div className="p-5 rounded-xl bg-neutral-900/40 border border-neutral-800">
-              <h4 className="font-semibold text-white mb-2">Sau khi thanh toán tôi có nhận được thông báo qua Telegram không?</h4>
+              <h4 className="font-semibold text-white mb-2">Sau khi nâng cấp gói PRO/VIP tôi nhận được quyền lợi ngay lập tức không?</h4>
               <p className="text-sm text-neutral-400 leading-relaxed">
-                Có. Nếu bạn đã liên kết tài khoản iKnowBall với Bot Telegram trong mục VIP Lounge, hệ thống sẽ tự động gửi tin nhắn xác nhận kích hoạt thành công kèm theo link mời tham gia nhóm tín hiệu VIP độc quyền.
+                Có! Hệ thống thanh toán VietQR Napas 247 được tích hợp webhook thời gian thực. Ngay khi chuyển khoản thành công, tài khoản của bạn sẽ tự động nâng cấp gói PRO/VIP trong 5 - 30 giây, mở khóa ngay toàn bộ dự đoán AI, Radar Kèo Giá Trị (+EV), AI Copilot và Trình Giả lập Trận đấu.
               </p>
             </div>
           </div>

@@ -61,11 +61,19 @@ function IconBellAlert() {
   );
 }
 
-function IconTelegram() {
+function IconCpu() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m22 2-7 20-4-9-9-4Z" />
-      <path d="M22 2 11 13" />
+      <rect width="16" height="16" x="4" y="4" rx="2" />
+      <rect width="6" height="6" x="9" y="9" rx="1" />
+      <path d="M15 2v2" />
+      <path d="M15 20v2" />
+      <path d="M2 15h2" />
+      <path d="M2 9h2" />
+      <path d="M20 15h2" />
+      <path d="M20 9h2" />
+      <path d="M9 2v2" />
+      <path d="M9 20v2" />
     </svg>
   );
 }
@@ -274,7 +282,7 @@ export default function LandingPage() {
                 style={{ borderColor: bangMau.border, color: bangMau.text }}
               >
                 <span>Xem độ chính xác</span>
-                <span className="text-xs font-mono opacity-70">↓</span>
+
               </a>
             </div>
 
@@ -546,10 +554,10 @@ export default function LandingPage() {
               desc: "Phát hiện ngay khi tỷ lệ xác suất thực tế chênh lệch có lợi so với Odds thị trường, tạo kỳ vọng lợi nhuận dương.",
             },
             {
-              icon: <IconTelegram />,
-              title: "Bot Telegram VIP 24/7",
-              badge: "Realtime",
-              desc: "Nhận thông báo nhận định trước trận, phân tích đội hình và biến động tỷ lệ cược trực tiếp ngay trên điện thoại.",
+              icon: <IconCpu />,
+              title: "AI Copilot & Giả Lập Monte Carlo",
+              badge: "VIP Intelligence",
+              desc: "Giả lập 10.000 kịch bản trận đấu tức thì và tương tác 1-1 với Trợ lý AI định lượng chuyên sâu ngay trên nền tảng.",
             },
             {
               icon: <IconShieldCheck />,
@@ -701,7 +709,7 @@ export default function LandingPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="text-emerald-400 font-bold">✓</span>
-                    <span><strong>Tự động hóa 24/7:</strong> Đồng bộ dữ liệu liên tục từ API-Football, báo kèo tức thì qua Telegram VIP.</span>
+                    <span><strong>Tự động hóa 24/7:</strong> Đồng bộ dữ liệu liên tục từ API-Football, cảnh báo Web Push & Radar biến động Odds trực tiếp.</span>
                   </li>
                 </ul>
               </div>

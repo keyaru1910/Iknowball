@@ -128,7 +128,7 @@ function UserDropdown({
             <span className="text-[11px] font-normal text-neutral-400">→</span>
           </Link>
 
-          {/* VIP Telegram Hub */}
+          {/* VIP Insights Hub */}
           <Link
             href="/vip"
             onClick={() => setOpen(false)}
@@ -136,10 +136,10 @@ function UserDropdown({
             style={{ color: colors.text }}
           >
             <span className="flex items-center gap-1.5">
-              <span>✈️</span>
-              <span>Kênh VIP Telegram</span>
+              <span>👑</span>
+              <span>VIP Insights Hub</span>
             </span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded bg-cyan-400/20 text-cyan-300 font-bold">
+            <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 font-bold">
               VIP
             </span>
           </Link>

@@ -217,8 +217,8 @@ export default function AlertPreferencesModal({
                       : "bg-neutral-950 text-neutral-500 border border-neutral-800"
                   }`}
                 >
-                  <Send className="w-4 h-4" />
-                  <span>Telegram Bot</span>
+                  <Zap className="w-4 h-4" />
+                  <span>Browser Push</span>
                 </button>
 
                 <button

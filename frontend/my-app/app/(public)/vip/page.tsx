@@ -3,11 +3,11 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../hooks/useAuth";
-import TelegramVipLounge from "../../components/TelegramVipLounge";
+import VipAiCopilotSimulator from "../../components/VipAiCopilotSimulator";
 import FluctuationAlertFeed from "../../components/FluctuationAlertFeed";
 import VipApiKeyManager from "../../components/VipApiKeyManager";
 import { colors } from "../../lib/design-tokens";
-import { Crown, Sparkles, Zap, Key, Send, ShieldAlert, ArrowRight, TrendingUp } from "lucide-react";
+import { Crown, Sparkles, Zap, Key, Bot, ShieldAlert, ArrowRight, TrendingUp, Cpu } from "lucide-react";
 
 interface TopPickItem {
   matchId: string;
@@ -34,7 +34,7 @@ interface TopPickItem {
 export default function VipHubPage() {
   const { user } = useAuth();
   const isVip = user?.tier === "vip" || user?.role === "admin";
-  const [activeTab, setActiveTab] = useState<"top-picks" | "fluctuations" | "telegram" | "api">("top-picks");
+  const [activeTab, setActiveTab] = useState<"top-picks" | "fluctuations" | "simulator" | "api">("top-picks");
   const [topPicks, setTopPicks] = useState<TopPickItem[]>([]);
   const [loadingPicks, setLoadingPicks] = useState(false);
   const [sportFilter, setSportFilter] = useState<string>("all");
@@ -77,7 +77,7 @@ export default function VipHubPage() {
               Trung Tâm Dữ Liệu & Phân Tích Cao Cấp
             </h1>
             <p className="mt-2 text-xs sm:text-sm text-neutral-300 max-w-2xl leading-relaxed">
-              Dành riêng cho hội viên VIP: Bộ công cụ độc quyền gồm <strong>Daily Top Picks</strong>, <strong>+EV Value Bet Radar</strong>, <strong>Cảnh báo tự động qua Telegram Bot</strong> và <strong>Developer REST API</strong>.
+              Dành riêng cho hội viên VIP: Bộ công cụ độc quyền gồm <strong>Daily Top Picks (+EV)</strong>, <strong>Radar Biến Động Odds</strong>, <strong>Giả Lập 10.000 Kịch Bản Monte Carlo & AI Copilot 1-1</strong> và <strong>Developer REST API</strong>.
             </p>
           </div>
 
@@ -125,15 +125,15 @@ export default function VipHubPage() {
         </button>
 
         <button
-          onClick={() => setActiveTab("telegram")}
+          onClick={() => setActiveTab("simulator")}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            activeTab === "telegram"
+            activeTab === "simulator"
               ? "bg-amber-500 text-neutral-950 shadow-lg shadow-amber-500/20"
               : "text-neutral-400 hover:text-white bg-white/5 hover:bg-white/10"
           }`}
         >
-          <Send className="w-4 h-4" />
-          <span>Telegram Alerts Bot</span>
+          <Bot className="w-4 h-4" />
+          <span>Giả Lập Monte Carlo & AI Copilot</span>
         </button>
 
         <button
@@ -282,10 +282,10 @@ export default function VipHubPage() {
         </div>
       )}
 
-      {/* Tab Content: Telegram */}
-      {activeTab === "telegram" && (
+      {/* Tab Content: Simulator & AI Copilot */}
+      {activeTab === "simulator" && (
         <div>
-          <TelegramVipLounge />
+          <VipAiCopilotSimulator />
         </div>
       )}
 

@@ -134,7 +134,7 @@ export default function PredictionsPage() {
               </span>
             </div>
             <p className="text-[11px] sm:text-xs text-neutral-400 mt-0.5">
-              Hệ thống vừa ghi nhận biến động xác suất tại các cặp đấu tâm điểm. Theo dõi trực tiếp trên Kênh VIP.
+              Hệ thống vừa ghi nhận biến động xác suất tại các cặp đấu tâm điểm. Khám phá ngay trên VIP Insights Hub.
             </p>
           </div>
         </div>
@@ -150,7 +150,7 @@ export default function PredictionsPage() {
             href="/vip"
             className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-neutral-950 text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-1"
           >
-            <span>Kênh VIP Telegram</span>
+            <span>VIP Insights Hub</span>
             <span>→</span>
           </a>
         </div>
