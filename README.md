@@ -68,51 +68,63 @@ Hệ thống hỗ trợ dữ liệu thể thao đa môn:
 Dự án được xây dựng theo mô hình **Microservices phân tầng**, phân tách rõ ràng giữa lớp giao diện, lớp điều hướng nghiệp vụ, dịch vụ tính toán AI và tầng lưu trữ phân tán:
 
 ```mermaid
-flowchart TD
-    subgraph Client_Layer["🖥️ Frontend Client (Next.js 16 + React 19)"]
-        UI["Modern Web App (Dark Mode, Glassmorphism, Tailwind v4)"]
-        Copilot["VIP AI Copilot & Match Simulator"]
-        State["Zustand State & TanStack Query v5"]
+flowchart TB
+    %% Styling Classes
+    classDef client fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef gateway fill:#0f172a,stroke:#f43f5e,stroke-width:2px,color:#f8fafc;
+    classDef ai fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+    classDef db fill:#0f172a,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef ext fill:#1e293b,stroke:#94a3b8,stroke-width:1.5px,color:#e2e8f0;
+
+    subgraph Client ["🖥️ CLIENT LAYER (Next.js 16 + React 19)"]
+        direction LR
+        UI["<b>Modern Web App</b><br/>Dashboard, Live Matches, Alerts"]:::client
+        Simulator["<b>VIP AI Copilot & Simulator</b><br/>XAI & Real-time Scenario Model"]:::client
     end
 
-    subgraph Gateway_Layer["🛡️ Backend Gateway (NestJS 11 + TypeScript)"]
-        AuthMod["Xác thực JWT / Google OAuth & RBAC"]
-        PaymentMod["Cổng thanh toán (Stripe / VietQR / MoMo / VNPay)"]
-        Coordinator["Multi-Provider Coordinator & Key Pool"]
-        Queue["BullMQ Sync Jobs & Background Workers"]
-        AlertService["Telegram Bot Alert Service"]
-        CacheLayer["Redis Distributed Cache (Cache-Aside Pattern)"]
+    subgraph Gateway ["🛡️ BACKEND GATEWAY (NestJS 11 + TypeScript)"]
+        direction TB
+        subgraph G_Top ["Quản lý & Nghiệp vụ"]
+            direction LR
+            Auth["<b>Auth & RBAC</b><br/>JWT & Google OAuth"]:::gateway
+            Pay["<b>Payment Gateway</b><br/>Stripe, VietQR, MoMo, VNPay"]:::gateway
+        end
+        subgraph G_Bottom ["Điều phối & Cảnh báo"]
+            direction LR
+            Coord["<b>Key Pool Coordinator</b><br/>Multi-Provider Failover"]:::gateway
+            Queue["<b>BullMQ & Telegram Bot</b><br/>Background Sync & Hot Alerts"]:::gateway
+        end
     end
 
-    subgraph AI_Layer["🧠 Prediction Microservice (Python FastAPI :8001)"]
-        MLApi["FastAPI Model Endpoints"]
-        EloEngine["Dynamic Elo Rating Calculator"]
-        PoissonEngine["Bivariate Poisson Probability Engine"]
-        CalibEngine["Calibration & XAI Metrics (Brier / Log Loss)"]
+    subgraph ProcessingStorage ["⚡ AI ENGINE & DATA PERSISTENCE"]
+        direction LR
+        subgraph AI ["🧠 Prediction Microservice (FastAPI)"]
+            direction TB
+            ML["<b>Probability Engine</b><br/>Elo, Poisson & ML Models"]:::ai
+            XAI["<b>XAI Calibration</b><br/>Brier Score & Log Loss"]:::ai
+        end
+        subgraph DB ["💾 Database & In-Memory Store"]
+            direction TB
+            Postgres[("<b>PostgreSQL 15</b><br/>Relational Matches & Users")]:::db
+            Redis[("<b>Redis 7</b><br/>Distributed Cache & BullMQ")]:::db
+        end
     end
 
-    subgraph Persistence_Layer["💾 Data Persistence"]
-        Postgres[(PostgreSQL 15 Database)]
-        RedisStore[(Redis 7 Cache & Queue)]
+    subgraph External ["🌐 EXTERNAL SPORTS DATA & CHANNELS"]
+        direction LR
+        Football["<b>Football APIs</b><br/>Zafronix, API-Football, FD.org"]:::ext
+        Basketball["<b>Basketball APIs</b><br/>Balldontlie, API-Basketball"]:::ext
+        Telegram["<b>Telegram Bot</b><br/>Realtime Alert Webhooks"]:::ext
     end
 
-    subgraph External_APIs["🌐 External Sports Providers Pool"]
-        ZF["Zafronix Sports API"]
-        AF["API-Football"]
-        FD["Football-Data.org"]
-        BDL["Balldontlie (NBA)"]
-        AB["API-Basketball"]
-        TelegramAPI["Telegram Bot Webhook API"]
-    end
-
-    Client_Layer -->|REST API / HTTPS| Gateway_Layer
-    Gateway_Layer --> Persistence_Layer
-    Gateway_Layer -->|Sync Tasks| Queue
-    Queue --> Coordinator
-    Coordinator --> External_APIs
-    Gateway_Layer -->|Compute Probability| AI_Layer
-    AI_Layer -.-> Postgres
-    AlertService --> TelegramAPI
+    %% Flow Connections
+    Client ==>|REST API / HTTPS| Gateway
+    Gateway -->|Compute Probabilities| AI
+    Gateway <==>|Read / Write / Cache| DB
+    Coord --> Football
+    Coord --> Basketball
+    Queue --> Telegram
+    AI -.->|Fetch Data| Postgres
 ```
 
 ---
