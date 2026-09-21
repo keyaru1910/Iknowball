@@ -56,23 +56,29 @@ async function resetLegacyMockSports(prisma: PrismaClient) {
   const teams = await prisma.team.findMany({ where: { leagueId: { in: leagueIds } }, select: { id: true } });
   const matchIds = matches.map(({ id }) => id);
   const teamIds = teams.map(({ id }) => id);
-  await prisma.$transaction(async (tx) => {
-    if (matchIds.length) {
-      await tx.prediction.deleteMany({ where: { matchId: { in: matchIds } } });
-      await tx.matchEvent.deleteMany({ where: { matchId: { in: matchIds } } });
-      await tx.playerStats.deleteMany({ where: { matchId: { in: matchIds } } });
-      await tx.match.deleteMany({ where: { id: { in: matchIds } } });
-    }
-    if (teamIds.length) {
-      await tx.playerStats.deleteMany({ where: { player: { teamId: { in: teamIds } } } });
-      await tx.player.deleteMany({ where: { teamId: { in: teamIds } } });
-    }
-    await tx.standing.deleteMany({ where: { leagueId: { in: leagueIds } } });
-    await tx.teamStats.deleteMany({ where: { leagueId: { in: leagueIds } } });
-    await tx.team.deleteMany({ where: { leagueId: { in: leagueIds } } });
-    await tx.league.deleteMany({ where: { id: { in: leagueIds } } });
-    await tx.sport.deleteMany({ where: { name: 'basketball' } });
-  });
+  await prisma.$transaction(
+    async (tx) => {
+      if (matchIds.length) {
+        await tx.prediction.deleteMany({ where: { matchId: { in: matchIds } } });
+        await tx.matchEvent.deleteMany({ where: { matchId: { in: matchIds } } });
+        await tx.playerStats.deleteMany({ where: { matchId: { in: matchIds } } });
+        await tx.match.deleteMany({ where: { id: { in: matchIds } } });
+      }
+      if (teamIds.length) {
+        await tx.playerStats.deleteMany({ where: { player: { teamId: { in: teamIds } } } });
+        await tx.player.deleteMany({ where: { teamId: { in: teamIds } } });
+      }
+      await tx.standing.deleteMany({ where: { leagueId: { in: leagueIds } } });
+      await tx.teamStats.deleteMany({ where: { leagueId: { in: leagueIds } } });
+      await tx.team.deleteMany({ where: { leagueId: { in: leagueIds } } });
+      await tx.league.deleteMany({ where: { id: { in: leagueIds } } });
+      await tx.sport.deleteMany({ where: { name: 'basketball' } });
+    },
+    {
+      maxWait: 20000,
+      timeout: 60000,
+    },
+  );
 }
 
 async function main() {
