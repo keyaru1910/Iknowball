@@ -23,7 +23,16 @@ import { AlertModule } from './module/alert/alert.module';
 import { BullModule } from '@nestjs/bullmq';
 import { getBullMqRedisConnection } from './config/redis.config';
 
-const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQueueModule, SportsSyncModule] : [];
+const isQueueEnabled = process.env.ENABLE_SYNC_QUEUE === 'true';
+const optionalQueueModules = isQueueEnabled
+  ? [
+      BullModule.forRoot({
+        connection: getBullMqRedisConnection(),
+      }),
+      PredictionQueueModule,
+      SportsSyncModule,
+    ]
+  : [];
 
 @Module({
   imports: [
@@ -34,9 +43,6 @@ const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQu
         limit: 60,
       },
     ]),
-    BullModule.forRoot({
-      connection: getBullMqRedisConnection(),
-    }),
     SharedModule,
     HealthModule,
     AuthModule,
@@ -50,7 +56,7 @@ const optionalModules = process.env.ENABLE_SYNC_QUEUE === 'true' ? [PredictionQu
     CommentsModule,
     TelegramModule,
     AlertModule,
-    ...optionalModules,
+    ...optionalQueueModules,
   ],
   controllers: [AppController],
   providers: [
