@@ -51,6 +51,13 @@ export function getBullMqRedisConnection() {
           tls: isTls ? { rejectUnauthorized: false } : undefined,
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
+          connectTimeout: 15000,
+          keepAlive: 30000,
+          retryStrategy: (times: number) => {
+            // Giãn cách thử lại từ 1s đến tối đa 5s để tránh bão kết nối
+            const delay = Math.min(times * 1000, 5000);
+            return delay;
+          },
         };
       }
     } catch (urlErr: any) {
@@ -73,6 +80,9 @@ export function getBullMqRedisConnection() {
           tls: isTls ? { rejectUnauthorized: false } : undefined,
           maxRetriesPerRequest: null,
           enableReadyCheck: false,
+          connectTimeout: 15000,
+          keepAlive: 30000,
+          retryStrategy: (times: number) => Math.min(times * 1000, 5000),
         };
       }
     } catch (regexErr: any) {
@@ -97,5 +107,8 @@ export function getBullMqRedisConnection() {
     tls: isUpstashOrTls ? { rejectUnauthorized: false } : undefined,
     maxRetriesPerRequest: null,
     enableReadyCheck: false,
+    connectTimeout: 15000,
+    keepAlive: 30000,
+    retryStrategy: (times: number) => Math.min(times * 1000, 5000),
   };
 }
