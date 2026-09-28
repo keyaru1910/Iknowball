@@ -12,7 +12,6 @@ import MatchTimeline from "../../../components/MatchTimeline";
 import MatchStatsBar from "../../../components/MatchStatsBar";
 import H2HCard from "../../../components/H2HCard";
 import ProbBar from "../../../components/ProbBar";
-import TeamFormBadge from "../../../components/TeamFormBadge";
 import PredictionDisclaimer from "../../../components/PredictionDisclaimer";
 import UserBadge from "../../../components/UserBadge";
 import EloChart from "../../../components/EloChart";
@@ -326,8 +325,8 @@ export default function PredictionDetailPage() {
 
                   <p className="text-xs mb-6 leading-relaxed" style={{ color: colors.textMuted }}>
                     {isBasketball
-                      ? "Xác suất được tính toán từ mô hình Logistic 2 chiều dựa trên Elo rating và hiệu chỉnh phong độ NBA."
-                      : "Xác suất được tính từ mô hình Logistic Regression đa lớp kết hợp Elo rating và hiệu chỉnh phong độ 5 trận."}
+                      ? "Xác suất được tính toán từ mô hình Logistic 2 chiều dựa trên chỉ số Elo rating và phong độ thi đấu NBA."
+                      : "Xác suất được tính toán từ mô hình Định lượng Calibrated Machine Learning kết hợp Elo rating và dữ liệu đối đầu."}
                   </p>
 
                   <div className="mb-6">
@@ -351,7 +350,7 @@ export default function PredictionDetailPage() {
                       </div>
                       <p className="text-white font-medium text-xs">
                         {explanation.dominantFactor === "elo_difference" && "⚡ Chênh lệch đẳng cấp Elo rating"}
-                        {explanation.dominantFactor === "recent_form" && "🔥 Phong độ chuỗi 5 trận gần nhất"}
+                        {explanation.dominantFactor === "recent_form" && "🔥 Hiệu suất thi đấu các trận gần nhất"}
                         {explanation.dominantFactor === "home_advantage" && "🏟️ Lợi thế sân nhà"}
                         {!["elo_difference", "recent_form", "home_advantage"].includes(explanation.dominantFactor) &&
                           (explanation.dominantFactor || "⚡ Phân tích đa yếu tố AI")}
@@ -376,7 +375,7 @@ export default function PredictionDetailPage() {
                 >
                   <div className="flex justify-between text-[11px] mb-1">
                     <span style={{ color: colors.textMuted }}>Phiên bản mô hình:</span>
-                    <span className="font-mono text-white">{currentPrediction.modelVersion || "logistic-regression-v1"}</span>
+                    <span className="font-mono text-white">{currentPrediction.modelVersion || "gemini-hybrid-v1"}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span style={{ color: colors.textMuted }}>Phương pháp:</span>
@@ -395,35 +394,50 @@ export default function PredictionDetailPage() {
               </div>
             )}
 
-            {/* Quick Stats & Form */}
+            {/* Match Information & Venue Card */}
             <div
               className="rounded-xl border p-6 flex flex-col justify-between"
               style={{ borderColor: colors.border, backgroundColor: colors.panel }}
             >
               <div>
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white">
-                  Phong độ gần đây & Địa điểm
+                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-white flex items-center gap-2">
+                  <span>🏟️</span>
+                  <span>Thông tin trận đấu & Địa điểm</span>
                 </h3>
 
-                <div className="flex flex-col gap-4 border-b pb-6" style={{ borderColor: colors.borderSoft }}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">{match.homeTeam.name}</span>
-                    <TeamFormBadge form={["W", "W", "D", "W", "W"]} showLabel={false} />
+                <div className="flex flex-col gap-3 text-xs border-b pb-5" style={{ borderColor: colors.borderSoft, color: colors.textMuted }}>
+                  <div className="flex justify-between items-center py-1">
+                    <span>🏆 Giải đấu:</span>
+                    <strong className="text-white font-medium">{match.league}</strong>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-white">{match.awayTeam.name}</span>
-                    <TeamFormBadge form={["L", "W", "W", "D", "L"]} showLabel={false} />
+                  <div className="flex justify-between items-center py-1">
+                    <span>🏟️ Sân vận động:</span>
+                    <strong className="text-white font-medium">{match.venue || "Sân vận động chính"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span>⚖️ Trọng tài / Giám sát:</span>
+                    <strong className="text-white font-medium">{match.referee || "Tổ trọng tài chính thức"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span>⏰ Giờ thi đấu:</span>
+                    <strong className="text-emerald-400 font-mono font-medium">
+                      {new Intl.DateTimeFormat("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      }).format(new Date(match.kickoffTime))}
+                    </strong>
                   </div>
                 </div>
 
                 <div className="pt-4">
-                  <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider" style={{ color: colors.textMuted }}>
-                    Thông tin trận đấu
-                  </h4>
-                  <div className="flex flex-col gap-1.5 text-xs" style={{ color: colors.textMuted }}>
-                    <div>🏟️ Sân vận động: <strong className="text-white">{match.venue || "Sân vận động chính"}</strong></div>
-                    <div>⚖️ Trọng tài / Giám sát: <strong className="text-white">{match.referee || "Tổ trọng tài chính thức"}</strong></div>
-                    <div>🏆 Giải đấu: <strong className="text-white">{match.league}</strong></div>
+                  <div className="rounded-lg p-3 bg-white/5 border border-white/10 text-xs flex items-center justify-between">
+                    <span className="text-neutral-400 text-[11px]">Trạng thái trận:</span>
+                    <span className="font-semibold text-emerald-400 font-mono uppercase text-[11px]">
+                      {match.status === "upcoming" ? "Sắp diễn ra" : match.status === "live" ? "Đang thi đấu" : "Đã kết thúc"}
+                    </span>
                   </div>
                 </div>
               </div>

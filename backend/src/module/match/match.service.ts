@@ -299,6 +299,11 @@ export class MatchService {
         passAccuracy: { home: 85, away: 82 },
       };
 
+      const [homeForm, awayForm] = await Promise.all([
+        this.getTeamRecentForm(match.homeTeam.id, match.matchDate),
+        this.getTeamRecentForm(match.awayTeam.id, match.matchDate),
+      ]);
+
       return {
         id: match.id,
         league: match.league?.name || 'Unknown League',
@@ -308,12 +313,14 @@ export class MatchService {
           name: match.homeTeam.name,
           shortName: match.homeTeam.shortName,
           logoUrl: match.homeTeam.logoUrl,
+          form: homeForm,
         },
         awayTeam: {
           id: match.awayTeam.id,
           name: match.awayTeam.name,
           shortName: match.awayTeam.shortName,
           logoUrl: match.awayTeam.logoUrl,
+          form: awayForm,
         },
         kickoffTime: match.matchDate.toISOString(),
         status: this.mapPrismaStatusToFe(match.status),
@@ -334,6 +341,36 @@ export class MatchService {
         } : undefined,
       };
     });
+  }
+
+  /**
+   * Lấy phong độ 5 trận gần nhất của 1 đội bóng trước thời điểm trận đấu diễn ra
+   */
+  async getTeamRecentForm(teamId: string, beforeDate: Date, limit = 5): Promise<Array<'W' | 'D' | 'L'>> {
+    const recentMatches = await this.prisma.match.findMany({
+      where: {
+        status: MatchStatus.FINISHED,
+        matchDate: { lt: beforeDate },
+        OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
+        homeScore: { not: null },
+        awayScore: { not: null },
+      },
+      orderBy: { matchDate: 'desc' },
+      take: limit,
+      select: { homeTeamId: true, awayTeamId: true, homeScore: true, awayScore: true },
+    });
+
+    const forms: Array<'W' | 'D' | 'L'> = recentMatches.map((m) => {
+      const isHome = m.homeTeamId === teamId;
+      const teamScore = isHome ? m.homeScore! : m.awayScore!;
+      const opponentScore = isHome ? m.awayScore! : m.homeScore!;
+      if (teamScore > opponentScore) return 'W';
+      if (teamScore === opponentScore) return 'D';
+      return 'L';
+    });
+
+    // Đảo ngược để theo thứ tự thời gian từ cũ nhất -> mới nhất (Trái qua phải)
+    return forms.reverse();
   }
 
   /**

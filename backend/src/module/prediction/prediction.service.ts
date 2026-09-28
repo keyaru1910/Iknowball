@@ -201,11 +201,11 @@ export class PredictionService {
 
       // Đảm bảo tỷ số dự đoán Poisson phù hợp với tỷ lệ thắng
       let predictedScore = topLikelyScores[0]?.score || '2-1';
-      if (homeWinProb > awayWinProb + 0.15 && predictedScore.startsWith('0-') || predictedScore.startsWith('1-2')) {
+      if ((homeWinProb > awayWinProb + 0.15) && (predictedScore.startsWith('0-') || predictedScore.startsWith('1-2') || predictedScore.startsWith('0-1') || predictedScore.startsWith('0-2'))) {
         const homeWinScore = topLikelyScores.find((s) => s.homeGoals > s.awayGoals);
         if (homeWinScore) predictedScore = homeWinScore.score;
         else predictedScore = '2-1';
-      } else if (awayWinProb > homeWinProb + 0.15 && predictedScore.endsWith('-0') || predictedScore.startsWith('2-1')) {
+      } else if ((awayWinProb > homeWinProb + 0.15) && (predictedScore.endsWith('-0') || predictedScore.startsWith('2-1') || predictedScore.startsWith('1-0') || predictedScore.startsWith('2-0'))) {
         const awayWinScore = topLikelyScores.find((s) => s.awayGoals > s.homeGoals);
         if (awayWinScore) predictedScore = awayWinScore.score;
         else predictedScore = '1-2';
@@ -664,10 +664,17 @@ Yêu cầu trả về JSON DUY NHẤT (không bọc trong markdown hay text gi�
   "tacticalSummary": "1 câu nhận định chuyên môn về kịch bản nhiều khả năng xảy ra nhất"
 }`;
 
-      const endpoints = [
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      const modelCandidates = [
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-flash-latest',
+        'gemini-2.5-flash',
+        'gemini-1.5-pro',
+        'gemini-2.0-flash-exp',
       ];
+      const endpoints = modelCandidates.map(
+        (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,
+      );
 
       for (const url of endpoints) {
         try {
@@ -684,7 +691,8 @@ Yêu cầu trả về JSON DUY NHẤT (không bọc trong markdown hay text gi�
           );
 
           const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          const clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const jsonMatch = text.match(/\{[\s\S]*\}/);
+          const clean = jsonMatch ? jsonMatch[0] : text.replace(/```json/g, '').replace(/```/g, '').trim();
           const parsed = JSON.parse(clean);
 
           if (parsed && typeof parsed.calibratedHomeProb === 'number' && typeof parsed.calibratedAwayProb === 'number') {
@@ -1578,7 +1586,7 @@ Yêu cầu trả về JSON DUY NHẤT (không bọc trong markdown hay text gi�
       const pred = m.predictions?.[0];
       const res = pred?.result;
       const homeProb = pred ? (Number(pred.homeWinProb) * 100).toFixed(1) : '';
-      const drawProb = pred?.drawProb ? (Number(pred.drawProb) * 100).toFixed(1) : '';
+      const drawProb = pred?.drawProb !== null && pred?.drawProb !== undefined ? (Number(pred.drawProb) * 100).toFixed(1) : '';
       const awayProb = pred ? (Number(pred.awayWinProb) * 100).toFixed(1) : '';
 
       return [

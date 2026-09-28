@@ -5,6 +5,7 @@ export const teamSchema = z.object({
   name: z.string(),
   logoUrl: z.string().url().optional().nullable(),
   shortName: z.string().optional().nullable(),
+  form: z.array(z.string()).optional().nullable(),
 });
 
 export const predictionSchema = z.object({

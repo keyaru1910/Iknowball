@@ -20,7 +20,7 @@ export default function VipMatchReport({
 }: VipMatchReportProps) {
   const { data: report, isLoading, isError, refetch } = useVipReport(matchId);
   const [chatInput, setChatInput] = useState("");
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string; isError?: boolean }>>([]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
 
@@ -44,13 +44,26 @@ export default function VipMatchReport({
         },
         body: JSON.stringify({ message: userMsg }),
       });
-      const json = await res.json();
-      const reply = json.data?.reply || "Chưa thể phân tích câu trả lời vào lúc này.";
-      setChatMessages((prev) => [...prev, { sender: "ai", text: reply }]);
-    } catch {
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok || !json?.data?.reply) {
+        const errorMsg =
+          json?.message ||
+          json?.error?.message ||
+          (typeof json?.error === 'string' ? json.error : null) ||
+          "Không thể kết nối đến Trợ lý AI. Vui lòng kiểm tra API Key trên máy chủ.";
+        setChatMessages((prev) => [
+          ...prev,
+          { sender: "ai", text: `⚠️ ${errorMsg}`, isError: true },
+        ]);
+        return;
+      }
+
+      setChatMessages((prev) => [...prev, { sender: "ai", text: json.data.reply }]);
+    } catch (err: any) {
       setChatMessages((prev) => [
         ...prev,
-        { sender: "ai", text: "Lỗi kết nối tới Trợ lý AI. Vui lòng thử lại sau." },
+        { sender: "ai", text: `⚠️ Lỗi kết nối mạng tới Trợ lý AI: ${err.message || 'Không có phản hồi'}`, isError: true },
       ]);
     } finally {
       setIsChatLoading(false);
@@ -344,6 +357,8 @@ export default function VipMatchReport({
                     className={`p-3 rounded-xl text-xs leading-relaxed ${
                       msg.sender === "user"
                         ? "bg-amber-500/20 text-white self-end max-w-[85%] border border-amber-500/30"
+                        : msg.isError
+                        ? "bg-rose-950/40 text-rose-200 self-start max-w-[95%] border border-rose-500/40 font-medium"
                         : "bg-white/5 text-neutral-200 self-start max-w-[90%] border border-white/10"
                     }`}
                   >

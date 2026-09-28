@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionPlan, SubscriptionStatus } from '@prisma/client';
@@ -399,11 +399,18 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
   "recommendation": "Khuyến nghị góc nhìn dữ liệu cho nhà phân tích"
 }`;
 
-    // Thử gọi gemini-2.0-flash hoặc gemini-1.5-flash
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    // Thử gọi các model Gemini đang hoạt động ổn định nhất với cơ chế fallback tự động
+    const modelCandidates = [
+      'gemini-2.0-flash',
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-2.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-exp',
     ];
+    const endpoints = modelCandidates.map(
+      (m) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`,
+    );
 
     let lastErr: Error | null = null;
     for (const url of endpoints) {
@@ -421,7 +428,8 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
         );
 
         const rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        const cleanJson = jsonMatch ? jsonMatch[0] : rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         const parsed = JSON.parse(cleanJson);
 
         return {
@@ -605,9 +613,9 @@ Yêu cầu trả về JSON chuẩn DUY NHẤT (không bọc trong markdown code 
 
     const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_KEY;
     if (!geminiKey) {
-      return {
-        reply: `Dựa trên dữ liệu định lượng của iKnowBall: ${match.homeTeam.name} vs ${match.awayTeam.name} (${match.league.name}), xác suất chiến thắng nghiêng về ${Number(pred?.homeWinProb ?? 0.5) >= Number(pred?.awayWinProb ?? 0.5) ? match.homeTeam.name : match.awayTeam.name} (${Math.round(Math.max(Number(pred?.homeWinProb ?? 0.5), Number(pred?.awayWinProb ?? 0.5)) * 100)}%). ${scoreDetails?.predictedScore ? `Tỷ số dự kiến: ${scoreDetails.predictedScore}.` : ''}`,
-      };
+      throw new ServiceUnavailableException(
+        'Chưa cấu hình GEMINI_API_KEY trong hệ thống backend. Vui lòng thêm khóa API vào file .env để kích hoạt Trợ lý AI.',
+      );
     }
 
     const prompt = `Bạn là Trợ Lý Phân Tích Dữ Liệu Thể Thao Cao Cấp iKnowBall.
@@ -621,18 +629,37 @@ Dưới đây là thông tin trận đấu:
 Người dùng hỏi: "${message}"
 Hãy trả lời ngắn gọn (3 đến 5 câu), súc tích, mang tính chuyên môn cao, định lượng và tập trung thẳng vào câu hỏi của người dùng bằng tiếng Việt.`;
 
-    try {
-      const response = await axios.post(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-        { contents: [{ parts: [{ text: prompt }] }] },
-        { timeout: 9000 },
-      );
-      const reply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Chưa thể phân tích câu trả lời vào lúc này.';
-      return { reply: reply.trim() };
-    } catch {
-      return {
-        reply: `Theo phân tích mô hình iKnowBall cho trận ${match.homeTeam.name} vs ${match.awayTeam.name}: Lợi thế đang nghiêng về ${Number(pred?.homeWinProb ?? 0.5) >= Number(pred?.awayWinProb ?? 0.5) ? match.homeTeam.name : match.awayTeam.name} với tỷ lệ thắng xấp xỉ ${Math.round(Math.max(Number(pred?.homeWinProb ?? 0.5), Number(pred?.awayWinProb ?? 0.5)) * 100)}%.`,
-      };
+    const modelCandidates = [
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-latest',
+      'gemini-2.5-flash',
+      'gemini-1.5-pro',
+      'gemini-2.0-flash-exp',
+    ];
+
+    let lastError: any = null;
+
+    for (const model of modelCandidates) {
+      try {
+        const response = await axios.post(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+          { contents: [{ parts: [{ text: prompt }] }] },
+          { timeout: 9000 },
+        );
+        const reply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (reply && reply.trim()) {
+          return { reply: reply.trim() };
+        }
+      } catch (err: any) {
+        lastError = err;
+        this.logger.debug(`[chatWithMatchAi] Model ${model} gặp lỗi: ${err?.response?.data?.error?.message || err.message}. Thử model kế tiếp.`);
+      }
     }
+
+    const errDetail = lastError?.response?.data?.error?.message || lastError?.message || 'Không thể kết nối đến máy chủ AI';
+    this.logger.error(`[chatWithMatchAi] Toàn bộ các model Gemini đều thất bại: ${errDetail}`);
+    throw new ServiceUnavailableException(
+      `Không thể kết nối đến Trợ lý AI iKnowBall (${errDetail}). Vui lòng kiểm tra lại API Key hoặc quota của tài khoản.`,
+    );
   }
 }

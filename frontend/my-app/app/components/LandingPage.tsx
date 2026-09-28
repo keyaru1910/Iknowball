@@ -181,20 +181,19 @@ export default function LandingPage() {
   const { sport } = useSport();
   const today = new Intl.DateTimeFormat("en-CA").format(new Date());
   const { data: todayMatches = [] } = useMatches({ date: today, sport });
-  const { data: allMatches = [] } = useMatches({ sport, limit: 10 });
 
+  // Chỉ lọc các trận sắp diễn ra hoặc đang live trong ngày hôm nay
   const upcomingToday = todayMatches.filter((m) => m.status === "upcoming" || m.status === "live");
-  const effectiveMatches = upcomingToday.length > 0 ? upcomingToday : (todayMatches.length > 0 ? todayMatches : allMatches);
-  const isTodayMatch = todayMatches.length > 0;
+  const isTodayMatch = upcomingToday.length > 0;
 
-  const danhSachTranDauSapToi: TranDau[] = effectiveMatches.slice(0, 3).map((match) => {
+  const danhSachTranDauSapToi: TranDau[] = upcomingToday.slice(0, 3).map((match) => {
     const rawHome = match.prediction?.homeWinProb;
     const rawDraw = match.prediction?.drawProb;
     const rawAway = match.prediction?.awayWinProb;
 
-    const probHome = rawHome !== undefined && rawHome !== null ? (rawHome > 1 ? rawHome : Number((rawHome * 100).toFixed(1))) : 45;
+    const probHome = rawHome !== undefined && rawHome !== null ? (rawHome > 1 ? rawHome : Number((rawHome * 100).toFixed(1))) : 50;
     const probDraw = sport === "basketball" ? 0 : (rawDraw !== undefined && rawDraw !== null ? (rawDraw > 1 ? rawDraw : Number((rawDraw * 100).toFixed(1))) : 25);
-    const probAway = rawAway !== undefined && rawAway !== null ? (rawAway > 1 ? rawAway : Number((rawAway * 100).toFixed(1))) : 30;
+    const probAway = rawAway !== undefined && rawAway !== null ? (rawAway > 1 ? rawAway : Number((rawAway * 100).toFixed(1))) : 25;
 
     return {
       league: match.league,
@@ -359,8 +358,24 @@ export default function LandingPage() {
                 </div>
 
                 {danhSachTranDauSapToi.length === 0 ? (
-                  <div className="flex min-h-[240px] sm:min-h-[260px] items-center justify-center rounded-xl border border-dashed px-6 text-center text-sm sm:text-base" style={{ borderColor: bangMau.borderSoft, color: bangMau.textMuted }}>
-                    Chưa có trận nào hôm nay
+                  <div
+                    className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed p-6 text-center"
+                    style={{ borderColor: bangMau.borderSoft, backgroundColor: "rgba(22, 27, 35, 0.4)" }}
+                  >
+                    <div className="mb-2 text-2xl">📅</div>
+                    <p className="text-sm font-semibold text-neutral-300 mb-1">
+                      Hôm nay không có trận đấu nào
+                    </p>
+                    <p className="text-xs text-neutral-500 mb-4 max-w-[200px]">
+                      Xem trước lịch thi đấu và nhận định AI các ngày tiếp theo
+                    </p>
+                    <Link
+                      href="/predictions"
+                      className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-all"
+                    >
+                      <span>Xem lịch thi đấu</span>
+                      <span>→</span>
+                    </Link>
                   </div>
                 ) : (
                   <div className="flex flex-col divide-y" style={{ borderColor: bangMau.borderSoft }}>
