@@ -30,7 +30,6 @@ const optionalQueueModules = isQueueEnabled
         connection: getBullMqRedisConnection(),
       }),
       PredictionQueueModule,
-      SportsSyncModule,
     ]
   : [];
 
@@ -52,6 +51,7 @@ const optionalQueueModules = isQueueEnabled
     PredictionModule,
     PaymentModule,
     AdminModule,
+    SportsSyncModule.register(),
     NewsModule,
     CommentsModule,
     TelegramModule,

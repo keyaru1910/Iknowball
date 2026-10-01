@@ -10,6 +10,7 @@ import {
   Logger,
   NotFoundException,
   Inject,
+  Optional,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -60,10 +61,12 @@ export class SportsSyncController {
     private readonly sportsSyncService: SportsSyncService,
     @Inject(PrismaService)
     private readonly prisma: PrismaService,
+    @Optional()
     @InjectQueue(SPORTS_SYNC_QUEUE)
-    private readonly syncQueue: Queue,
+    private readonly syncQueue?: Queue,
+    @Optional()
     @InjectQueue(SPORTS_SYNC_SCHEDULER_QUEUE)
-    private readonly schedulerQueue: Queue,
+    private readonly schedulerQueue?: Queue,
   ) {}
 
   /**
@@ -196,6 +199,25 @@ export class SportsSyncController {
    */
   @Get('queues/status')
   async getQueuesStatus() {
+    if (!this.syncQueue || !this.schedulerQueue) {
+      return {
+        data: {
+          syncQueue: {
+            name: SPORTS_SYNC_QUEUE,
+            status: 'Queue BullMQ chưa được bật hoặc không khả dụng',
+          },
+          schedulerQueue: {
+            name: SPORTS_SYNC_SCHEDULER_QUEUE,
+            status: 'Queue BullMQ chưa được bật hoặc không khả dụng',
+          },
+        },
+        meta: {
+          timestamp: new Date().toISOString(),
+        },
+        error: null,
+      };
+    }
+
     const [
       syncWaiting,
       syncActive,
